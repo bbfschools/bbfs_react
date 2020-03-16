@@ -1,3 +1,5 @@
+/* stylelint-disable no-descending-specificity */
+/* stylelint-disable no-duplicate-selectors */
 .fusion-mobile-menu-design-modern .fusion-secondary-header {
   padding-left: 0 !important;
   padding-right: 0 !important;
@@ -65,6 +67,7 @@
   padding-top: 20px;
   margin-left: -30px;
   margin-right: -30px;
+  margin-bottom: calc(-20px - var(--header_padding-bottom));
 }
 .fusion-mobile-menu-design-modern.fusion-header-v1 .fusion-mobile-nav-holder > ul,
 .fusion-mobile-menu-design-modern.fusion-header-v2 .fusion-mobile-nav-holder > ul,
@@ -185,6 +188,9 @@
   padding-left: 0;
   padding-right: 0;
 }
+.fusion-secondary-header {
+  background-color: var(--header_top_bg_color);
+}
 .fusion-secondary-header .fusion-row {
   display: block;
 }
@@ -233,7 +239,7 @@ body.fusion-body .fusion-secondary-header .fusion-alignright .fusion-social-link
 }
 .fusion-mobile-menu-design-classic.fusion-header-v7 .fusion-main-menu {
   display: block;
-  max-width: auto;
+  max-width: none;
 }
 .fusion-mobile-menu-design-classic.fusion-header-v7 .fusion-main-menu > ul > li {
   display: none;
@@ -328,12 +334,14 @@ body.fusion-body .fusion-secondary-header .fusion-alignright .fusion-social-link
 .fusion-is-sticky .fusion-mobile-menu-design-classic.fusion-header-v7 .fusion-main-menu > ul .fusion-middle-logo-menu-logo {
   display: none;
 }
+.fusion-is-sticky .fusion-mobile-menu-design-classic.fusion-header-v7 .fusion-main-menu-sticky > ul .fusion-middle-logo-menu-logo,
 .fusion-is-sticky .fusion-mobile-menu-design-classic.fusion-header-v7 .fusion-sticky-menu > ul .fusion-middle-logo-menu-logo {
   display: block;
 }
 .fusion-is-sticky .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-main-menu {
   display: none;
 }
+.fusion-is-sticky .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-main-menu-sticky,
 .fusion-is-sticky .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-sticky-menu {
   display: block;
 }
@@ -432,7 +440,6 @@ body.fusion-body .fusion-secondary-header .fusion-alignright .fusion-social-link
 .fusion-mobile-menu-design-flyout.fusion-header-v7 .fusion-flyout-mobile-menu-icons {
   z-index: 99999;
   position: relative;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
 }
@@ -470,9 +477,21 @@ body.fusion-body .fusion-secondary-header .fusion-alignright .fusion-social-link
 .fusion-header-v4.fusion-header-has-flyout-menu .fusion-header > .fusion-row {
   position: relative;
 }
+.avada-not-responsive .fusion-main-menu > ul > li {
+  padding-right: var(--mobile_nav_padding);
+}
+.avada-responsive .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-main-menu {
+  float: var(--logo_alignment);
+}
+.avada-responsive.mobile-logo-pos-center .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-main-menu {
+  float: left;
+}
+.mobile-logo-pos-right .fusion-mobile-menu-design-modern.fusion-header-v7 .fusion-main-menu {
+  float: right;
+}
 /* uberMenu Styles
 ================================================================================================= */
-.fusion-body .fusion-header-wrapper .fusion-header .fusion-main-menu.fusion-ubermenu {
+.fusion-body .fusion-header-wrapper .fusion-main-menu.fusion-ubermenu-mobile {
   display: block;
 }
 .fusion-mobile-nav-holder li.fusion-mobile-nav-item .wpml-ls-item a::before {
@@ -480,4 +499,26 @@ body.fusion-body .fusion-secondary-header .fusion-alignright .fusion-social-link
 }
 .fusion-mobile-nav-holder .wpml-ls-native {
   padding: 0 5px;
+}
+.avada-mobile-header-color-not-opaque .fusion-header-wrapper {
+  position: absolute;
+  z-index: 10000;
+}
+.avada-mobile-header-color-not-opaque .fusion-header-wrapper .fusion-header {
+  background-image: none;
+}
+.avada-mobile-header-color-not-opaque .layout-boxed-mode .fusion-header-wrapper {
+  width: 100%;
+  max-width: var(--site_width);
+}
+.avada-mobile-header-color-not-opaque .layout-wide-mode .fusion-header-wrapper {
+  left: 0;
+  right: 0;
+}
+body.avada-has-mobile-menu-search:not(.avada-has-main-nav-search-icon) .fusion-header-v6.fusion-header-has-flyout-menu .fusion-flyout-menu-icons .fusion-flyout-search-toggle {
+  display: -ms-flexbox;
+  display: flex;
+}
+body:not(.avada-has-mobile-menu-search) .fusion-header-v6.fusion-header-has-flyout-menu .fusion-flyout-menu-icons .fusion-flyout-search-toggle {
+  display: none;
 }

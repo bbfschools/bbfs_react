@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -26,7 +26,7 @@ class Avada_Multiple_Featured_Images {
 	 */
 	public function __construct() {
 		if ( is_admin() ) {
-			add_action( 'after_setup_theme', array( $this, 'generate' ) );
+			add_action( 'after_setup_theme', [ $this, 'generate' ] );
 		}
 	}
 
@@ -36,11 +36,11 @@ class Avada_Multiple_Featured_Images {
 	 * @access  public
 	 */
 	public function generate() {
-		$post_types = array(
+		$post_types = [
 			'post',
 			'page',
 			'avada_portfolio',
-		);
+		];
 
 		$i = 2;
 
@@ -48,7 +48,7 @@ class Avada_Multiple_Featured_Images {
 
 			foreach ( $post_types as $post_type ) {
 				new Fusion_Featured_Image(
-					array(
+					[
 						'id'           => 'featured-image-' . $i,
 						'post_type'    => $post_type,
 						/* translators: Number. */
@@ -57,7 +57,7 @@ class Avada_Multiple_Featured_Images {
 						'label_set'    => sprintf( __( 'Set featured image %s', 'Avada' ), $i ),
 						/* translators: Number. */
 						'label_remove' => sprintf( __( 'Remove featured image %s', 'Avada' ), $i ),
-					)
+					]
 				);
 			}
 

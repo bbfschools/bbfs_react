@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.5
+ */
 
 if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 
@@ -54,7 +60,7 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			 * @since 1.5
 			 * @var array
 			 */
-			protected $child_legend_text_colors = array();
+			protected $child_legend_text_colors = [];
 
 			/**
 			 * Constructor.
@@ -64,11 +70,105 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_filter( 'fusion_attr_chart-shortcode', array( $this, 'parent_attr' ) );
-				add_shortcode( 'fusion_chart', array( $this, 'render_parent' ) );
+				add_filter( 'fusion_attr_chart-shortcode', [ $this, 'parent_attr' ] );
+				add_shortcode( 'fusion_chart', [ $this, 'render_parent' ] );
 
-				add_filter( 'fusion_attr_chart-dataset-shortcode', array( $this, 'child_attr' ) );
-				add_shortcode( 'fusion_chart_dataset', array( $this, 'render_child' ) );
+				add_filter( 'fusion_attr_chart-dataset-shortcode', [ $this, 'child_attr' ] );
+				add_shortcode( 'fusion_chart_dataset', [ $this, 'render_child' ] );
+			}
+
+			/**
+			 * Gets the default values.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
+			 * @return array
+			 */
+			public static function get_element_defaults( $context = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
+
+				$parent = [
+					'hide_on_mobile'           => fusion_builder_default_visibility( 'string' ),
+					'title'                    => '',
+					'chart_padding'            => '',
+					'chart_type'               => '',
+					'bg_colors'                => '',
+					'border_colors'            => '',
+					'chart_legend_position'    => $fusion_settings->get( 'chart_legend_position' ),
+					'legend_labels'            => '',
+					'legend_text_colors'       => '',
+					'x_axis_labels'            => '',
+					'x_axis_label'             => '',
+					'y_axis_label'             => '',
+					'show_tooltips'            => $fusion_settings->get( 'chart_show_tooltips' ),
+					'chart_border_size'        => 1,
+					'chart_border_type'        => 'smooth',
+					'chart_fill'               => 'start',
+					'chart_point_style'        => '',
+					'chart_point_size'         => '',
+					'chart_point_bg_color'     => '',
+					'chart_point_border_color' => '',
+					'chart_bg_color'           => $fusion_settings->get( 'chart_bg_color' ),
+					'chart_axis_text_color'    => $fusion_settings->get( 'chart_axis_text_color' ),
+					'chart_gridline_color'     => $fusion_settings->get( 'chart_gridline_color' ),
+					'class'                    => '',
+					'id'                       => '',
+				];
+
+				$child = [
+					'title'             => '',
+					'values'            => '',
+					'legend_text_color' => '',
+					'background_color'  => '',
+					'border_color'      => '',
+				];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				} elseif ( 'child' === $context ) {
+					return $child;
+				} else {
+					return [
+						'parent' => $parent,
+						'child'  => $child,
+					];
+				}
+			}
+
+			/**
+			 * Maps settings to param variables.
+			 *
+			 * @static
+			 * @access public
+			 * @param string $context Whether we want parent or child.
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function settings_to_params( $context = '' ) {
+
+				$parent = [
+					'chart_legend_position' => 'chart_legend_position',
+					'chart_show_tooltips'   => 'show_tooltips',
+					'chart_bg_color'        => 'chart_bg_color',
+					'chart_axis_text_color' => 'chart_axis_text_color',
+					'chart_gridline_color'  => 'chart_gridline_color',
+				];
+
+				$child = [];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				} elseif ( 'child' === $context ) {
+					return $child;
+				} else {
+					return [
+						'parent' => $parent,
+						'child'  => $child,
+					];
+				}
 			}
 
 			/**
@@ -83,42 +183,14 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			public function render_parent( $args, $content = '' ) {
 				global $fusion_settings;
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'hide_on_mobile'           => fusion_builder_default_visibility( 'string' ),
-						'title'                    => '',
-						'chart_padding'            => '',
-						'chart_type'               => '',
-						'bg_colors'                => '',
-						'border_colors'            => '',
-						'chart_legend_position'    => $fusion_settings->get( 'chart_legend_position' ),
-						'legend_labels'            => '',
-						'legend_text_colors'       => '',
-						'x_axis_labels'            => '',
-						'x_axis_label'             => '',
-						'y_axis_label'             => '',
-						'show_tooltips'            => $fusion_settings->get( 'chart_show_tooltips' ),
-						'chart_border_size'        => 1,
-						'chart_border_type'        => 'smooth',
-						'chart_fill'               => 'start',
-						'chart_point_style'        => '',
-						'chart_point_size'         => '',
-						'chart_point_bg_color'     => '',
-						'chart_point_border_color' => '',
-						'chart_bg_color'           => $fusion_settings->get( 'chart_bg_color' ),
-						'chart_axis_text_color'    => $fusion_settings->get( 'chart_axis_text_color' ),
-						'chart_gridline_color'     => $fusion_settings->get( 'chart_gridline_color' ),
-						'class'                    => '',
-						'id'                       => '',
-					), $args
-				);
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_chart' );
 
-				$defaults['chart_padding'] = array(
+				$defaults['chart_padding'] = [
 					'top'    => isset( $args['padding_top'] ) && '' !== $args['padding_top'] ? $args['padding_top'] : 0,
 					'right'  => isset( $args['padding_right'] ) && '' !== $args['padding_right'] ? $args['padding_right'] : 0,
 					'bottom' => isset( $args['padding_bottom'] ) && '' !== $args['padding_bottom'] ? $args['padding_bottom'] : 0,
 					'left'   => isset( $args['padding_left'] ) && '' !== $args['padding_left'] ? $args['padding_left'] : 0,
-				);
+				];
 
 				$this->parent_args = $defaults;
 
@@ -167,16 +239,16 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 				}
 
 				if ( $styles ) {
-					$styles = '<style type="text/css" scoped="scoped">' . $styles . '</style>';
+					$styles = '<style type="text/css">' . $styles . '</style>';
 				}
 
 				$this->chart_sc_counter++;
 
 				// Reset child element counter.
 				$this->chart_dataset_counter    = 0;
-				$this->child_legend_text_colors = array();
+				$this->child_legend_text_colors = [];
 
-				return $styles . $html;
+				return apply_filters( 'fusion_element_chart_content', $styles . $html, $args );
 			}
 
 			/**
@@ -189,10 +261,11 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			public function parent_attr() {
 
 				$attr = fusion_builder_visibility_atts(
-					$this->parent_args['hide_on_mobile'], array(
+					$this->parent_args['hide_on_mobile'],
+					[
 						'id'    => 'fusion-chart-' . $this->chart_sc_counter,
 						'class' => 'fusion-chart',
-					)
+					]
 				);
 
 				if ( $this->parent_args['chart_type'] ) {
@@ -233,8 +306,8 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 					$attr['data-legend_labels'] = $this->parent_args['legend_labels'];
 				}
 
-				if ( $this->parent_args['chart_border_size'] ) {
-					$attr['data-border_size'] = $this->parent_args['chart_border_size'];
+				if ( '' !== $this->parent_args['chart_border_size'] ) {
+					$attr['data-border_size'] = (int) $this->parent_args['chart_border_size'];
 				}
 
 				if ( $this->parent_args['chart_border_type'] ) {
@@ -291,23 +364,15 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_child( $args, $content = '' ) {
-				global $fusion_library, $fusion_settings;
+				global $fusion_settings;
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'title'             => '',
-						'values'            => '',
-						'legend_text_color' => '',
-						'background_color'  => '',
-						'border_color'      => '',
-					), $args
-				);
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'child' ), $args, 'fusion_chart_dataset' );
 
 				$this->child_args = $defaults;
 
 				$this->child_legend_text_colors[] = $this->child_args['legend_text_color'];
 
-				$html  = '<div ' . FusionBuilder::attributes( 'chart-dataset-shortcode' ) . '></div>';
+				$html = '<div ' . FusionBuilder::attributes( 'chart-dataset-shortcode' ) . '></div>';
 
 				$this->chart_dataset_counter++;
 
@@ -324,10 +389,9 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			 */
 			public function child_attr() {
 
-				$attr = array(
+				$attr = [
 					'class' => 'fusion-chart-dataset',
-					// 'style' => 'display:none;',
-				);
+				];
 
 				if ( $this->child_args['title'] ) {
 					$attr['data-label'] = $this->child_args['title'];
@@ -352,44 +416,6 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			}
 
 			/**
-			 * Builds the dynamic styling.
-			 *
-			 * @access public
-			 * @since 1.5
-			 * @return array
-			 */
-			public function add_styling() {
-				global $content_media_query, $dynamic_css_helpers;
-
-				$css = array();
-
-				$elements = array(
-					'.fusion-chart.legend-right .fusion-chart-inner',
-					'.fusion-chart.legend-left .fusion-chart-inner',
-				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['flex-direction'] = 'column';
-
-				$elements = array(
-					'.fusion-chart.legend-right .fusion-chart-inner .fusion-chart-legend-wrap li',
-					'.fusion-chart.legend-left .fusion-chart-inner .fusion-chart-legend-wrap li',
-				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['display'] = 'inline-block';
-
-				$elements = array(
-					'.fusion-chart.legend-right .fusion-chart-legend-wrap',
-					'.fusion-chart.legend-left .fusion-chart-legend-wrap',
-				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-top'] = '20px';
-
-				$css[ $content_media_query ]['.fusion-chart.legend-right .fusion-chart-legend-wrap']['padding-left'] = '0';
-				$css[ $content_media_query ]['.fusion-chart.legend-left .fusion-chart-legend-wrap']['padding-right'] = '0';
-
-				$css[ $content_media_query ]['.fusion-chart.legend-left .fusion-chart-legend-wrap']['order'] = 2;
-
-				return $css;
-			}
-
-			/**
 			 * Adds settings to element options panel.
 			 *
 			 * @access public
@@ -398,62 +424,68 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 			 */
 			public function add_options() {
 
-				return array(
-					'chart_shortcode_section' => array(
-						'label'       => esc_html__( 'Chart Element', 'fusion-builder' ),
+				return [
+					'chart_shortcode_section' => [
+						'label'       => esc_html__( 'Chart', 'fusion-builder' ),
 						'description' => '',
 						'id'          => 'chart_shortcode_section',
 						'type'        => 'accordion',
-						'fields'      => array(
-							'chart_legend_position' => array(
+						'icon'        => 'fusiona-bar-chart',
+						'fields'      => [
+							'chart_legend_position' => [
 								'label'       => esc_attr__( 'Legend Position', 'fusion-builder' ),
 								'description' => esc_attr__( 'Set chart legend position. Note that on mobile devices legend will be positioned below the chart when left or right position is used.', 'fusion-builder' ),
 								'id'          => 'chart_legend_position',
 								'default'     => 'top',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'top'    => esc_attr__( 'Top', 'fusion-builder' ),
 									'right'  => esc_attr__( 'Right', 'fusion-builder' ),
 									'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
 									'left'   => esc_attr__( 'Left', 'fusion-builder' ),
 									'off'    => esc_attr__( 'Off', 'fusion-builder' ),
-								),
-							),
-							'chart_show_tooltips' => array(
+								],
+							],
+							'chart_show_tooltips'   => [
 								'label'       => esc_attr__( 'Show Tooltips', 'fusion-builder' ),
 								'description' => esc_attr__( 'Choose whether tooltips should be displayed on hover. If your chart is in a column and the column has a hover type or link, tooltips are disabled.', 'fusion-builder' ),
 								'id'          => 'chart_show_tooltips',
 								'default'     => 'yes',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
-									'yes'  => esc_attr__( 'Yes', 'fusion-builder' ),
-									'no'   => esc_attr__( 'No', 'fusion-builder' ),
-								),
-							),
-							'chart_bg_color' => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
+									'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+									'no'  => esc_attr__( 'No', 'fusion-builder' ),
+								],
+							],
+							'chart_bg_color'        => [
 								'label'       => esc_attr__( 'Chart Background Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the background of the chart.', 'fusion-builder' ),
 								'id'          => 'chart_bg_color',
 								'default'     => 'rgba(255,255,255,0)',
 								'type'        => 'color-alpha',
-							),
-							'chart_axis_text_color' => array(
+								'transport'   => 'postMessage',
+							],
+							'chart_axis_text_color' => [
 								'label'       => esc_attr__( 'Chart Axis Text Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the text color of the x-axis and y-axis.', 'fusion-builder' ),
 								'id'          => 'chart_axis_text_color',
-								'default'     => '#666666',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
-							),
-							'chart_gridline_color' => array(
+								'transport'   => 'postMessage',
+							],
+							'chart_gridline_color'  => [
 								'label'       => esc_attr__( 'Chart Gridline Color', 'fusion-builder' ),
 								'description' => esc_attr__( 'Controls the color of the chart background grid lines and values.', 'fusion-builder' ),
 								'id'          => 'chart_gridline_color',
 								'default'     => 'rgba(0,0,0,0.1)',
 								'type'        => 'color-alpha',
-							),
-						),
-					),
-				);
+								'transport'   => 'postMessage',
+							],
+						],
+					],
+				];
 			}
 
 			/**
@@ -469,7 +501,7 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
 					'fusion-chart',
 					FusionBuilder::$js_folder_url . '/general/fusion-chart.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-chart.js',
-					array( 'jquery', 'fusion-chartjs' ),
+					[ 'jquery', 'fusion-chartjs' ],
 					'1',
 					true
 				);
@@ -487,313 +519,397 @@ if ( fusion_is_element_enabled( 'fusion_chart' ) ) {
  * @since 1.0
  */
 function fusion_element_chart() {
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
+	$fusion_settings = fusion_get_fusion_settings();
+	$is_builder      = ( function_exists( 'fusion_is_preview_frame' ) && fusion_is_preview_frame() ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+	$to_link         = '';
+
+	if ( $is_builder ) {
+		$to_link = '<span class="fusion-panel-shortcut" data-fusion-option="h4_typography">' . __( 'Theme Options', 'fusion-builder' ) . '</span>';
+	} else {
+		$to_link = '<a href="' . esc_url_raw( $fusion_settings->get_setting_link( 'h4_typography' ) ) . '" target="_blank">' . esc_attr__( 'Theme Options', 'fusion-builder' ) . '</a>';
 	}
 
 	fusion_builder_map(
-		array(
-			'name'          => esc_attr__( 'Chart', 'fusion-builder' ),
-			'shortcode'     => 'fusion_chart',
-			'icon'          => 'fusiona-bar-chart',
-			'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-chart-preview.php',
-
-			'custom_settings_view_name'     => 'ModuleSettingsChartView',
-			'custom_settings_view_js'       => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/js/fusion-chart-settings.js',
-			'custom_settings_template_file' => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/custom/fusion-chart-settings.php',
-			'on_save'           => 'chartShortcodeFilter',
-			'admin_enqueue_js'  => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-chart.js',
-			'preview_id'    => 'fusion-builder-block-module-chart-preview-template',
-			'params'        => array(
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Title', 'fusion-builder' ),
-					/* translators: Link containing the "Theme Options" text. */
-					'description' => sprintf( esc_html__( 'The chart title utilizes all the H4 typography settings in %s except for top and bottom margins.', 'fusion-builder' ), '<a href="' . esc_url_raw( $fusion_settings->get_setting_link( 'h4_typography' ) ) . '" target="_blank">' . esc_attr__( 'Theme Options', 'fusion-builder' ) . '</a>' ),
-					'param_name'  => 'title',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Chart Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select chart type.', 'fusion-builder' ),
-					'param_name'  => 'chart_type',
-					'value'       => array(
-						'bar'           => esc_attr__( 'Bar', 'fusion-builder' ),
-						'horizontalBar' => esc_attr__( 'Horizontal Bar', 'fusion-builder' ),
-						'line'          => esc_attr__( 'Line', 'fusion-builder' ),
-						'pie'           => esc_attr__( 'Pie', 'fusion-builder' ),
-						'doughnut'      => esc_attr__( 'Doughnut', 'fusion-builder' ),
-						'radar'         => esc_attr__( 'Radar', 'fusion-builder' ),
-						'polarArea'     => esc_attr__( 'Polar Area', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Legend Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set chart legend position. Note that on mobile devices legend will be positioned below the chart when left or right position is used.', 'fusion-builder' ),
-					'param_name'  => 'chart_legend_position',
-					'value'       => array(
-						''       => esc_attr__( 'Default', 'fusion-builder' ),
-						'top'    => esc_attr__( 'Top', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-						'off'    => esc_attr__( 'Off', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'X Axis Label', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set X axis label.', 'fusion-builder' ),
-					'param_name'  => 'x_axis_label',
-					'value'       => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'pie',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'doughnut',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'polarArea',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'radar',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Y Axis Label', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set Y axis label.', 'fusion-builder' ),
-					'param_name'  => 'y_axis_label',
-					'value'       => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'pie',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'doughnut',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'polarArea',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'radar',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Show Tooltips', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose whether tooltips should be displayed on hover. If your chart is in a column and the column has a hover type or link, tooltips are disabled.', 'fusion-builder' ),
-					'param_name'  => 'show_tooltips',
-					'value'       => array(
-						''    => esc_attr__( 'Default', 'fusion-builder' ),
-						'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'  => esc_attr__( 'No', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Border Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select border type.', 'fusion-builder' ),
-					'param_name'  => 'chart_border_type',
-					'value'       => array(
-						'smooth'        => esc_attr__( 'Smooth', 'fusion-builder' ),
-						'non_smooth'    => esc_attr__( 'Non smooth', 'fusion-builder' ),
-						'stepped'       => esc_attr__( 'Stepped', 'fusion-builder' ),
-					),
-					'default'     => 'smooth',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Chart Fill', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose how line chart should be filled.', 'fusion-builder' ),
-					'param_name'  => 'chart_fill',
-					'value'       => array(
-						'start'  => esc_attr__( 'Start', 'fusion-builder' ),
-						'end'    => esc_attr__( 'End', 'fusion-builder' ),
-						'origin' => esc_attr__( 'Origin', 'fusion-builder' ),
-						'off'    => esc_attr__( 'Not filled', 'fusion-builder' ),
-					),
-					'default'  => 'off',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Point Style', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose point style for line charts.', 'fusion-builder' ),
-					'param_name'  => 'chart_point_style',
-					'value'       => array(
-						'circle'      => esc_attr__( 'Circle', 'fusion-builder' ),
-						'cross'       => esc_attr__( 'Cross', 'fusion-builder' ),
-						'crossRot'    => esc_attr__( 'Cross Rotated', 'fusion-builder' ),
-						'dash'        => esc_attr__( 'Dash', 'fusion-builder' ),
-						'line'        => esc_attr__( 'Line', 'fusion-builder' ),
-						'rect'        => esc_attr__( 'Rectangle', 'fusion-builder' ),
-						'rectRounded' => esc_attr__( 'Rectangle Rounded', 'fusion-builder' ),
-						'rectRot'     => esc_attr__( 'Rectangle Rotated', 'fusion-builder' ),
-						'star'        => esc_attr__( 'Star', 'fusion-builder' ),
-						'triangle'    => esc_attr__( 'Triangle', 'fusion-builder' ),
-					),
-					'default'     => 'circle',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Point Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose point size for line charts.', 'fusion-builder' ),
-					'param_name'  => 'chart_point_size',
-					'value'       => '3',
-					'min'         => '0',
-					'max'         => '20',
-					'step'        => '1',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'cross',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'crossRot',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'line',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'dash',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'star',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Point Background Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose point background color for line charts.', 'fusion-builder' ),
-					'param_name'  => 'chart_point_bg_color',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'cross',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'crossRot',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'line',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'dash',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'chart_point_style',
-							'value'    => 'star',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Point Border Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose point border color for line charts.', 'fusion-builder' ),
-					'param_name'  => 'chart_point_border_color',
-					'dependency'  => array(
-						array(
-							'element'  => 'chart_type',
-							'value'    => 'line',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'checkbox_button_set',
-					'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
-					'param_name'  => 'hide_on_mobile',
-					'value'       => fusion_builder_visibility_options( 'full' ),
-					'default'     => fusion_builder_default_visibility( 'array' ),
-					'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_Chart',
+			[
+				'name'                                    => esc_attr__( 'Chart', 'fusion-builder' ),
+				'shortcode'                               => 'fusion_chart',
+				'icon'                                    => 'fusiona-bar-chart',
+				'preview'                                 => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-chart-preview.php',
+				'multi'                                   => 'multi_element_parent',
+				'element_child'                           => 'fusion_chart_dataset',
+				'custom_settings_view_name'               => 'ModuleSettingsChartView',
+				'custom_settings_view_js'                 => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/js/fusion-chart-settings.js',
+				'custom_settings_template_file'           => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/custom/fusion-chart-settings.php',
+				'front_end_custom_settings_view_js'       => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/front-end/js/fusion-chart-settings.js',
+				'front_end_custom_settings_template_file' => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/custom/front-end/fusion-chart-settings.php',
+				'on_save'                                 => 'chartShortcodeFilter',
+				'admin_enqueue_js'                        => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-chart.js',
+				'preview_id'                              => 'fusion-builder-block-module-chart-preview-template',
+				'child_ui'                                => true,
+				'help_url'                                => 'https://theme-fusion.com/documentation/fusion-builder/elements/chart-element/',
+				'params'                                  => [
+					[
+						'type'             => 'hidden',
+						'heading'          => esc_attr__( 'Chart Data', 'fusion-builder' ),
+						'param_name'       => 'fake-chart-option',
+						'remove_from_atts' => true,
+						'callback'         => [
+							'function' => 'chartShortcodeFilter',
+							'ajax'     => false,
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Title', 'fusion-builder' ),
+						/* translators: Link containing the "Theme Options" text. */
+						'description' => sprintf( esc_html__( 'The chart title utilizes all the H4 typography settings in %s except for top and bottom margins.', 'fusion-builder' ), $to_link ),
+						'param_name'  => 'title',
+						'value'       => '',
+						'css_class'   => 'fusion-debounce-change',
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Chart Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select chart type.', 'fusion-builder' ),
+						'param_name'  => 'chart_type',
+						'default'     => 'bar',
+						'value'       => [
+							'bar'           => esc_attr__( 'Bar', 'fusion-builder' ),
+							'horizontalBar' => esc_attr__( 'Horizontal Bar', 'fusion-builder' ),
+							'line'          => esc_attr__( 'Line', 'fusion-builder' ),
+							'pie'           => esc_attr__( 'Pie', 'fusion-builder' ),
+							'doughnut'      => esc_attr__( 'Doughnut', 'fusion-builder' ),
+							'radar'         => esc_attr__( 'Radar', 'fusion-builder' ),
+							'polarArea'     => esc_attr__( 'Polar Area', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Legend Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set chart legend position. Note that on mobile devices legend will be positioned below the chart when left or right position is used.', 'fusion-builder' ),
+						'param_name'  => 'chart_legend_position',
+						'value'       => [
+							''       => esc_attr__( 'Default', 'fusion-builder' ),
+							'top'    => esc_attr__( 'Top', 'fusion-builder' ),
+							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+							'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+							'off'    => esc_attr__( 'Off', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'X Axis Label', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set X axis label.', 'fusion-builder' ),
+						'param_name'  => 'x_axis_label',
+						'value'       => '',
+						'css_class'   => 'fusion-debounce-change',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'pie',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'doughnut',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'polarArea',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'radar',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Y Axis Label', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set Y axis label.', 'fusion-builder' ),
+						'param_name'  => 'y_axis_label',
+						'value'       => '',
+						'css_class'   => 'fusion-debounce-change',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'pie',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'doughnut',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'polarArea',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_type',
+								'value'    => 'radar',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Show Tooltips', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose whether tooltips should be displayed on hover. If your chart is in a column and the column has a hover type or link, tooltips are disabled.', 'fusion-builder' ),
+						'param_name'  => 'show_tooltips',
+						'value'       => [
+							''    => esc_attr__( 'Default', 'fusion-builder' ),
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Border Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select border type.', 'fusion-builder' ),
+						'param_name'  => 'chart_border_type',
+						'value'       => [
+							'smooth'     => esc_attr__( 'Smooth', 'fusion-builder' ),
+							'non_smooth' => esc_attr__( 'Non smooth', 'fusion-builder' ),
+							'stepped'    => esc_attr__( 'Stepped', 'fusion-builder' ),
+						],
+						'default'     => 'smooth',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Chart Fill', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose how line chart should be filled.', 'fusion-builder' ),
+						'param_name'  => 'chart_fill',
+						'value'       => [
+							'start'  => esc_attr__( 'Start', 'fusion-builder' ),
+							'end'    => esc_attr__( 'End', 'fusion-builder' ),
+							'origin' => esc_attr__( 'Origin', 'fusion-builder' ),
+							'off'    => esc_attr__( 'Not filled', 'fusion-builder' ),
+						],
+						'default'     => 'off',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Point Style', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose point style for line charts.', 'fusion-builder' ),
+						'param_name'  => 'chart_point_style',
+						'value'       => [
+							'circle'      => esc_attr__( 'Circle', 'fusion-builder' ),
+							'cross'       => esc_attr__( 'Cross', 'fusion-builder' ),
+							'crossRot'    => esc_attr__( 'Cross Rotated', 'fusion-builder' ),
+							'dash'        => esc_attr__( 'Dash', 'fusion-builder' ),
+							'line'        => esc_attr__( 'Line', 'fusion-builder' ),
+							'rect'        => esc_attr__( 'Rectangle', 'fusion-builder' ),
+							'rectRounded' => esc_attr__( 'Rectangle Rounded', 'fusion-builder' ),
+							'rectRot'     => esc_attr__( 'Rectangle Rotated', 'fusion-builder' ),
+							'star'        => esc_attr__( 'Star', 'fusion-builder' ),
+							'triangle'    => esc_attr__( 'Triangle', 'fusion-builder' ),
+						],
+						'default'     => 'circle',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Point Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose point size for line charts.', 'fusion-builder' ),
+						'param_name'  => 'chart_point_size',
+						'value'       => '3',
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'cross',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'crossRot',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'line',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'dash',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'star',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Point Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose point background color for line charts.', 'fusion-builder' ),
+						'param_name'  => 'chart_point_bg_color',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'cross',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'crossRot',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'line',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'dash',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'chart_point_style',
+								'value'    => 'star',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Point Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose point border color for line charts.', 'fusion-builder' ),
+						'param_name'  => 'chart_point_border_color',
+						'dependency'  => [
+							[
+								'element'  => 'chart_type',
+								'value'    => 'line',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'checkbox_button_set',
+						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
+						'param_name'  => 'hide_on_mobile',
+						'value'       => fusion_builder_visibility_options( 'full' ),
+						'default'     => fusion_builder_default_visibility( 'array' ),
+						'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+					],
+				],
+			],
+			'parent'
 		)
 	);
 }
 add_action( 'fusion_builder_before_init', 'fusion_element_chart' );
+
+/**
+ * Map shortcode to Fusion Builder
+ */
+function fusion_element_chart_value() {
+
+	global $fusion_settings;
+
+	fusion_builder_map(
+		fusion_builder_frontend_data(
+			'FusionSC_Chart',
+			[
+				'name'                                    => esc_attr__( 'Chart Value', 'fusion-builder' ),
+				'description'                             => esc_attr__( 'Enter some content for this textblock', 'fusion-builder' ),
+				'shortcode'                               => 'fusion_chart_dataset',
+				'custom_settings_view_name'               => 'ModuleSettingsChartTableView',
+				'front_end_custom_settings_view_js'       => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/front-end/js/fusion-chart-table-settings.js',
+				'front_end_custom_settings_template_file' => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/custom/front-end/fusion-chart-table-settings.php',
+				'hide_from_builder'                       => true,
+				'allow_generator'                         => true,
+				'params'                                  => [
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Label', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add a label for chart function.', 'fusion-builder' ),
+						'param_name'  => 'title',
+						'placeholder' => true,
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Value', 'fusion-builder' ),
+						'description' => __( 'Enter values for axis. <strong>Note:</strong> Separate values with "|".', 'fusion-builder' ),
+						'param_name'  => 'values',
+						'placeholder' => true,
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color. ', 'fusion-builder' ),
+						'param_name'  => 'background_color',
+						'value'       => '',
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color. ', 'fusion-builder' ),
+						'param_name'  => 'border_color',
+						'value'       => '',
+					],
+				],
+			],
+			'child'
+		)
+	);
+}
+add_action( 'fusion_builder_before_init', 'fusion_element_chart_value' );

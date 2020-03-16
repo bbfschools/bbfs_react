@@ -58,6 +58,8 @@ class Envira_Welcome {
 		// Misc.
 		add_action( 'admin_print_scripts', array( $this, 'disable_admin_notices' ) );
 
+		//echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/docs/how-to-configure-your-gallery-settings", "whatsnewtab", "checkoutourchangelog", "envira-changelog" ); exit;
+
 	}
 
 	/**
@@ -86,7 +88,7 @@ class Envira_Welcome {
 	 */
 	public function enqueue_admin_styles() {
 
-		$welcome_pages = array( 'envira-gallery-lite-get-started', 'envira-gallery-lite-welcome', 'envira-gallery-lite-support', 'envira-gallery-lite-welcome-addons', 'envira-gallery-lite-changelog', 'envira-gallery-lite-upgrade' );
+		$welcome_pages = array( 'envira-gallery-lite-get-started', 'envira-gallery-lite-welcome', 'envira-gallery-lite-support', 'envira-gallery-lite-welcome-addons', 'envira-gallery-lite-changelog', 'envira-gallery-lite-upgrade', 'envira-gallery-lite-litevspro' );
 
 		if ( isset( $_GET['post_type'] ) && isset( $_GET['page'] ) && 'envira' === wp_unslash( $_GET['post_type'] ) && in_array( wp_unslash( $_GET['page'] ), $welcome_pages ) ) { // @codingStandardsIgnoreLine
 
@@ -121,7 +123,8 @@ class Envira_Welcome {
 			========================================================================== */
 			li#menu-posts-envira ul li:last-child,
 			li#menu-posts-envira ul li:nth-last-child(2),
-			li#menu-posts-envira ul li:nth-last-child(3) {
+			li#menu-posts-envira ul li:nth-last-child(3),
+			li#menu-posts-envira ul li:nth-last-child(4) {
 				display: none;
 			}
 
@@ -185,6 +188,15 @@ class Envira_Welcome {
 			apply_filters( 'envira_gallery_menu_cap', 'manage_options' ),
 			ENVIRA_SLUG . '-upgrade',
 			array( $this, 'upgrade_page' )
+		);
+
+		add_submenu_page(
+			'edit.php?post_type=envira',
+			$whitelabel . __( 'Lite vs Pro', 'envira-gallery-lite' ),
+			'<span style="color:#FFA500"> ' . __( 'Lite vs Pro', 'envira-gallery-lite' ) . '</span>',
+			apply_filters( 'envira_gallery_menu_cap', 'manage_options' ),
+			ENVIRA_SLUG . '-litevspro',
+			array( $this, 'lite_vs_pro_page' )
 		);
 	
 		add_submenu_page(
@@ -291,6 +303,27 @@ class Envira_Welcome {
 			</a>
 			<a class="nav-tab
 			<?php
+			if ( isset( $_GET['page'] ) && 'envira-gallery-lite-litevspro' === sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) : // @codingStandardsIgnoreLine
+				?>
+				nav-tab-active<?php endif; ?>" href="
+				<?php
+				echo esc_url(
+					admin_url(
+						add_query_arg(
+							array(
+								'post_type' => 'envira',
+								'page'      => 'envira-gallery-lite-litevspro',
+							),
+							'edit.php'
+						)
+					)
+				);
+				?>
+														">
+				<?php esc_html_e( 'Lite vs Pro', 'envira-gallery-lite' ); ?>
+			</a>
+			<a class="nav-tab
+			<?php
 			if ( isset( $_GET['page'] ) && 'envira-gallery-lite-upgrade' === sanitize_text_field( wp_unslash( $_GET['page'] ) ) ) : // @codingStandardsIgnoreLine
 				?>
 				nav-tab-active<?php endif; ?>" href="
@@ -310,6 +343,7 @@ class Envira_Welcome {
 														">
 				<?php esc_html_e( 'Upgrade Envira Gallery', 'envira-gallery-lite' ); ?>
 			</a>
+
 		</h3>
 
 		<?php
@@ -323,6 +357,10 @@ class Envira_Welcome {
 	public function sidebar() {
 
 		global $wp_version;
+
+		if ( isset( $_GET['page'] ) && $_GET['page'] === 'envira-gallery-lite-litevspro' ) {
+			return;
+		}
 
 		?>
 
@@ -438,15 +476,42 @@ class Envira_Welcome {
 
 							<?php endif; ?>
 
-							<div class="envira-features-section">
+							<div class="envira-recent-section">
 
-								<h3 class="headline-title"><?php esc_html_e( 'Envira Gallery is the best responsive WordPress gallery plugin.', 'envira-gallery-lite' ); ?></h3>
+								<h3 class="headline-title"><?php esc_html_e( 'Envira Gallery is the most beginner-friendly drag &amp; drop WordPress gallery plugin.', 'envira-gallery-lite' ); ?></h3>
+
+								<h3 class="title"><?php esc_html_e( 'Recent Updates To Envira Lite:', 'envira-gallery-lite' ); ?></h3>
+
+								<div class="envira-recent envirathree-column">
+									<div class="enviracolumn">
+											<h4 class="title"><?php esc_html_e( 'Bug Fixes', 'envira-gallery-lite' ); ?> <span class="badge updated">UPDATED</span></h4>
+											<?php /* translators: %1$s: link */ ?>
+											<p><?php printf( esc_html__( 'Bugs involving automatic and column galleries on the same page, certain character displaying in the admin, and Gutenberg Block tweaks.' ) ); ?></p>
+									</div>
+									<div class="enviracolumn">
+											<h4 class="title"><?php esc_html_e( 'Gutenberg Block', 'envira-gallery-lite' ); ?></h4>
+											<?php /* translators: %1$s: link */ ?>
+											<p><?php printf( esc_html__( 'Improved support and additional features for the Envira Lite Gutenberg block. Bug fixes involving the gallery preview and items that were appearing out of order.' ) ); ?></p>
+									</div>
+
+									<div class="enviracolumn">
+											<h4 class="title"><?php esc_html_e( 'Enhancements', 'envira-gallery-lite' ); ?></h4>
+											<p><?php printf( esc_html__( 'Ability to set margins for Automatic Layouts. Also better workings with various popular WordPress plugins and themes.', 'envira-gallery-lite' ) ); ?></p>
+									</div>
+								</div>
+
+							</div>
+
+
+							<div class="envira-recent-section last-section">
+
+								<h3>Recent Updates To Envira Pro:</h3>
 
 								<div class="envira-feature">
-								<img class="icon" src="https://enviragallery.com/wp-content/uploads/2015/08/drag-drop-icon.png" />
-								<h4 class="feature-title"><?php esc_html_e( 'Getting Better And Better!', 'envira-gallery-lite' ); ?></h4>
-								<?php /* translators: %1$s: url, %2$s url */ ?>
-								<p><?php printf( esc_html__( 'This latest update contains enhancements and improvements - some of which are based on your user feedback! Check out %1$s.', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/docs/how-to-configure-your-gallery-settings/#envira-changelog/">our changelog</a>' ); ?></p>
+									<img class="icon" src="https://enviragallery.com/wp-content/uploads/2015/08/drag-drop-icon.png" />
+									<h4 class="feature-title"><?php esc_html_e( 'Getting Better And Better!', 'envira-gallery-lite' ); ?></h4>
+									<?php /* translators: %1$s: url, %2$s url */ ?>
+									<p><?php printf( esc_html__( 'This latest update contains enhancements and improvements - some of which are based on your user feedback! Check out %1$s.', 'envira-gallery-lite' ), '<a target="_blank" href="' . Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/docs/how-to-configure-your-gallery-settings", "whatsnewtab", "checkoutourchangelog", "#envira-changelog" ) . '">our changelog</a>' ); ?></p>
 								</div>
 
 								<div class="envira-feature opposite">
@@ -457,7 +522,7 @@ class Envira_Welcome {
 									</h4>
 									<p>
 										<?php /* translators: %1$s: url, %2$s url */ ?>
-										<?php printf( esc_html__( 'Envira is now ready for WordPress 5.0 and it\'s newest editor "%1$s". Find out how to use the new Envira Gutenberg block: %2$s', 'envira-gallery-lite' ), '<a href="https://wordpress.org/gutenberg/" target="_blank">Gutenberg</a>', '<a href="https://enviragallery.com/docs/how-to-use-envira-with-gutenberg/" target="_blank">Read More</a>' ); ?>
+										<?php printf( esc_html__( 'Envira is now ready for WordPress 5.0 and it\'s newest editor "%1$s". Find out how to use the new Envira Gutenberg block: %2$s', 'envira-gallery-lite' ), '<a href="https://wordpress.org/gutenberg/" target="_blank">Gutenberg</a>', '<a href="' . Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/docs/how-to-use-envira-with-gutenberg/", "whatsnewtab", "gutenbergblockreadmore", "" ) . '" target="_blank">Read More</a>' ); ?>
 										</p>
 								</div>
 
@@ -465,41 +530,20 @@ class Envira_Welcome {
 								<img class="icon" src="https://enviragallery.com/wp-content/uploads/2015/10/social-icon.png" />
 								<h4 class="feature-title"><?php esc_html_e( 'Social Addon', 'envira-gallery-lite' ); ?> <span class="badge updated">UPDATED</span> </h4>
 								<?php /* translators: %1$s: button */ ?>
-								<p><?php printf( esc_html__( 'You can now allow users to share your photos via LinkedIn and WhatsApp, in addition to Facebook, Twitter, Google+, Pinterest, and email. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/addons/social-addon/">Read More</a>' ); ?></p>
+								<p><?php printf( esc_html__( 'You can now allow users to share your photos via Instagram and Facebook, in addition to LinkedIn, WhatsApp, Twitter, Pinterest, and email. %s', 'envira-gallery-lite' ), '<a target="_blank" href="' . Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/social-addon/", "whatsnewtab", "socialaddonreadmore", "" ) . '">Read More</a>' ); ?></p>
 								</div>
 
 								<div class="envira-feature opposite">
 								<img class="icon" src="https://enviragallery.com/wp-content/uploads/2015/10/videos-icon.png" />
 								<h4 class="feature-title"><?php esc_html_e( 'Video Addon', 'envira-gallery-lite' ); ?> <span class="badge updated">UPDATED</span> </h4>
 								<?php /* translators: %1$s: button */ ?>
-								<p><?php printf( esc_html__( 'Now add videos from Facebook, Instagram, Twitch, VideoPress, Vimeo, Wistia, and Dailymotion to your galleries. Expanded self-hosted and YouTube features are now supported too! %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/announcing-new-video-integrations/">Read More</a>' ); ?></p>
+								<p><?php printf( esc_html__( 'Now add videos from Facebook, Instagram, Twitch, VideoPress, Vimeo, Wistia, and Dailymotion to your galleries. Expanded self-hosted and YouTube features are now supported too! %s', 'envira-gallery-lite' ), '<a target="_blank" href="' . Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/announcing-new-video-integrations/", "whatsnewtab", "videoaddonreadmore", "" ) . '">Read More</a>' ); ?></p>
 								</div>
 
 							</div>
 							
 
-							<div class="envira-recent-section">
 
-								<h3 class="title"><?php esc_html_e( 'Recent Updates To Envira Lite:', 'envira-gallery-lite' ); ?></h3>
-								<div class="envira-recent envirathree-column">
-								<div class="enviracolumn">
-										<h4 class="title"><?php esc_html_e( 'Bug Fixes', 'envira-gallery-lite' ); ?> <span class="badge updated">UPDATED</span></h4>
-										<?php /* translators: %1$s: link */ ?>
-										<p><?php printf( esc_html__( 'Bugs involving automatic and column galleries on the same page, certain character displaying in the admin, and Gutenberg Block tweaks.' ) ); ?></p>
-								</div>
-								<div class="enviracolumn">
-										<h4 class="title"><?php esc_html_e( 'Gutenberg Block', 'envira-gallery-lite' ); ?></h4>
-										<?php /* translators: %1$s: link */ ?>
-										<p><?php printf( esc_html__( 'Improved support and additional features for the Envira Lite Gutenberg block. Bug fixes involving the gallery preview and items that were appearing out of order.' ) ); ?></p>
-								</div>
-
-								<div class="enviracolumn">
-										<h4 class="title"><?php esc_html_e( 'Enhancements', 'envira-gallery-lite' ); ?></h4>
-										<p><?php printf( esc_html__( 'Ability to set margins for Automatic Layouts. Also better workings with various popular WordPress plugins and themes.', 'envira-gallery-lite' ) ); ?></p>
-								</div>
-								</div>
-
-							</div>
 
 							<?php $this->envira_assets(); ?>
 
@@ -843,101 +887,197 @@ class Envira_Welcome {
 
 				<?php self::tab_navigation( __METHOD__ ); ?>
 
-				<div class="envira-get-started-panel">
+				<div class="envira-get-started-section">
 
-					<div class="wraps about-wsrap">
+						<div class="envira-admin-get-started-panel">
 
-						<div class="envira-features-section">
+							<div class="section-text text-left">
 
-						<h3 class="headline-title"><?php esc_html_e( 'New To Envira? It\'s Easy To Get Started!', 'envira-gallery-lite' ); ?>
+								<h2>Creating your first gallery</h2>
 
-                        <?php
-                        
-						// Load the main plugin class.
-						
-						$envira_gallery_lite = Envira_Gallery_Lite::get_instance();
+								<p>Want to get started creating your first gallery? By following the step by step instructions in this walkthrough, you can easily publish your first gallery on your site.</p>
 
-                        $galleries = Envira_Gallery_Lite::get_instance()->_get_galleries();
+								<p>To begin, you’ll need to be logged into the WordPress admin area. Once there, click on Envira Gallery in the admin sidebar to go the Add New page.</p>
 
-                        $text = esc_html( 'Add New Gallery', 'envira-gallery-lite' );
+								<p>This will launch the Envira Gallery Builder.</p>
 
-						?>
+								<ul class="list-of-links">
+									<li><a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/docs/creating-first-envira-gallery", "gettingstartedtab", "howtocreateyourfirstgallery", "" ); ?>">How to create your first gallery</a></li>
+									<li><a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-upload-photos-directly-from-lightroom-to-wordpress/", "gettingstartedtab", "createandsynchronizelightroomwithwordpress", "" ); ?>">How to create and synchronize your Adobe Lightroom Collections with WordPress</a></li>
+									<li><a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-protect-your-website-from-image-theft/", "gettingstartedtab", "howtoprotectyourgalleriesfromimagetheft", "" ); ?>">How to protect your galleries and images from online theft</a></li>
+									<li><a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-create-a-woocommerce-product-image-gallery/", "gettingstartedtab", "turnphotosintoproductsandmakemoneyfromphotography", "" ); ?>">How to turn your photos into products and make money from your photography</a></li>
+									<li><a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-optimize-your-wordpress-galleries-for-seo/", "gettingstartedtab", "appearhigheringooglesearchresults", "" ); ?>">How to appear higher in Google search results so more people find your work</a></li>
+									</li>
+								</ul>
 
-						<div class="envira-headline-button">
-							<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=envira' ) ); ?>" class="button button-primary">
-								<?php echo $text; ?>
-							</a>
-						</div>
-
-						</h3>
-
-						<div class="envira-feature">
-								<span class="envira-leaf envira-big-icon"></span>
-								<h4 class="feature-title"><?php esc_html_e( 'How to Verify Your Envira License', 'envira-gallery-lite' ); ?></h4>
-								<p><?php printf( esc_html( 'We\'ll walk you through each step on how to verify your Envira license. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/docs/verify-envira-license/">Read More</a>' ); ?></p>
-						</div>
-
-						<div class="envira-feature opposite">
-								<span class="envira-leaf envira-big-icon"></span>
-								<h4 class="feature-title"><?php esc_html_e( 'How to Activate Addons', 'envira-gallery-lite' ); ?></h4>
-								<p><?php printf( esc_html( 'Once your license is verified, it\'s now time to activate your addons. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/docs/activate-addons/">Read More</a>' ); ?></p>
-						</div>
-
-						<div class="envira-feature">
-								<span class="envira-leaf envira-big-icon"></span>
-								<h4 class="feature-title"><?php esc_html_e( 'Creating Your First Envira Gallery', 'envira-gallery-lite' ); ?></h4>
-								<p><?php printf( esc_html( 'In this article, we\'ll help you create your very first Envira gallery. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/docs/creating-first-envira-gallery/">Read More</a>' ); ?></p>
-
-						</div>
-
-						<div class="envira-feature opposite">
-								<span class="envira-leaf envira-big-icon"></span>
-								<h4 class="feature-title"><?php esc_html_e( 'Debugging Envira', 'envira-gallery-lite' ); ?></h4>
-								<p><?php printf( esc_html( 'Having trouble seeing your gallery? Take a look at some of our steps on troubleshooting your gallery. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://enviragallery.com/docs/debugging-envira/">Read More</a>' ); ?></p>
-								</p>
-						</div>
-
-					</div>
-
-					<div class="envira-posts">
-
-						<h3 class="title"><?php esc_html_e( 'Video Tutorials:', 'envira-gallery-lite' ); ?></h3>
-
-						<div class="envira-recent envirathree-column">
-							<div class="enviracolumn">
-								<iframe width="100%" src="https://www.youtube.com/embed/sE5ZEfT7388" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-								<h4 class="title"><?php esc_html_e( 'How to Create a Filterable Portfolio in WordPress', 'envira-gallery-lite' ); ?></h4>
-								<?php /* Translators: %s */ ?>
-								<p><?php printf( esc_html__( 'Many photographers have large portfolios that have a variety of their favorite photos and some users want to filter down to the types they want to see. In this video we\'ll show you how to create a filterable portfolio. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://www.youtube.com/watch?v=sE5ZEfT7388">Read More</a>' ); ?></p>
-							</div>
-							<div class="enviracolumn">
-							<iframe width="100%" src="https://www.youtube.com/embed/S_4LgeQdb-I" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-								<h4 class="title"><?php esc_html_e( 'Envira Gallery Instagram Addon', 'envira-gallery-lite' ); ?></h4>
-								<?php /* Translators: %s */ ?>
-								<p><?php printf( esc_html__( 'The Instagram addon allows you to dynamically add images from your Instagram account to your galleries. %s', 'envira-gallery-lite' ), '<a target="_blank" href="https://www.youtube.com/watch?v=S_4LgeQdb-I">Read More</a>' ); ?></p>
 							</div>
 
-							<div class="enviracolumn">
-							<iframe width="100%" src="https://www.youtube.com/embed/uGpz4YVb5UY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-								<h4 class="title"><?php esc_html_e( 'Envira Gallery EXIF Addon', 'envira-gallery-lite' ); ?></h4>
-								<?php /* Translators: %s */ ?>
-								<p><?php printf( esc_html__( 'Add your EXIF metadata in your galleries and lightbox images, including support for all the common EXIF data, including camera make/model, aperture and shutter speed. %s', 'envira-gallery-lite' ), '<a  target="_blank" href="https://www.youtube.com/watch?v=uGpz4YVb5UY">Read More</a>' ); ?></p>
+							<div class="feature-photo-column">
+									<img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/creating.png', ENVIRA_FILE ) ); ?>" />
 							</div>
-						</div>
 
-					</div>
+						</div> <!-- panel -->
 
-					<hr/>
+						<div class="envira-admin-get-started-panel">
 
-					<?php $this->envira_posts(); ?>
+							<div class="section-text-column text-left">
+
+								<h2>Upgrade to a complete Envira Gallery experience</h2>
+
+								<p>Get the most out of Envira Gallery by <a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'gettingstartedtab', 'upgradetounlockallitspowerfulfeatures' ); ?>">upgrading to unlock all of its powerful features</a>.</p>
+
+								<p>With Envira Gallery Pro, you can unlock amazing features like:</p>
+
+								<ul>
+									<li>Get your gallery set up in minutes with pre-built customizable templates </li>
+									<li>Have more people find you on Google by making your galleries SEO friendly </li>
+									<li>Display your photos in all their glory on mobile with a true full-screen experience. No bars, buttons or small arrows</li>
+									<li>Tag your images for better organization and gallery display</li>
+									<li>Improve load times and visitor experience by splitting your galleries into multiple pages </li>
+									<li>Streamline your workflow by sharing your gallery images directly on your favorite social media networks </li>
+									</li>
+								</ul>
+
+							</div>
+
+							<div class="feature-photo-column">
+									<img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/upgrade.png', ENVIRA_FILE ) ); ?>" />
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-panel">
+
+							<div class="feature-photo-column photo-left">
+								<img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/upgrade-and-save.png', ENVIRA_FILE ) ); ?>" />
+							</div>
+
+							<div class="section-text-column text-left">
+
+								<h2>Upgrade to Envira Gallery Pro today and get 20% off with the coupon code LITE20</h2>
+
+								<p>Create, edit and sync your photos from Adobe Lightroom to WordPress, protect your work from image theft, start selling your work online by turning images into products and appear higher in Google search results so more people can find your work.</p> 
+
+								<p>Get all of this and more when you upgrade to Envira Gallery Pro!</p>
+
+								<p>Plus, get access to exclusive discounts on photography tools and software when you upgrade like 15% off all Adobe products, 40% off Skylum Luminar and more!</p>
+
+								<p>Have questions about Envira Gallery? <a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://direct.lc.chat/10277922/", "gettingstartedtab", "chatwithalivememberofoursupporteam", "" ); ?>" target="_blank">Chat with a live member of our support team</a> and have all your questions answered.</p>
+
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-banner">
+
+							<div class="banner-text">
+								<h3>Upgrade To Unleash the Power of Envira</h3>
+								<p>Pricing starts at just $29... What are you waiting for?</p>
+							</div>
+							<div class="banner-button">
+								<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'getstartedtab', 'upgradenowbutton' ); ?>" class="button button-primary">Upgrade Now</a>
+							</div>
+
+						</div> <!-- banner -->
+
+						<div class="envira-admin-get-started-panel mini-panel">
+
+							<div class="feature-photo-column photo-left">
+								<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-create-a-masonry-image-gallery-in-wordpress/", "gettingstartedtab", "createamasonrygallerybutton", "" ); ?>"><img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/how-to-create-a-masonry-image-gallery-in-wordpress.jpg', ENVIRA_FILE ) ); ?>" /></a>
+							</div>
+
+							<div class="section-text-column text-left">
+
+								<h2>How to Create a Masonry Image Gallery in WordPress</h2>
+
+								<p>Do you want to create a masonry style gallery in WordPress? Sometimes you need to display full-view thumbnails without cropping the height or width. In this tutorial, we will share with you how to create a masonry image gallery in WordPress.</p>
+
+								<div class="banner-button">
+									<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-create-a-masonry-image-gallery-in-wordpress/", "gettingstartedtab", "createamasonrygallerybutton", "" ); ?>" class="button button-primary">Read Documentation</a>
+								</div>
+
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-panel mini-panel">
+
+							<div class="feature-photo-column photo-left">
+								<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-create-an-image-slider-for-your-wordpress-galleries/", "gettingstartedtab", "createimageslidersforyourgalleries", "" ); ?>"><img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/how-to-create-image-slider-for-your-wordpress-galleries.jpg', ENVIRA_FILE ) ); ?>" /></a>
+							</div>
+
+							<div class="section-text-column text-left">
+
+								<h2>How to Create an Image Slider for Your WordPress Galleries</h2>
+
+								<p>Do you want to create an image slider in WordPress? Want to display your photo galleries in a slideshow? In this article, we will show you how to create an image slider for your WordPress galleries.</p>
+
+								<div class="banner-button">
+									<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-create-an-image-slider-for-your-wordpress-galleries/", "gettingstartedtab", "createimageslidersforyourgalleries", "" ); ?>" class="button button-primary">Read Documentation</a>
+								</div>
+
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-panel mini-panel">
+
+							<div class="feature-photo-column photo-left">
+								<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/add-gallery-tags-wordpress/", "gettingstartedtab", "addgallerytagsinwordpress", "" ); ?>"><img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/add-gallery-tags-in-wordpress.jpg', ENVIRA_FILE ) ); ?>" /></a>
+							</div>
+
+							<div class="section-text-column text-left">
+
+								<h2>How to Make Your Images Easier for Visitors To Find</h2>
+
+								<p>Do you want to add tags to your images in WordPress galleries? With image tagging, you can give your visitors a way to sort through them easily. In this tutorial, we will share how to add gallery tags in WordPress by using Envira Gallery.</p>
+
+								<div class="banner-button">
+									<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/add-gallery-tags-wordpress/", "gettingstartedtab", "addgallerytagsinwordpress", "" ); ?>" class="button button-primary">Read Documentation</a>
+								</div>
+
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-panel mini-panel">
+
+							<div class="feature-photo-column photo-left">
+								<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-customize-wordpress-for-mobile-galleries/", "gettingstartedtab", "customizewordpressgalleriesformobile", "" ); ?>"><img class="feature-photo" src="<?php echo esc_url( plugins_url( 'assets/images/get-started/How-to-Customize-WordPress-Galleries-for-Mobile-Devices.png', ENVIRA_FILE ) ); ?>" /></a>
+							</div>
+
+							<div class="section-text-column text-left">
+
+								<h2>How to Make Your Galleries Mobile Friendly</h2>
+
+								<p>Do you want to customize your image galleries for mobile? With the rise of mobile internet usage, your photo galleries should be responsive. In this tutorial, we will share how to customize WordPress galleries for mobile devices.</p>
+
+								<div class="banner-button">
+									<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/how-to-customize-wordpress-for-mobile-galleries/", "gettingstartedtab", "customizewordpressgalleriesformobile", "" ); ?>" class="button button-primary">Read Documentation</a>
+								</div>
+
+							</div>
+
+						</div> <!-- panel -->
+
+						<div class="envira-admin-get-started-banner">
+
+							<div class="banner-text">
+								<h3>Start Creating Responsive Photo Galleries</h3>
+								<p>Customize and Publish in Minutes... What are you waiting for?</p>
+							</div>
+							<div class="banner-button">
+								<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'getstartedtab', 'getenviragallerynowbutton' ); ?>" class="button button-primary">Get Envira Gallery Now</a>
+							</div>
+
+						</div> <!-- banner -->
+
+
+					<?php //$this->envira_posts(); ?>
 
 					<?php $this->envira_assets(); ?>
 
-				</div>
-
 			</div>
-
-		</div>
 
 		</div> <!-- wrap -->
 
@@ -975,7 +1115,7 @@ class Envira_Welcome {
 
 						<h4 class="headline-subtitle"><?php esc_html_e( 'Upgrade To Envira Pro and can get access to our full suite of features.', 'envira-gallery-lite' ); ?></h4>
 
-						<a target="_blank" href="https://enviragallery.com/lite?tracking=lite-tab" class="button button-primary">Upgrade To Envira Pro</a>
+						<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'upgradeenviragallerytab', 'upgradetoenviraprobutton' ); ?>" class="button button-primary">Upgrade To Envira Pro</a>
 
 					</div>
 
@@ -984,73 +1124,73 @@ class Envira_Welcome {
 						<ul>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/albums-addon/">Albums Addon</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/albums-addon/", "upgradeenviragallerytab", "albumsaddon", "" ); ?>">Albums Addon</a></h5>
 									<p>Organize your galleries in Albums, choose cover photos and more.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/lite/">Masonry Gallery</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/demo/masonry-gallery-demo/", "upgradeenviragallerytab", "masonrygallery", "" ); ?>">Masonry Gallery</a></h5>
 									<p>Display your photo galleries in a masonry layout.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/lite/">Gallery Themes/Layouts</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/demo/envira-gallery-theme-demo/", "upgradeenviragallerytab", "gallerythemesandlayouts", "" ); ?>">Gallery Themes/Layouts</a></h5>
 									<p>Build responsive WordPress galleries that work on mobile, tablet and desktop devices.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/videos-addon/">Video Galleries</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/videos-addon/", "upgradeenviragallerytab", "videogalleries", "" ); ?>">Video Galleries</a></h5>
 									<p>Not just for photos! Embed YouTube, Vimeo, Wistia, DailyMotion, Facebook, Instagram, Twitch, VideoPress, and self-hosted videos in your gallery.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/social-addon/">Social Addon</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/social-addon/", "upgradeenviragallerytab", "socialaddon", "" ); ?>">Social Addon</a></h5>
 									<p>Allows users to share photos via email, Facebook, Twitter, Pinterest, LinkedIn and WhatsApp.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/proofing-addon/">Image Proofing</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/proofing-addon/", "upgradeenviragallerytab", "imageproofing", "" ); ?>">Image Proofing</a></h5>
 									<p>Client image proofing made easy for your photography business.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/woocommerce-addon/">Ecommerce</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/woocommerce-addon/", "upgradeenviragallerytab", "ecommerce", "" ); ?>">Ecommerce</a></h5>
 									<p>Instantly display and sell your photos with our native WooCommerce integration.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/deeplinking-addon/">Deeplinking</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/deeplinking-addon/", "upgradeenviragallerytab", "deeplinking", "" ); ?>">Deeplinking</a></h5>
 									<p>Make your gallery SEO friendly and easily link to images with deeplinking.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/slideshow-addon/">Slideshows</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/slideshow-addon/", "upgradeenviragallerytab", "slideshows", "" ); ?>">Slideshows</a></h5>
 									<p>Enable slideshows for your galleries, controls autoplay settings and more.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/lightroom-addon/">Lightroom Integration</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/lightroom-addon/", "upgradeenviragallerytab", "lightroomintegration", "" ); ?>">Lightroom Integration</a></h5>
 									<p>Automatically create & sync photo galleries from your Adobe Lightroom collections.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/addons/protection-addon/">Download Protection</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/addons/protection-addon/", "upgradeenviragallerytab", "downloadprotection", "" ); ?>">Download Protection</a></h5>
 									<p>Prevent visitors from downloading your images without permission.</p>
 								</div>
 							</li>
 							<li>
 								<div class="interior">
-									<h5><a href="https://enviragallery.com/lite/">Dedicated Customer Support... and much more!</a></h5>
+									<h5><a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'upgradeenviragallerytab', 'dedicatedcustomersupport' ); ?>">Dedicated Customer Support... and much more!</a></h5>
 									<p>Top notch customer support and dozens of pro features.</p>
 								</div>
 							</li>
@@ -1061,6 +1201,213 @@ class Envira_Welcome {
 					<div class="upgrade-video">
 						<iframe width="100%" src="https://www.youtube.com/embed/CLxxh_-7uFQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 					</div>
+
+					<?php $this->envira_assets(); ?>
+
+				</div>
+
+			</div>
+
+		</div> <!-- wrap -->
+
+
+		<?php
+	}
+
+	/**
+	 * Output the upgrade screen.
+	 *
+	 * @since 1.8.1
+	 */
+	public function lite_vs_pro_page() {
+		?>
+
+		<div class="envira-welcome-wrap envira-help">
+
+			<div class="envira-title">
+
+				<?php self::welcome_text(); ?>
+
+			</div>
+
+			<?php $this->sidebar(); ?>
+
+			<div class="envira-get-started-main">
+
+				<?php self::tab_navigation( __METHOD__ ); ?>
+
+				<div class="envira-get-started-panel">
+
+				<div id="envira-admin-litevspro" class="wrap envira-admin-wrap">
+
+				<div class="envira-admin-litevspro-section no-bottom litevspro-table-header">
+					<h1 class="centered">
+						<strong>Lite</strong> vs <strong>Pro</strong>
+					</h1>
+
+					<p class="centered">Get the most out of Envira by upgrading to Pro and unlocking all of the powerful features.</p>
+				</div>
+
+				<div class="envira-admin-litevspro-section no-bottom envira-admin-litevspro-section-table">
+
+						<table cellspacing="0" cellpadding="0" border="0">
+							<thead>
+								<th>Feature</th>
+								<th>Lite</th>
+								<th>Pro</th>
+							</thead>
+							<tbody>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Gallery Themes And Layouts</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-partial">
+											<strong>Basic Gallery Theme</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Gallery Themes &amp; Layouts</strong> 
+											More themes to make your Galleries unique and professional.
+										</p>
+									</td>
+								</tr>
+
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Lightbox Features</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-partial">
+											<strong>Basic Lightbox</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Advanced Lightbox Features</strong>
+											Multiple themes for your Gallery Lightbox display, Titles, Transitions, Fullscreen, Counter, Thumbnails  
+										</p>
+									</td>
+								</tr>
+   
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Mobile Features</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-partial">
+											<strong>Basic Mobile Gallery	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Advanced Mobile Settings</strong>Customize all aspects of your user's mobile gallery display experience to be different than the default desktop</p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Import/Export Options	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong>Limited Import/Export	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Import/Export </strong> Instagram, Dropbox, NextGen, Flickr, Zip and more</p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Video Galleries	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong> No Videos	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Videos Gallery </strong> Import your own videos or from any major video sharing platform</p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Social Sharing	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong>No Social Sharing	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Social Sharing Features</strong>Share your photos on any major social sharing platform</p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Advanced Gallery Features	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong>  No Advanced Features	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong>All Advanced Features</strong>Albums, Ecommerce, Pagination, Deeplinking, and Expanded Gallery Configurations</p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Envira Gallery Addons 	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong>  No Addons Included 	</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong> All Addons Included</strong>WooCommerce, Tags and Filters, Proofing, Schedule, Password Protection, Lightroom, Slideshows, Watermarking and more (28 total)            </p>
+									</td>
+								</tr>
+								<tr class="envira-admin-columns">
+									<td class="envira-admin-litevspro-first-column">
+										<p>Customer Support	</p>
+									</td>
+									<td class="envira-admin-litevspro-lite-column">
+										<p class="features-none">
+											<strong>Limited Customer Support</strong>
+										</p>
+									</td>
+									<td class="envira-admin-litevspro-pro-column">
+										<p class="features-full">
+											<strong> Priority Customer Support</strong>Dedicated prompt service via email from our top tier support team. Your request is assigned the highest priority</p>
+									</td>
+								</tr>
+								
+							</tbody>
+						</table>
+
+				</div>
+
+				<div class="envira-admin-litevspro-section envira-admin-litevspro-section-hero">
+					<div class="envira-admin-about-section-hero-main no-border">
+						<h3 class="call-to-action">
+						<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( false, 'litevsprotab', 'getenviragalleryprotoday' ); ?>" target="_blank" rel="noopener noreferrer">Get Envira Pro Today and Unlock all the Powerful Features					</a>
+					</h3>
+
+						<p>
+							<strong>Bonus:</strong> Envira Lite users get <span class="envira-deal 20-percent-off">20% off regular price</span>, using the code in the link above.
+						</p>
+					</div>
+				</div>
+
+				</div>
 
 					<?php $this->envira_assets(); ?>
 
@@ -1237,8 +1584,8 @@ class Envira_Welcome {
 
 		<div class="envira-assets">
 			<p>
-				<?php esc_html_e( 'Learn more:', 'envira-gallery-lite' ); ?>&nbsp;<a href="https://enviragallery.com/blog/"><?php esc_html_e( 'Blog', 'envira-gallery-lite' ); ?></a>
-				&bullet; <a href="https://enviragallery.com/docs/"><?php esc_html_e( 'Documentation', 'envira-gallery-lite' ); ?></a>
+				<?php esc_html_e( 'Learn more:', 'envira-gallery-lite' ); ?>&nbsp;<a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/blog/", "learnmore", "blog", "" ); ?>"><?php esc_html_e( 'Blog', 'envira-gallery-lite' ); ?></a>
+				&bullet; <a href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "https://enviragallery.com/docs/", "learnmore", "documentation", "" ); ?>"><?php esc_html_e( 'Documentation', 'envira-gallery-lite' ); ?></a>
 			<?php /* &bullet; <a href="https://enviragallery.com/dev/"><?php _ex( 'Development Blog', 'About screen, link to development blog', 'envira-gallery-lite' ); ?></a> */ ?>
 			</p>
 
@@ -1274,7 +1621,7 @@ class Envira_Welcome {
 
 				<?php esc_html_e( 'Also by us: ', 'envira-gallery-lite' ); ?>
 
-				<a target="_blank" href="http://soliloquywp.com"><?php esc_html_e( 'Soliloquy Slider', 'envira-gallery-lite' ); ?></a>
+				<a target="_blank" href="<?php echo Envira_Gallery_Common_Admin::get_instance()->get_upgrade_link( "http://soliloquywp.com", "alsobyus", "soliloquyslider", "" ); ?>"><?php esc_html_e( 'Soliloquy Slider', 'envira-gallery-lite' ); ?></a>
 
 			</p>
 

@@ -1,4 +1,5 @@
 /* global FusionPageBuilderEvents, FusionPageBuilderViewManager, fusionAllElements, FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText */
+/* eslint no-unused-vars: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -64,24 +65,24 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Process default parameters from shortcode
 				_.each( defaultParams, function( param )  {
 					if ( _.isObject( param.value ) ) {
-						value = param.default;
+						value = param[ 'default' ];
 					} else {
 						value = param.value;
 					}
-					params[param.param_name] = value;
+					params[ param.param_name ] = value;
 				} );
 
 				_.each( layout, function( element, index ) { // jshint ignore:line
 					var columnAttributes = {
-							type: 'fusion_builder_column_inner',
-							element_type: 'fusion_builder_column_inner',
-							cid: FusionPageBuilderViewManager.generateCid(),
-							parent: FusionPageBuilderApp.parentRowId,
-							layout: element,
-							view: thisView,
-							params: params,
-							appendAfter: appendAfter
-						};
+						type: 'fusion_builder_column_inner',
+						element_type: 'fusion_builder_column_inner',
+						cid: FusionPageBuilderViewManager.generateCid(),
+						parent: FusionPageBuilderApp.parentRowId,
+						layout: element,
+						view: thisView,
+						params: params,
+						appendAfter: appendAfter
+					};
 
 					that.collection.add( [ columnAttributes ] );
 
@@ -108,4 +109,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

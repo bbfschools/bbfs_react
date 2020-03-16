@@ -9,13 +9,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			defaults: {
 				type: 'element'
-			},
-
-			initialize: function() {
 			}
 
 		} );
 
 	} );
 
-} ( jQuery ) );
+}( jQuery ) );

@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<?php if ( $title_tag && Avada()->settings->get( 'disable_rich_snippet_title' ) ) : ?>
 		<span class="entry-title rich-snippet-hidden">
-			<?php echo get_the_title(); ?>
+			<?php the_title(); ?>
 		</span>
 	<?php endif; ?>
 
@@ -35,7 +35,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php echo esc_attr( get_the_modified_time( 'c' ) ); ?>
 		</span>
 	<?php endif; ?>
-	<?php
-endif;
-
-/* Omit closing PHP tag to avoid "Headers already sent" issues. */
+<?php endif; ?>

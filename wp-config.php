@@ -20,7 +20,7 @@
 
 // ** MySQL settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
-define( 'DB_NAME', 'wp_react_bbfs' );
+define( 'DB_NAME', 'wp_react_bbfs_1' );
 
 /** MySQL database username */
 define( 'DB_USER', 'wprbbfs' );
@@ -36,6 +36,8 @@ define( 'DB_CHARSET', 'utf8mb4' );
 
 /** The Database Collate type. Don't change this if in doubt. */
 define( 'DB_COLLATE', '' );
+
+/*define( 'ALLOW_UNFILTERED_UPLOADS', true ); */
 
 /**#@+
  * Authentication Unique Keys and Salts.
@@ -63,7 +65,10 @@ define( 'NONCE_SALT',       '_hf,yqW!2h%@vM[E]n-tk ,_B(JsB*x`Oje77!H@|/*~^P$YP72
  * You can have multiple installations in one database if you give each
  * a unique prefix. Only numbers, letters, and underscores please!
  */
+@ini_set( 'max_input_vars' , 3000 );
 $table_prefix = 'wp_';
+set_time_limit(180);
+
 
 /**
  * For developers: WordPress debugging mode.

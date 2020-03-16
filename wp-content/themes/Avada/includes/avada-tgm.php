@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -24,20 +24,13 @@ function avada_get_required_and_recommened_plugins() {
 		include_once Avada::$template_dir_path . '/includes/importer/class-avada-importer-data.php';
 	}
 
-	$is_plugins_page = false;
-	if (
-		( isset( $_GET['page'] ) && 'avada-plugins' === $_GET['page'] ) || // WPCS: CSRF ok.
-		( isset( $_GET['page'] ) && 'install-required-plugins' === $_GET['page'] ) || // WPCS: CSRF ok.
-		( isset( $_SERVER['HTTP_REFERER'] ) && false !== strpos( esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ), 'HTTP_REFERER' ) )
-	) {
-		$is_plugins_page = true;
-	}
+	$is_plugins_page = ( isset( $_GET['page'] ) && ( 'avada-plugins' === $_GET['page'] || 'install-required-plugins' === $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 	$plugins_info = Avada::get_bundled_plugins();
 
 	if ( is_array( $plugins_info ) ) {
 		foreach ( $plugins_info as $plugin ) {
-			if ( $plugin['premium'] ) {
+			if ( $plugin['has_package'] ) {
 				$plugins_info[ $plugin['slug'] ]['source'] = ( $is_plugins_page ) ? Avada()->remote_install->get_package( $plugin['name'] ) : 'bundled';
 			} else {
 				$plugins_info[ $plugin['slug'] ]['source'] = 'repo';
@@ -67,7 +60,7 @@ function avada_register_required_and_recommended_plugins() {
 	 * Some of the strings are added into a sprintf, so see the comments at the
 	 * end of each line for what each argument will be.
 	 */
-	$config = array(
+	$config = [
 		'domain'       => $theme_text_domain,
 		'default_path' => '',
 		'parent_slug'  => 'avada',
@@ -75,7 +68,7 @@ function avada_register_required_and_recommended_plugins() {
 		'has_notices'  => true,
 		'is_automatic' => true,
 		'message'      => '',
-		'strings'      => array(
+		'strings'      => [
 			'page_title'                      => __( 'Install/Update Required Plugins', 'Avada' ),
 			'menu_title'                      => __( 'Install Plugins', 'Avada' ),
 			/* translators: %1$s = plugin name(s) */
@@ -104,8 +97,8 @@ function avada_register_required_and_recommended_plugins() {
 			/* translators: %1$s = dashboard link. */
 			'complete'                        => __( 'All plugins installed and activated successfully. %s', 'Avada' ),
 			'nag_type'                        => 'error', // Determines admin notice type - can only be 'updated' or 'error'.
-		),
-	);
+		],
+	];
 
 	avada_tgmpa( $plugins, $config );
 }

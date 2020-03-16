@@ -1,4 +1,5 @@
-/* global FusionPageBuilderApp, fusionBuilderText, alert, FusionPageBuilderEvents, FusionPageBuilderViewManager, fusionHistoryManager, fusionBuilderText, fusionAllElements */
+/* global FusionPageBuilderApp, fusionBuilderText, FusionPageBuilderEvents, FusionPageBuilderViewManager, fusionHistoryManager, fusionBuilderText, fusionAllElements */
+/* eslint no-alert: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -19,6 +20,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			initialize: function() {
 				this.elementIsCloning = false;
+				this.initDynamicParams();
+			},
+
+			initDynamicParams: function() {
+				var self        = this,
+					params      = 'object' === typeof this.model.get( 'params' ) ? this.model.get( 'params' ) : {},
+					dynamicData = params.dynamic_params;
+
+				if ( 'string' === typeof params.dynamic_params && '' !== params.dynamic_params ) {
+					try {
+						if ( FusionPageBuilderApp.base64Encode( FusionPageBuilderApp.base64Decode( dynamicData ) ) === dynamicData ) {
+							dynamicData = FusionPageBuilderApp.base64Decode( dynamicData );
+							dynamicData = _.unescape( dynamicData );
+							dynamicData = JSON.parse( dynamicData );
+						}
+						self.model.set( 'dynamic_params', dynamicData );
+					} catch ( error ) {
+						console.log( error ); // jshint ignore:line
+					}
+				}
 			},
 
 			render: function() {
@@ -79,8 +100,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.model.set( 'params', params );
 				}
 
-				$.each( jQuery( 'ul.fusion-page-layouts.fusion-layout-elements li' ), function( index, value ) { // jshint ignore:line
-					var templateName = jQuery( this ).find( 'h4.fusion-page-layout-title' ).html().split( '<div ' )[0];
+				$.each( jQuery( 'ul.fusion-page-layouts.fusion-layout-elements li' ), function() {
+					var templateName = jQuery( this ).find( 'h4.fusion-page-layout-title' ).html().split( '<div ' )[ 0 ];
+					templateName     = templateName.replace( /\u2013|\u2014/g, '-' );
 					if ( elementName.toLowerCase().trim() === templateName.toLowerCase().trim() ) {
 						alert( fusionBuilderText.duplicate_element_name_error );
 						isDuplicate = true;
@@ -130,6 +152,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} );
 
 				} else {
+					FusionPageBuilderApp.layoutIsSaving = false;
 					alert( fusionBuilderText.please_enter_element_name );
 				}
 			},
@@ -146,6 +169,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				parentCID = this.model.get( 'parent' );
+
+				// Remove component from used array.
+				if ( 'undefined' !== typeof fusionAllElements[ this.model.get( 'element_type' ) ].component && true === fusionAllElements[ this.model.get( 'element_type' ) ].component ) {
+					FusionPageBuilderViewManager.defaults.usedComponents[ this.model.get( 'element_type' ) ]--;
+				}
 
 				// Remove element view
 				FusionPageBuilderViewManager.removeView( this.model.get( 'cid' ) );
@@ -177,11 +205,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					event.preventDefault();
 				}
 
-				if ( true === this.elementIsCloning ) {
+				if ( -1 !== this.$el.children( '.fusion-builder-module-controls-container' ).attr( 'class' ).indexOf( 'fusion_tb_' ) || true === this.elementIsCloning ) {
 					return;
-				} else {
-					this.elementIsCloning = true;
 				}
+
+				this.elementIsCloning = true;
 
 				elementAttributes = $.extend( true, {}, this.model.attributes );
 				elementAttributes.created = 'manually';
@@ -236,4 +264,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

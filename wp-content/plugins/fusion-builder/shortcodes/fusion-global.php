@@ -1,9 +1,15 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.2.2
+ */
+
 if ( ! class_exists( 'FusionSC_Global' ) ) {
 	/**
 	 * Shortcode class.
 	 *
-	 * @package fusion-builder
 	 * @since 1.2.2
 	 */
 	class FusionSC_Global extends Fusion_Element {
@@ -24,7 +30,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 		 * @since 1.0
 		 * @var int
 		 */
-		private $global_elements = array();
+		private $global_elements = [];
 
 		/**
 		 * Constructor.
@@ -36,10 +42,10 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 
 			parent::__construct();
 
-			add_shortcode( 'fusion_global', array( $this, 'render' ) );
+			add_shortcode( 'fusion_global', [ $this, 'render' ] );
 
-			add_filter( 'content_edit_pre', array( $this, 'add_global_elements' ), 10, 2 );
-			add_filter( 'content_save_pre', array( $this, 'update_global_elements' ), 10, 1 );
+			add_filter( 'content_edit_pre', [ $this, 'add_global_elements' ], 10, 2 );
+			add_filter( 'content_save_pre', [ $this, 'update_global_elements' ], 10, 1 );
 		}
 
 		/**
@@ -54,9 +60,11 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 		public function render( $args, $content = '' ) {
 
 			$defaults = FusionBuilder::set_shortcode_defaults(
-				array(
-					'id'    => '',
-				), $args
+				[
+					'id' => '',
+				],
+				$args,
+				'fusion_global'
 			);
 
 			extract( $defaults );
@@ -69,7 +77,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 				// Check if post exists.
 				if ( ! is_null( $post ) ) {
 					// Return contents.
-					return do_shortcode( $post->post_content );
+					return apply_filters( 'fusion_element_global_content', do_shortcode( $post->post_content ), $args );
 				}
 			}
 		}
@@ -108,7 +116,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			$pattern = '\[(\[?)(fusion_global)(?![\w-])([^\]\/]*(?:\/(?!\])[^\]\/]*)*?)(?:(\/)\]|\](?:([^\[]*+(?:\[(?!\/\2\])[^\[]*+)*+)\[\/\2\])?)(\]?)';
 
 			// Extract short-codes from content.
-			if ( preg_match_all( '/' . $pattern . '/s', $content, $matches ) && array_key_exists( 2, $matches ) && in_array( 'fusion_global', $matches[2] ) ) {
+			if ( preg_match_all( '/' . $pattern . '/s', $content, $matches ) && array_key_exists( 2, $matches ) && in_array( 'fusion_global', $matches[2], true ) ) {
 				// Loop through matches.
 				foreach ( $matches[2] as $key => $value ) {
 					if ( 'fusion_global' === $value ) {
@@ -116,8 +124,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 						// Get relative global element CPT and replace in content.
 						if ( isset( $result['id'] ) && ! empty( $result['id'] ) ) {
 							$post = get_post( $result['id'] );
-
-							if ( ! is_null( $post ) ) {
+							if ( ! is_null( $post ) && false === strpos( $post->post_content, 'fusion_global id="' . $result['id'] ) ) {
 								$position           = strpos( $post->post_content, ']' );
 								$post->post_content = substr_replace( $post->post_content, ' fusion_global="' . $result['id'] . '"]', $position, 1 );
 								if ( ! empty( $base_content ) ) {
@@ -125,7 +132,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 								} else {
 									$base_content = str_replace( $matches[0][ $key ], $post->post_content, $content );
 								}
-								$base_content   = $this->recursively_add_global_elements( $post->post_content, $base_content );
+								$base_content = $this->recursively_add_global_elements( $post->post_content, $base_content );
 							} else {
 								if ( ! empty( $base_content ) ) {
 									$base_content = str_replace( $matches[0][ $key ], '', $base_content );
@@ -159,15 +166,15 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			}
 
 			// Unhook this method so it doesn't loop infinitely.
-			remove_filter( 'content_save_pre', array( $this, 'update_global_elements' ), 10, 1 );
+			remove_filter( 'content_save_pre', [ $this, 'update_global_elements' ], 10, 1 );
 
-			$shortcodes = array();
+			$shortcodes = [];
 			$shortcodes = $this->recurvisely_extract_shortcodes_from_content( $shortcodes, $content );
 
 			$this->recursively_extract_globals_from_shortcodes( $shortcodes );
 
 			$count      = count( $this->global_elements );
-			$duplicates = array();
+			$duplicates = [];
 
 			// Remove duplicate globals as we are handling theme in JS.
 			for ( $j = 0; $j < $count; $j++ ) {
@@ -192,14 +199,16 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 					}
 				}
 				// Remove fusion_global from short-code attributes.
-				$post_content = str_replace( addslashes( 'fusion_global="' . $this->global_elements[ $x ]['id'] . '"' ), '', $this->global_elements[ $x ]['content'] );
-				$post = array(
-					'ID'           => $this->global_elements[ $x ]['id'],
-					'post_content' => $post_content,
-				);
-				if ( ! in_array( $this->global_elements[ $x ]['id'], $duplicates ) ) {
-					// Update global element CPT.
-					$post_id = wp_update_post( $post );
+				if ( apply_filters( 'fusion_global_save', true, 'page' ) ) {
+					$post_content = str_replace( addslashes( 'fusion_global="' . $this->global_elements[ $x ]['id'] . '"' ), '', $this->global_elements[ $x ]['content'] );
+					$post         = [
+						'ID'           => $this->global_elements[ $x ]['id'],
+						'post_content' => $post_content,
+					];
+					if ( ! in_array( $this->global_elements[ $x ]['id'], $duplicates ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+						// Update global element CPT.
+						$post_id = wp_update_post( $post );
+					}
 				}
 
 				// Update original content.
@@ -208,7 +217,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			}
 
 			// Re-hook this method.
-			add_filter( 'content_save_pre', array( $this, 'update_global_elements' ), 10, 1 );
+			add_filter( 'content_save_pre', [ $this, 'update_global_elements' ], 10, 1 );
 
 			return $content;
 		}
@@ -219,7 +228,7 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 		 * @since 1.2.2
 		 * @access public
 		 * @param array $shortcodes array of all shortcodes in content.
-		 * @return string
+		 * @return void
 		 */
 		public function recursively_extract_globals_from_shortcodes( $shortcodes ) {
 
@@ -235,20 +244,18 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 					// if short-code has got attributes.
 					if ( is_array( $shortcodes[ $i ]['atts'] ) ) {
 						// Check whether fusion_global param exists in short-code.
-						 $got_global = preg_grep( '/^fusion_global.*/', $shortcodes[ $i ]['atts'] );
+						$got_global = preg_grep( '/^fusion_global.*/', $shortcodes[ $i ]['atts'] );
 						if ( is_array( $got_global ) && 1 === count( $got_global ) ) {
 
-							 $global_elements_data            = array();
-							 $global_id                       = shortcode_parse_atts( $shortcodes[ $i ]['atts'][ key( $got_global ) ] );
-							 $global_elements_data['id']      = $global_id['fusion_global'];
-							 $global_elements_data['content'] = $shortcodes[ $i ]['content'];
-							 $this->global_elements[]         = $global_elements_data;
+							$global_elements_data            = [];
+							$global_id                       = shortcode_parse_atts( $shortcodes[ $i ]['atts'][ key( $got_global ) ] );
+							$global_elements_data['id']      = $global_id['fusion_global'];
+							$global_elements_data['content'] = $shortcodes[ $i ]['content'];
+							$this->global_elements[]         = $global_elements_data;
 						}
 					}
 				}
-				return;
 			}
-			return;
 		}
 
 		/**
@@ -266,11 +273,11 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			$matches = $this->get_shortcode_matches( $content );
 			if ( ! empty( $matches ) ) {
 				list( $shortcodes, $d, $parents, $atts, $d, $contents ) = $matches;
-				$child_arr_shortcodes                          = array();
+				$child_arr_shortcodes                                   = [];
 
 				foreach ( $parents as $k => $parent ) {
-					$shortcode_name                                         = $k;
-					$sub_matches                                            = $this->get_shortcode_matches( $contents[ $k ] );
+					$shortcode_name = $k;
+					$sub_matches    = $this->get_shortcode_matches( $contents[ $k ] );
 					// Check for child elements.
 					$child_shortcodes                                       = $this->recurvisely_extract_shortcodes_from_content( $child_arr_shortcodes, $contents[ $k ], true );
 					$arr_shortcodes[ $shortcode_name ]['name']              = $parents[ $k ];
@@ -298,6 +305,6 @@ if ( ! class_exists( 'FusionSC_Global' ) ) {
 			return $matches;
 		}
 	}
-} // End if().
+}
 
 new FusionSC_Global();

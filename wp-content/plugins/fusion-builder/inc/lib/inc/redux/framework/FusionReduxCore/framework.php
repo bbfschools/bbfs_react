@@ -98,7 +98,7 @@
 
 						$is_plugin = false;
 						foreach ( get_plugins() as $key => $value ) {
-							if ( is_plugin_active( $key ) && strpos( $key, 'fusionredux-framework.php' ) !== false ) {
+							if ( fusion_is_plugin_activated( $key ) && strpos( $key, 'fusionredux-framework.php' ) !== false ) {
 								self::$_dir = trailingslashit( FusionRedux_Helpers::cleanFilePath( WP_CONTENT_DIR . '/plugins/' . plugin_dir_path( $key ) . 'FusionReduxCore/' ) );
 								$is_plugin  = true;
 							}
@@ -217,15 +217,15 @@
 				}
 
 				if ( empty ( $this->args['footer_credit'] ) ) {
-					$this->args['footer_credit'] = '<span id="footer-thankyou">' . sprintf( __( 'Options panel created using %1$s', 'Avada' ), '<a href="' . esc_url( $this->framework_url ) . '" target="_blank">' . __( 'FusionRedux Framework', 'Avada' ) . '</a> v' . self::$_version ) . '</span>';
+					$this->args['footer_credit'] = '<span id="footer-thankyou">' . sprintf( __( 'Options panel created using %1$s', 'fusion-builder' ), '<a href="' . esc_url( $this->framework_url ) . '" target="_blank">' . __( 'FusionRedux Framework', 'fusion-builder' ) . '</a> v' . self::$_version ) . '</span>';
 				}
 
 				if ( empty ( $this->args['menu_title'] ) ) {
-					$this->args['menu_title'] = __( 'Options', 'Avada' );
+					$this->args['menu_title'] = __( 'Options', 'fusion-builder' );
 				}
 
 				if ( empty ( $this->args['page_title'] ) ) {
-					$this->args['page_title'] = __( 'Options', 'Avada' );
+					$this->args['page_title'] = __( 'Options', 'fusion-builder' );
 				}
 
 				$this->old_opt_name = $this->args['opt_name'];
@@ -345,10 +345,11 @@
 						add_action( 'network_admin_menu', array( $this, '_options_page' ) );
 					}
 
-					// Admin Bar menu
-					add_action( 'admin_bar_menu', array(
+					// Admin Bar menu.
+					$admin_bar_name = 'admin_bar_';
+					add_action( $admin_bar_name . '_menu', array(
 						$this,
-						'_admin_bar_menu'
+						'_' . $admin_bar_name . '_add_menu'
 					), $this->args['admin_bar_priority'] );
 
 					// Register setting
@@ -401,7 +402,7 @@
 							$this,
 							'save_network_page'
 						), 10, 0 );
-						add_action( 'admin_bar_menu', array( $this, 'network_admin_bar' ), 999 );
+						add_action( $action_name, array( $this, 'network_admin_bar' ), 999 );
 					}
 					// Ajax saving!!!
 					add_action( "wp_ajax_" . $this->args['opt_name'] . '_ajax_save', array( $this, "ajax_save" ) );
@@ -631,8 +632,8 @@
                    }
                 }
 
-				$locale      = fusion_get_user_locale();
-				$text_domain = wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/redux/framework/FusionReduxCore/languages/fusionredux-framework-' . $locale . '.mo' );
+				$locale      = get_user_locale();
+				$text_domain = FUSION_LIBRARY_PATH . '/inc/redux/framework/FusionReduxCore/languages/fusionredux-framework-' . $locale . '.mo';
 				load_textdomain( 'fusionredux-framework', $text_domain );
 				 */
 			}
@@ -1473,7 +1474,7 @@
 			 * @global      $menu , $submenu, $wp_admin_bar
 			 * @return      void
 			 */
-			public function _admin_bar_menu() {
+			public function _admin_bar_add_menu() {
 				global $menu, $submenu, $wp_admin_bar;
 
 				$ct         = wp_get_theme();
@@ -1561,7 +1562,7 @@
 					$wp_admin_bar->add_node( $nodeargs );
 				}
 			}
-// _admin_bar_menu()
+// _admin_bar_add_menu()
 
 			/**
 			 * Output dynamic CSS at bottom of HEAD
@@ -1655,6 +1656,7 @@
 				if ( ! empty ( $this->typography ) && ! empty ( $this->typography ) && filter_var( $this->args['output'], FILTER_VALIDATE_BOOLEAN ) ) {
 					$version    = ! empty ( $this->transients['last_save'] ) ? $this->transients['last_save'] : '';
 					$typography = new FusionReduxFramework_typography ( null, null, $this );
+					$google_api  = 'googleapis.com';
 
 					if ( $this->args['async_typography'] && ! empty ( $this->typography ) ) {
 						$families = array();
@@ -1662,8 +1664,8 @@
 							$families[] = $key;
 						}
 						?>
-						<link rel="dns-prefetch" href="//ajax.googleapis.com">
-						<link rel="dns-prefetch" href="//fonts.googleapis.com">
+						<link rel="dns-prefetch" href="<?php echo esc_url( 'https://ajax.' . $google_api ); ?>">
+						<link rel="dns-prefetch" href="<?php echo esc_url( 'https://fonts.' . $google_api ); ?>">
 						<link rel="dns-prefetch" href="//fonts.gstatic.com">
 						<script>
 							/* You can add more configuration options to webfontloader by previously defining the WebFontConfig with your options */
@@ -1674,7 +1676,7 @@
 
 							(function() {
 								var wf = document.createElement( 'script' );
-								wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.5.3/webfont.js';
+								wf.src = '<?php echo esc_url( 'https://ajax.' . $google_api . '/ajax/libs/webfont/1.6.26/webfont.js' ); ?>';
 								wf.type = 'text/javascript';
 								wf.async = 'true';
 								var s = document.getElementsByTagName( 'script' )[0];
@@ -1748,29 +1750,29 @@
 
 					// Default url values for enabling hints.
 					$dismiss = 'true';
-					$s       = __( 'Enable', 'Avada' );
+					$s       = __( 'Enable', 'fusion-builder' );
 
 					// Values for disabling hints.
 					if ( 'true' == $hint_status ) {
 						$dismiss = 'false';
-						$s       = __( 'Disable', 'Avada' );
+						$s       = __( 'Disable', 'fusion-builder' );
 					}
 
 					// Make URL
 					$url = '<a class="fusionredux_hint_status" href="?dismiss=' . $dismiss . '&amp;id=hints&amp;page=' . $curPage . '&amp;tab=' . $curTab . '">' . $s . ' hints</a>';
 
-					$event = __( 'moving the mouse over', 'Avada' );
+					$event = __( 'moving the mouse over', 'fusion-builder' );
 					if ( 'click' == $this->args['hints']['tip_effect']['show']['event'] ) {
-						$event = __( 'clicking', 'Avada' );
+						$event = __( 'clicking', 'fusion-builder' );
 					}
 
 					// Construct message
-					$msg = sprintf( __( 'Hints are tooltips that popup when %d the hint icon, offering addition information about the field in which they appear.  They can be %d d by using the link below.', 'Avada' ), $event, strtolower( $s ) ) . '<br/><br/>' . $url;
+					$msg = sprintf( __( 'Hints are tooltips that popup when %d the hint icon, offering addition information about the field in which they appear.  They can be %d d by using the link below.', 'fusion-builder' ), $event, strtolower( $s ) ) . '<br/><br/>' . $url;
 
 					// Construct hint tab
 					$tab = array(
 						'id'      => 'fusionredux-hint-tab',
-						'title'   => __( 'Hints', 'Avada' ),
+						'title'   => __( 'Hints', 'fusion-builder' ),
 						'content' => '<p>' . $msg . '</p>'
 					);
 
@@ -1897,7 +1899,7 @@
 				}
 
 				if ( ! empty ( $default_output ) ) {
-					$default_output = __( 'Default', 'Avada' ) . ": " . substr( $default_output, 0, - 2 );
+					$default_output = __( 'Default', 'fusion-builder' ) . ": " . substr( $default_output, 0, - 2 );
 				}
 
 				if ( ! empty ( $default_output ) ) {
@@ -2779,7 +2781,7 @@
 			public function ajax_save() {
 				if ( ! wp_verify_nonce( $_REQUEST['nonce'], "fusionredux_ajax_nonce" . $this->args['opt_name'] ) ) {
 					echo json_encode( array(
-						'status' => __( 'Invalid security credential.  Please reload the page and try again.', 'Avada' ),
+						'status' => __( 'Invalid security credential.  Please reload the page and try again.', 'fusion-builder' ),
 						'action' => ''
 					) );
 
@@ -2788,7 +2790,7 @@
 
 				if ( ! current_user_can( $this->args['page_permissions'] ) ) {
 					echo json_encode( array(
-						'status' => __( 'Invalid user capability.  Please reload the page and try again.', 'Avada' ),
+						'status' => __( 'Invalid user capability.  Please reload the page and try again.', 'fusion-builder' ),
 						'action' => ''
 					) );
 
@@ -2800,21 +2802,6 @@
 				if ( ! empty ( $_POST['data'] ) && ! empty ( $fusionredux->args['opt_name'] ) ) {
 
 					$values = array();
-					//if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-					//    $process = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
-					//    while (list($key, $val) = each($process)) {
-					//        foreach ($val as $k => $v) {
-					//            unset($process[$key][$k]);
-					//            if (is_array($v)) {
-					//                $process[$key][stripslashes($k)] = $v;
-					//                $process[] = &$process[$key][stripslashes($k)];
-					//            } else {
-					//                $process[$key][stripslashes($k)] = stripslashes($v);
-					//            }
-					//        }
-					//    }
-					//    unset($process);
-					//}
 					$_POST['data'] = stripslashes( $_POST['data'] );
 
 					// Old method of saving, in case we need to go back! - kp
@@ -2824,10 +2811,6 @@
 					$values = $this->fusionredux_parse_str( $_POST['data'] );
 
 					$values = $values[ $fusionredux->args['opt_name'] ];
-
-					if ( function_exists( 'get_magic_quotes_gpc' ) && get_magic_quotes_gpc() ) {
-						$values = array_map( 'stripslashes_deep', $values );
-					}
 
 					if ( ! empty ( $values ) ) {
 
@@ -2868,7 +2851,7 @@
 							$return_array = array( 'status' => $e->getMessage() );
 						}
 					} else {
-						echo json_encode( array( 'status' => __( 'Your panel has no fields. Nothing to save.', 'Avada' ) ) );
+						echo json_encode( array( 'status' => __( 'Your panel has no fields. Nothing to save.', 'fusion-builder' ) ) );
 					}
 				}
 				if ( isset ( $this->transients['run_compiler'] ) && $this->transients['run_compiler'] ) {
@@ -3966,7 +3949,7 @@
 							if (is_array($arr) && !empty($arr)) {
 								foreach($arr as $x => $y) {
 									if (strpos(strtolower($y), 'fusionredux') >= 0) {
-										$msg = __('<strong>FusionRedux Framework Notice: </strong>There are references to the FusionRedux Framework support site in your config\'s <code>admin_bar_links</code> argument.  This is sample data.  Please change or remove this data before shipping your product.', 'Avada');
+										$msg = __('<strong>FusionRedux Framework Notice: </strong>There are references to the FusionRedux Framework support site in your config\'s <code>admin_bar_links</code> argument.  This is sample data.  Please change or remove this data before shipping your product.', 'fusion-builder');
 										$this->display_arg_change_notice('admin', $msg);
 										$this->omit_admin_items = true;
 										continue;
@@ -3981,7 +3964,7 @@
 							if (is_array($arr) && !empty($arr)) {
 								foreach($arr as $x => $y) {
 									if (strpos(strtolower($y), 'fusionredux') >= 0) {
-										$msg = __('<strong>FusionRedux Framework Notice: </strong>There are references to the FusionRedux Framework support site in your config\'s <code>share_icons</code> argument.  This is sample data.  Please change or remove this data before shipping your product.', 'Avada');
+										$msg = __('<strong>FusionRedux Framework Notice: </strong>There are references to the FusionRedux Framework support site in your config\'s <code>share_icons</code> argument.  This is sample data.  Please change or remove this data before shipping your product.', 'fusion-builder');
 										$this->display_arg_change_notice('share', $msg);
 										$this->omit_share_icons = true;
 									}

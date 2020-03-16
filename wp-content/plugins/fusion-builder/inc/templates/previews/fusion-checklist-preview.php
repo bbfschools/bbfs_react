@@ -1,3 +1,11 @@
+<?php
+/**
+ * Underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-block-module-checklist-preview-template">
 	<h4 class="fusion_module_title"><span class="fusion-module-icon {{ fusionAllElements[element_type].icon }}"></span>{{ fusionAllElements[element_type].name }}</h4>
 
@@ -22,6 +30,7 @@
 				if ( shortcode_icon === ' ' || shortcode_icon === '' ) {
 					shortcode_icon = params.icon;
 				}
+
 
 				if ( 'undefined' !== typeof shortcode_icon && -1 === shortcode_icon.trim().indexOf( ' ' ) ) {
 					shortcode_icon = 'fa ' + shortcode_icon;

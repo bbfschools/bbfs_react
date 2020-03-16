@@ -1,5 +1,5 @@
 var $avadaVersion;
-window.$versionSuffix = ' rc1';
+window.$versionSuffix = ' beta4';
 
 if ( window.jQuery ) {
 	jQuery( document ).ready( function() {
@@ -32,5 +32,5 @@ if ( window.jQuery ) {
 
 	// Splash Screens
 	$avadaVersion = document.getElementsByClassName( 'avada-version-inner' );
-	$avadaVersion['0'].textContent = $avadaVersion['0'].textContent + window.$versionSuffix;
+	$avadaVersion[ '0' ].textContent = $avadaVersion[ '0' ].textContent + window.$versionSuffix;
 }

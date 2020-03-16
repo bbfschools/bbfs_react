@@ -13,7 +13,7 @@
  * @see 	    https://docs.woocommerce.com/document/template-structure/
  * @author 		WooThemes
  * @package 	WooCommerce/Templates
- * @version     3.3.0
+ * @version     3.8.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<thead>
 	<tr>
 		<th class="product-name"><?php _e( 'Product', 'woocommerce' ); ?></th>
-		<th class="product-total"><?php _e( 'Total', 'woocommerce' ); ?></th>
+		<th class="product-total"><?php _e( 'Subtotal', 'woocommerce' ); ?></th>
 	</tr>
 	</thead>
 	<tbody>
@@ -41,24 +41,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td class="product-name">
 
 						<?php // ThemeFusion edit for Avada theme: add thumbnail to product name column. ?>
-						<span class="product-thumbnail">
-							<?php
-								$thumbnail = apply_filters( 'woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key );
+						<div class="fusion-product-name-wrapper">
+							<span class="product-thumbnail">
+								<?php
+									$thumbnail = apply_filters( 'woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key );
 
-								if ( ! $product_permalink ) {
-									echo $thumbnail;
-								} else {
-									printf( '<a href="%s">%s</a>', esc_url( $product_permalink ), $thumbnail );
-								}
-							?>
-						</span>
+									if ( ! $product_permalink ) {
+										echo $thumbnail;
+									} else {
+										printf( '<a href="%s">%s</a>', esc_url( $product_permalink ), $thumbnail );
+									}
+								?>
+							</span>
 
-						<div class="product-info">
-							<?php // Avada edit ?>
-							<?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
-							<?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times; %s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
-							<?php echo wc_get_formatted_cart_item_data( $cart_item ); ?>
+							<div class="product-info">
+								<?php // Avada edit ?>
+								<?php echo apply_filters( 'woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key ) . '&nbsp;'; ?>
+								<?php echo apply_filters( 'woocommerce_checkout_cart_item_quantity', ' <strong class="product-quantity">' . sprintf( '&times;&nbsp;%s', $cart_item['quantity'] ) . '</strong>', $cart_item, $cart_item_key ); ?>
+								<?php echo wc_get_formatted_cart_item_data( $cart_item ); ?>
 
+							</div>
 						</div>
 					</td>
 					<td class="product-total">

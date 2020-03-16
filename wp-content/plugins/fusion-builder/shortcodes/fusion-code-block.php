@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( fusion_is_element_enabled( 'fusion_code' ) ) {
 
@@ -6,7 +12,6 @@ if ( fusion_is_element_enabled( 'fusion_code' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_Code_Block extends Fusion_Element {
@@ -28,7 +33,7 @@ if ( fusion_is_element_enabled( 'fusion_code' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_shortcode( 'fusion_code', array( $this, 'render' ) );
+				add_shortcode( 'fusion_code', [ $this, 'render' ] );
 			}
 
 			/**
@@ -41,10 +46,10 @@ if ( fusion_is_element_enabled( 'fusion_code' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				if ( base64_encode( base64_decode( $content ) ) === $content ) {
-					$content = base64_decode( $content );
-				}
-				return do_shortcode( html_entity_decode( $content, ENT_QUOTES ) );
+				$content = fusion_decode_if_needed( $content );
+				$content = apply_filters( 'fusion_shortcode_content', $content, 'fusion_code', $args );
+
+				return apply_filters( 'fusion_element_code_block_content', do_shortcode( html_entity_decode( $content, ENT_QUOTES ) ), $args );
 			}
 		}
 	}
@@ -60,21 +65,22 @@ if ( fusion_is_element_enabled( 'fusion_code' ) ) {
  */
 function fusion_element_code_block() {
 	fusion_builder_map(
-		array(
+		[
 			'name'        => esc_attr__( 'Code Block', 'fusion-builder' ),
 			'shortcode'   => 'fusion_code',
 			'icon'        => 'fusiona-code',
 			'escape_html' => true,
-			'params'      => array(
-				array(
+			'help_url'    => 'https://theme-fusion.com/documentation/fusion-builder/elements/code-block-element/',
+			'params'      => [
+				[
 					'type'        => 'code',
 					'heading'     => esc_attr__( 'Code', 'fusion-builder' ),
 					'description' => esc_attr__( 'Enter some content for this codeblock.', 'fusion-builder' ),
 					'param_name'  => 'element_content',
 					'value'       => '',
-				),
-			),
-		)
+				],
+			],
+		]
 	);
 }
 add_action( 'fusion_builder_before_init', 'fusion_element_code_block' );

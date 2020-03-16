@@ -5,7 +5,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -178,6 +178,17 @@ function avada_handle_deprecated_recent_works_content() {
 	do_action( 'fusion_recent_works_shortcode_content' );
 }
 
+add_filter( 'fusion_google_analytics', 'avada_handle_deprecated_google_analytics_action' );
+/**
+ * Keep Backwards-compatibility.
+ * @param string $value HTML.
+ * @return string
+ */
+function avada_handle_deprecated_google_analytics_action( $value ) {
+	return apply_filters( 'avada_google_analytics', $value );
+}
+
+
 /**
  * Alias for the Avada_Megamenu_Framework class.
  * Kept for child-themes compatibility.
@@ -308,5 +319,72 @@ function apply_avada_blog_read_more_excerpt_filter( $value ) {
 	return apply_filters( 'avada_blog_read_more_excerpt', $value );
 }
 add_filter( 'fusion_blog_read_more_excerpt', 'apply_avada_blog_read_more_excerpt_filter' );
+
+/**
+ * Backwards-compatibility for the fusion_get_attachment_data_from_url_attachment_base_url filter.
+ *
+ * @since 5.7.1
+ * @param string $value HTML.
+ * @return string
+ */
+function apply_fusion_get_attachment_data_from_url_attachment_base_url_filter( $value ) {
+	return apply_filters( 'fusion_get_attachment_data_from_url_attachment_base_url', $value );
+}
+add_filter( 'fusion_get_attachment_base_url', 'apply_fusion_get_attachment_data_from_url_attachment_base_url_filter' );
+
+/**
+ * Backwards-compatibility for the avada_tabs_widget_excerpt_length filter.
+ *
+ * @since 5.1
+ * @param string $value HTML.
+ * @return string
+ */
+function apply_avada_tabs_widget_excerpt_length_filter( $value ) {
+	return apply_filters( 'avada_tabs_widget_excerpt_length', $value );
+}
+add_filter( 'fusion_tabs_widget_excerpt_length', 'apply_avada_tabs_widget_excerpt_length_filter' );
+
+/**
+ * Backwards-compatibility for the avada_social_icons_html filter.
+ *
+ * @since 5.9.2
+ * @param string $value HTML.
+ * @return string
+ */
+function apply_avada_social_icons_html_filter( $value ) {
+	return apply_filters( 'avada_social_icons_html', $value );
+}
+add_filter( 'fusion_social_icons_html', 'apply_avada_social_icons_html_filter' );
+
+/**
+ * Backwards-compatibility for the avada_social_sharing_html filter.
+ *
+ * @since 5.9.2
+ * @param string $value HTML.
+ * @return string
+ */
+function apply_avada_social_sharing_html_filter( $value ) {
+	return apply_filters( 'avada_social_sharing_html', $value );
+}
+add_filter( 'fusion_social_sharing_html', 'apply_avada_social_sharing_html_filter' );
+
+if ( ! function_exists( 'avada_featured_images_for_pages' ) ) {
+	/**
+	 * Featured images for pages.
+	 */
+	function avada_featured_images_for_pages() {
+		avada_singular_featured_image();
+	}
+}
+
+/**
+ * Function deprecated in v6.2.0 and replaced with JS implementations.
+ *
+ * @since 6.2.0
+ * @return bool
+ */
+function avada_jetpack_is_mobile() {
+	return wp_is_mobile();
+}
 
 /* Omit closing PHP tag to avoid "Headers already sent" issues. */

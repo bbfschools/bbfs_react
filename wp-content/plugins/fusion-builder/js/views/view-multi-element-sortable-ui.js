@@ -1,4 +1,8 @@
 /* global FusionPageBuilderApp, FusionPageBuilderEvents, fusionAllElements, FusionPageBuilderViewManager, fusionMultiElements */
+/* jshint -W024 */
+/* eslint no-unused-vars: 0 */
+/* eslint guard-for-in: 0 */
+/* eslint no-shadow: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -19,6 +23,12 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.element_type = this.$el.data( 'element_type' );
 
 				this.child_views = [];
+
+				this.fetchIds = [];
+
+				this.childIds = [];
+
+				this.updateGallery = false;
 
 				this.$el.attr( 'data-cid', this.attributes.cid );
 
@@ -63,25 +73,27 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Process default parameters from shortcode
 				_.each( defaultParams, function( param )  {
 					if ( _.isObject( param.value ) ) {
-						value = param.default;
+						value = param[ 'default' ];
 					} else {
 						value = param.value;
 					}
-					params[param.param_name] = value;
+					params[ param.param_name ] = value;
 				} );
 
-				this.model.collection.add( [ {
-					type: 'element',
-					element_type: this.element_type,
-					cid: FusionPageBuilderViewManager.generateCid(),
-					view: this,
-					created: 'manually',
-					multi: 'multi_element_child',
-					child_element: 'true',
-					parent: this.attributes.cid,
-					params: params,
-					allow_generator: allowGenerator
-				} ] );
+				this.model.collection.add( [
+					{
+						type: 'element',
+						element_type: this.element_type,
+						cid: FusionPageBuilderViewManager.generateCid(),
+						view: this,
+						created: 'manually',
+						multi: 'multi_element_child',
+						child_element: 'true',
+						parent: this.attributes.cid,
+						params: params,
+						allow_generator: allowGenerator
+					}
+				] );
 
 				this.$add_sortable_item.removeClass( 'fusion-builder-add-sortable-initial' );
 
@@ -107,6 +119,38 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			},
 
+			updateGalleryContent: function() {
+				var content = '',
+					self = this,
+					parentModel = FusionPageBuilderApp.collection.find( function( model ) {
+						return model.get( 'cid' ) === self.attributes.parentCid;
+					} );
+
+				this.$sortable_options.find( 'li' ).each( function() {
+					var $thisEl = $( this );
+					content += FusionPageBuilderApp.generateElementShortcode( $thisEl, false );
+				} );
+
+				parentModel.attributes.params.element_content = content;
+
+				this.$el.parents().find( '#fusion_builder_content_main' ).html( content );
+
+				if ( ! this.$sortable_options.find( 'li' ).length ) {
+					this.$add_sortable_item.addClass( 'fusion-builder-add-sortable-initial' );
+				} else {
+					this.$add_sortable_item.removeClass( 'fusion-builder-add-sortable-initial' );
+				}
+
+				// Update child previews
+				FusionPageBuilderEvents.trigger( 'fusion-multi-child-update-preview' );
+
+				// Update shortcodes
+				FusionPageBuilderEvents.trigger( 'fusion-element-added' );
+
+				this.fetchIds = [];
+				this.childIds = [];
+			},
+
 			removeView: function( event ) {
 				if ( event ) {
 					event.preventDefault();
@@ -124,15 +168,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					innerRegExp = FusionPageBuilderApp.regExpShortcode( shortcodeTags ),
 					matches     = content.match( regExp );
 
+				this.updateGallery = false;
+
 				if ( '' !== content ) {
 					this.$add_sortable_item.removeClass( 'fusion-builder-add-sortable-initial' );
 				}
 
 				_.each( matches, function( shortcode ) {
 					var shortcodeElement     = shortcode.match( innerRegExp ),
-						shortcodeName        = shortcodeElement[2],
-						shortcodeAttributes  = '' !== shortcodeElement[3] ? window.wp.shortcode.attrs( shortcodeElement[3] ) : '',
-						shortcodeContent     = shortcodeElement[5],
+						shortcodeName        = shortcodeElement[ 2 ],
+						shortcodeAttributes  = '' !== shortcodeElement[ 3 ] ? window.wp.shortcode.attrs( shortcodeElement[ 3 ] ) : '',
+						shortcodeContent     = shortcodeElement[ 5 ],
 						elementName          = '',
 						moduleCID            = FusionPageBuilderViewManager.generateCid(), // jshint ignore:line
 						prefixedAttributes   = { params: ( {} ) },
@@ -153,13 +199,21 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						elementName = shortcodeAttributes.named.title;
 					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.title_front && shortcodeAttributes.named.title_front.length ) {
 						elementName = shortcodeAttributes.named.title_front;
-					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.image && shortcodeAttributes.named.image.length ) {
+					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.name && shortcodeAttributes.named.name.length ) {
+						elementName = shortcodeAttributes.named.name;
+
+						if ( 'undefined' !== typeof shortcodeAttributes.named.company && shortcodeAttributes.named.company.length ) {
+							elementName += ', ' + shortcodeAttributes.named.company;
+						}
+					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.name && shortcodeAttributes.named.name.length ) {
+						elementName = shortcodeAttributes.named.name;
+					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.image && shortcodeAttributes.named.image.length && 'fusion_testimonial' !== shortcodeName ) {
 						elementName = shortcodeAttributes.named.image;
 
 						// If contains backslash, retrieve only last part.
 						if ( -1 !== elementName.indexOf( '/' ) && -1 === elementName.indexOf( '[' ) ) {
 							elementName = elementName.split( '/' );
-							elementName = elementName.slice( -1 )[0];
+							elementName = elementName.slice( -1 )[ 0 ];
 						}
 					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'image' === shortcodeAttributes.named.type && 'undefined' !== typeof shortcodeContent && shortcodeContent.length ) {
 						elementName = shortcodeContent;
@@ -167,7 +221,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						// If contains backslash, retrieve only last part.
 						if ( -1 !== elementName.indexOf( '/' ) && -1 === elementName.indexOf( '[' ) ) {
 							elementName = elementName.split( '/' );
-							elementName = elementName.slice( -1 )[0];
+							elementName = elementName.slice( -1 )[ 0 ];
 						}
 					} else if ( 'undefined' !== typeof shortcodeAttributes.named && 'undefined' !== typeof shortcodeAttributes.named.video && shortcodeAttributes.named.video.length ) {
 						elementName = shortcodeAttributes.named.video;
@@ -178,7 +232,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					// Remove HTML tags but keep quotation marks etc.
 					elementName = jQuery( '<div/>' ).html( elementName ).text();
 					elementName = jQuery( '<div/>' ).html( elementName ).text();
-					elementName = ( elementName && 15  < elementName.length ) ? elementName.substring( 0, 15 ) + '...' : elementName;
 
 					moduleSettings = {
 						type: 'element',
@@ -200,7 +253,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 							prefixedKey = key;
 
-							if ( ( 'fusion_builder_column' === shortcodeName ) && 'type' === prefixedKey || ( 'fusion_builder_column_inner' === shortcodeName ) && 'type' === prefixedKey ) {
+							if ( ( 'fusion_builder_column' === shortcodeName && 'type' === prefixedKey ) || ( 'fusion_builder_column_inner' === shortcodeName && 'type' === prefixedKey ) ) {
 								prefixedKey = 'layout';
 
 								prefixedAttributes[ prefixedKey ] = shortcodeAttributes.named[ key ];
@@ -250,9 +303,63 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						}
 					}
 
+					if ( 'fusion_gallery' === thisEl.model.attributes[ 'data-element_type' ] ) {
+
+						if ( 'undefined' === typeof moduleSettings.params.image || '' === moduleSettings.params.image ) {
+
+							if ( '' !== moduleSettings.params.image_id && 'NaN' !== moduleSettings.params.image_id && 'undefined' !== typeof moduleSettings.params.image_id ) {
+
+								if ( 'undefined' === typeof wp.media.attachment( moduleSettings.params.image_id ).get( 'url' ) ) {
+									thisEl.fetchIds.push( moduleSettings.params.image_id );
+									thisEl.childIds.push( moduleSettings.cid );
+									thisEl.updateGallery = true;
+
+								} else {
+									moduleSettings.params.image = wp.media.attachment( moduleSettings.params.image_id ).get( 'url' );
+									thisEl.updateGallery = true;
+								}
+							}
+						}
+					}
+
 					thisEl.model.collection.add( [ moduleSettings ] );
+
 				} );
+
+				if ( 'fusion_gallery' === thisEl.model.attributes[ 'data-element_type' ] ) {
+
+					// Fetch attachments if neccessary.
+					if ( thisEl.updateGallery ) {
+
+						if ( 'undefined' !== typeof thisEl.fetchIds && 0 < thisEl.fetchIds.length ) {
+
+							wp.media.query( { post__in: thisEl.fetchIds, posts_per_page: thisEl.fetchIds.length } ).more().then( function() {
+
+								_.each( thisEl.childIds, function( cid ) {
+									var model = FusionPageBuilderApp.collection.find( function( model ) {
+										return model.get( 'cid' ) === cid;
+									} );
+
+									if ( 'undefined' !== typeof wp.media.attachment( model.attributes.params.image_id ).get( 'url' ) ) {
+										model.attributes.params.image = wp.media.attachment( model.attributes.params.image_id ).get( 'url' );
+									}
+
+								} );
+
+								setTimeout( function() {
+									thisEl.updateGalleryContent();
+								}, 200 );
+
+							} );
+
+						} else {
+							setTimeout( function() {
+								thisEl.updateGalleryContent();
+							}, 200 );
+						}
+					}
+				}
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

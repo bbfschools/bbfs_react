@@ -1,4 +1,5 @@
 /* global FusionPageBuilderEvents, FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderViewManager */
+/* eslint no-unused-vars: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -60,9 +61,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
 					return;
-				} else {
-					FusionPageBuilderApp.layoutIsLoading = true;
 				}
+
+				FusionPageBuilderApp.layoutIsLoading = true;
 
 				thisModel = this.model;
 				layoutID  = $( event.currentTarget ).data( 'layout_id' );
@@ -144,11 +145,11 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					// Process default parameters from shortcode
 					_.each( defaultParams, function( param )  {
 						if ( _.isObject( param.value ) ) {
-							value = param.default;
+							value = param[ 'default' ];
 						} else {
 							value = param.value;
 						}
-						params[param.param_name] = value;
+						params[ param.param_name ] = value;
 					} );
 
 					updateContent    = layoutElementsNum == ( index + 1 ) ? 'true' : 'false'; // jshint ignore:line
@@ -189,6 +190,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			},
 
 			removeView: function() {
+				FusionPageBuilderApp.activeModal = '';
 				this.remove();
 			},
 
@@ -214,9 +216,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 				if ( true === FusionPageBuilderApp.layoutIsLoading ) {
 					return;
-				} else {
-					FusionPageBuilderApp.layoutIsLoading = true;
 				}
+
+				FusionPageBuilderApp.layoutIsLoading = true;
 
 				layoutID = $( event.currentTarget ).data( 'layout_id' );
 				title    = $( event.currentTarget ).find( '.fusion_module_title' ).text();
@@ -275,16 +277,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				FusionPageBuilderApp.targetContainerCID = targetContainer.find( '.fusion-builder-data-cid' ).data( 'cid' );
 				moduleID = FusionPageBuilderViewManager.generateCid();
 
-				this.collection.add( [ {
-					type: 'fusion_builder_next_page',
-					added: 'manually',
-					module_type: 'fusion_builder_next_page',
-					cid: moduleID,
-					params: params,
-					view: parentView,
-					appendAfter: targetContainer,
-					created: 'auto'
-				} ] );
+				this.collection.add( [
+					{
+						type: 'fusion_builder_next_page',
+						added: 'manually',
+						module_type: 'fusion_builder_next_page',
+						cid: moduleID,
+						params: params,
+						view: parentView,
+						appendAfter: targetContainer,
+						created: 'auto'
+					}
+				] );
 
 				if ( 'undefined' !== typeof parentView ) {
 					FusionPageBuilderApp.targetContainerCID = '';
@@ -300,4 +304,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 	} );
 
-} ( jQuery ) );
+}( jQuery ) );

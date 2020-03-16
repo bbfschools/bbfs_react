@@ -16,9 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $events_label_singular = tribe_get_event_label_singular();
 $events_label_plural = tribe_get_event_label_plural();
-
-$event_id = get_the_ID();
-
 ?>
 
 <div id="tribe-events-content" class="tribe-events-single">
@@ -36,9 +33,9 @@ $event_id = get_the_ID();
 		<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<?php if ( has_post_thumbnail() ) :  ?>
 				<div class="fusion-events-featured-image">
-					<div class="hover-type-<?php echo Avada()->settings->get( 'ec_hover_type' ); ?>">
-						<!-- Event featured image, but exclude link -->
-						<?php echo tribe_event_featured_image( $event_id, 'full', false ); ?>
+					<div class="fusion-ec-hover-type hover-type-<?php echo Avada()->settings->get( 'ec_hover_type' ); ?>">
+
+						<?php avada_singular_featured_image(); ?>
 
 						<?php Avada_EventsCalendar::render_single_event_title(); ?>
 					</div>
@@ -57,6 +54,45 @@ $event_id = get_the_ID();
 			<?php do_action( 'tribe_events_single_event_after_the_content' ); ?>
 
 			<!-- Event meta -->
+			<?php
+			$columns = 1;
+			$layout_class = '';
+
+			if ( tribe_has_organizer() ) {
+				$columns += 1;
+			} else {
+				$layout_class = ' fusion-event-meta-no-organizer';
+			}
+
+			$set_venue_apart = apply_filters( 'tribe_events_single_event_the_meta_group_venue', false, get_the_ID() );
+
+			if ( tribe_get_venue_id() ) {
+				// If we have no map to embed and no need to keep the venue separate...
+				if ( ! $set_venue_apart && ! tribe_embed_google_map() ) {
+					$layout_class .= ' fusion-event-meta-venue';
+					$columns += 1;
+				} elseif ( ! $set_venue_apart && ! tribe_has_organizer() && tribe_embed_google_map() ) {
+					$layout_class .= ' fusion-event-meta-venue-map';
+					$columns += 2;
+				} else {
+					$set_venue_apart = true;
+				}
+			}
+
+			if ( $set_venue_apart )	{
+				$layout_class .= ' fusion-event-meta-venue-apart';
+				$columns = 4;
+			}
+
+			if ( 'below_content' === Avada()->settings->get( 'ec_meta_layout' ) ) :
+			?>
+				<?php do_action( 'tribe_events_single_event_before_the_meta' ); ?>
+				<div class="fusion-content-widget-area fusion-event-meta-columns fusion-event-meta-columns-<?php echo esc_attr( $columns ) . esc_attr( $layout_class ); ?>">
+					<div class="fusion-event-meta-wrapper">
+						<?php tribe_get_template_part( 'modules/meta' ); ?>
+					</div>
+				</div>
+			<?php endif; ?>
 			<?php do_action( 'tribe_events_single_event_after_the_meta' ); ?>
 		</div> <!-- #post-x -->
 

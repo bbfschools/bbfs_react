@@ -6,11 +6,6 @@
  * @since 1.0.0
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * A collection of sanitization methods.
  */
@@ -28,7 +23,7 @@ class Fusion_Sanitize {
 		// Trim the value.
 		$value = trim( $value );
 
-		if ( in_array( $value, array( 'auto', 'inherit', 'initial' ), true ) ) {
+		if ( in_array( $value, [ 'auto', 'inherit', 'initial' ], true ) ) {
 			return $value;
 		}
 
@@ -66,7 +61,7 @@ class Fusion_Sanitize {
 		$value = trim( $value );
 
 		// The array of valid units.
-		$units = array( 'px', 'rem', 'em', '%', 'vmin', 'vmax', 'vh', 'vw', 'ex', 'cm', 'mm', 'in', 'pt', 'pc', 'ch' );
+		$units = [ 'px', 'rem', 'em', '%', 'vmin', 'vmax', 'vh', 'vw', 'ex', 'cm', 'mm', 'in', 'pt', 'pc', 'ch' ];
 
 		foreach ( $units as $unit ) {
 
@@ -92,12 +87,12 @@ class Fusion_Sanitize {
 	 */
 	public static function get_value_with_unit( $value, $unit = 'px', $unit_handling = 'add' ) {
 
-		$raw_values = array();
+		$raw_values = [];
 
 		// Trim the value.
 		$value = trim( $value );
 
-		if ( in_array( $value, array( 'auto', 'inherit', 'initial' ), true ) ) {
+		if ( in_array( $value, [ 'auto', 'inherit', 'initial' ], true ) ) {
 			return $value;
 		}
 
@@ -205,11 +200,11 @@ class Fusion_Sanitize {
 		if ( $implode ) {
 			return $color_obj->to_css( 'rgb' );
 		}
-		return array(
+		return [
 			$color_obj->red,
 			$color_obj->green,
 			$color_obj->blue,
-		);
+		];
 	}
 
 	/**
@@ -281,7 +276,7 @@ class Fusion_Sanitize {
 	 * @return array The correctly ordered version of $to_be_ordered.
 	 */
 	public static function order_array_like_array( array $to_be_ordered, array $order_like ) {
-		$ordered = array();
+		$ordered = [];
 
 		foreach ( $order_like as $key => $value ) {
 			if ( array_key_exists( $key, $to_be_ordered ) ) {
@@ -317,14 +312,14 @@ class Fusion_Sanitize {
 	 * @param array $values An array of CSS values.
 	 * @return string       The combined value.
 	 */
-	public static function add_css_values( $values = array() ) {
+	public static function add_css_values( $values = [] ) {
 
 		if ( ! is_array( $values ) || empty( $values ) ) {
 			return '0';
 		}
 
-		$units       = array();
-		$numerics    = array();
+		$units       = [];
+		$numerics    = [];
 		$should_calc = false;
 		// Figure out what we're dealing with.
 		foreach ( $values as $key => $value ) {
@@ -344,7 +339,7 @@ class Fusion_Sanitize {
 
 			// Add unit to the array of units used.
 			$unit = trim( self::get_unit( $value ) );
-			if ( ! empty( $unit ) && ! in_array( $unit, $units ) ) {
+			if ( ! empty( $unit ) && ! in_array( $unit, $units, true ) ) {
 				$units[] = $unit;
 			}
 
@@ -394,7 +389,7 @@ class Fusion_Sanitize {
 		}
 
 		// Remove multiple spaces.
-		$result = str_replace( array( '     ', '    ', '   ', '  ' ), ' ', $result );
+		$result = str_replace( [ '     ', '    ', '   ', '  ' ], ' ', $result );
 		// A simple tweak to make sure that negative values are substracted.
 		$result = str_replace( '+ -', ' - ', $result );
 		// The above might have resulted is a couple of double-spaces, so make them single again.
@@ -412,29 +407,75 @@ class Fusion_Sanitize {
 	 * @param string     $value          The CSS value.
 	 * @param string|int $body_font_size The body font-size, used to calculate em/rem.
 	 * @param string|int $screen_size    In pixels.
-	 * @return string
+	 * @return int
 	 */
 	public static function units_to_px( $value, $body_font_size = 16, $screen_size = 1600 ) {
 
 		$number = self::number( $value );
 		$units  = self::get_unit( $value );
 
-		// Return the value as-is if in pixels.
-		if ( 'px' === $units ) {
-			return $value;
-		}
-
 		// Calculate size if em/rem.
 		if ( 'em' === $units || 'rem' === $units ) {
-			return intval( $number * $body_font_size ) . 'px';
+			return intval( $number * $body_font_size );
 		}
 
 		// Calculate size if using percent (%).
 		if ( '%' === $units ) {
-			return intval( $number * $screen_size / 100 ) . 'px';
+			return intval( $number * $screen_size / 100 );
 		}
 
 		// Fallback to the value as-is.
-		return $value;
+		return $number;
+	}
+
+	/**
+	 * Converts a non-px font size to .
+	 *
+	 * @since 1.9
+	 *
+	 * @param string $font_size The font size to be changed.
+	 * @param string $base_font_size The font size to base calcs on.
+	 * @return string The changed font size.
+	 */
+	public static function convert_font_size_to_px( $font_size, $base_font_size ) {
+		$font_size_unit   = self::get_unit( $font_size );
+		$font_size_number = self::number( $font_size );
+
+		if ( 'rem' === $font_size_unit ) {
+			$body_font_size = fusion_library()->get_option( 'body_typography', 'font-size' );
+			$base_font_size = $body_font_size ? $body_font_size : $base_font_size;
+		}
+
+		$base_font_size_unit   = self::get_unit( $base_font_size );
+		$base_font_size_number = self::number( $base_font_size );
+
+		if ( ! $font_size_number ) {
+			return $font_size;
+		}
+
+		if ( 'px' === $font_size_unit ) {
+			return $font_size_number;
+		}
+
+		// Browser default font size. This is the average between Safari, Chrome and FF.
+		$default_font_size = 15;
+
+		if ( 'em' === $base_font_size_unit || 'rem' === $base_font_size_unit ) {
+			$base_font_size_number = $default_font_size * $base_font_size_number;
+		} elseif ( '%' === $base_font_size_unit ) {
+			$base_font_size_number = $default_font_size * $base_font_size_number / 100;
+		} elseif ( 'px' !== $base_font_size_unit ) {
+			$base_font_size_number = $default_font_size;
+		}
+
+		if ( 'em' === $font_size_unit || 'rem' === $font_size_unit ) {
+			$font_size_number = $base_font_size_number * $font_size_number;
+		} elseif ( '%' === $font_size_unit ) {
+			$font_size_number = $base_font_size_number * $font_size_number / 100;
+		} elseif ( 'px' !== $font_size_unit ) {
+			$font_size_number = $base_font_size_number;
+		}
+
+		return $font_size_number;
 	}
 }

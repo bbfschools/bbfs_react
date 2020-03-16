@@ -2,7 +2,7 @@
 /**
  * Handled the options panel for Element Options.
  *
- * @package Fusion-Builder
+ * @package fusion-builder
  * @subpackage Options
  * @since 1.1.0
  */
@@ -20,7 +20,7 @@ class Fusion_Builder_Options_Panel {
 	 * @since 1.1.0
 	 * @var array
 	 */
-	protected $args = array();
+	protected $args = [];
 
 	/**
 	 * The Fusion_Builder_Redux object.
@@ -40,7 +40,7 @@ class Fusion_Builder_Options_Panel {
 
 		$this->includes();
 
-		$this->args = array(
+		$this->args = [
 			'sections'             => Fusion_Builder_Options::get_instance(),
 			'is_language_all'      => ( 'all' === Fusion_Multilingual::get_active_language() ),
 			'option_name'          => Fusion_Settings::get_option_name(),
@@ -56,19 +56,19 @@ class Fusion_Builder_Options_Panel {
 			'page_slug'            => 'fusion-element-options',
 			'menu_type'            => 'submenu',
 			'page_permissions'     => 'manage_options',
-		);
+		];
 
-		require_once wp_normalize_path( FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-redux.php' );
+		if ( ! is_customize_preview() ) {
+			require_once FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-redux.php';
 
-		// If the current theme doesn't have an integration with fusion-builder-options
-		// Instantiate our admin options.
-		if ( ! current_theme_supports( 'fusion-builder-options' ) ) {
-			$this->init_redux();
-			return;
+			// If the current theme doesn't have an integration with fusion-builder-options
+			// Instantiate our admin options.
+			if ( ! current_theme_supports( 'fusion-builder-options' ) ) {
+				$this->init_redux();
+			}
 		}
-		// If we got this far, the theme DOES have a fusion-builder-options integration
-		// So we have to add the options via hooks.
-		add_filter( 'fusion_admin_options_injection', array( $this, 'fusion_options_integration' ) );
+
+		add_filter( 'fusion_admin_options_injection', [ $this, 'fusion_options_integration' ] );
 
 	}
 
@@ -91,7 +91,7 @@ class Fusion_Builder_Options_Panel {
 	protected function includes() {
 
 		if ( ! class_exists( 'Fusion_Builder_Options' ) ) {
-			include_once wp_normalize_path( FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-options.php' );
+			include_once FUSION_BUILDER_PLUGIN_DIR . '/inc/class-fusion-builder-options.php';
 		}
 
 	}
@@ -106,35 +106,38 @@ class Fusion_Builder_Options_Panel {
 	 */
 	public function fusion_options_integration( $sections ) {
 
-		$fb_options = Fusion_Builder_Options::get_instance();
-		$element_options = $fb_options->sections;
-		$fields_array = fusion_get_fields_array( $sections );
+		$fb_options       = Fusion_Builder_Options::get_instance();
+		$element_options  = $fb_options->sections;
+		$fields_array     = fusion_get_fields_array( $sections );
 		$has_addons_class = '';
 
 		// Options tweaks.
-		$option_panels = array(
+		$option_panels = [
 			'shortcode_styling',
 			'fusion_builder_addons',
-		);
+		];
 		if ( ! isset( $element_options['fusion_builder_addons'] ) ) {
 			$has_addons_class = 'fusion-builder-no-addon-elements';
 		}
 		foreach ( $option_panels as $option_panel ) {
 			if ( isset( $element_options[ $option_panel ] ) ) {
 				ksort( $element_options[ $option_panel ]['fields'] );
-				foreach ( $element_options[ $option_panel ]['fields'] as $key => $value ) {
-					$element_options[ $option_panel ]['fields'][ $key ]['type'] = 'accordion';
-					if ( isset( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) &&
-						is_array( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) ) {
-						foreach ( $element_options[ $option_panel ]['fields'][ $key ]['fields'] as $field_key => $field_value ) {
-							if ( is_array( $fields_array ) && in_array( $field_key, $fields_array ) ) {
 
-								// If the field already exist somewhere in $sections, then don't add twice.
-								unset( $element_options[ $option_panel ]['fields'][ $key ]['fields'][ $field_key ] );
-								if ( empty( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) ) {
+				if ( current_theme_supports( 'fusion-builder-options' ) ) {
+					foreach ( $element_options[ $option_panel ]['fields'] as $key => $value ) {
+						$element_options[ $option_panel ]['fields'][ $key ]['type'] = 'accordion';
+						if ( isset( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) &&
+							is_array( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) ) {
+							foreach ( $element_options[ $option_panel ]['fields'][ $key ]['fields'] as $field_key => $field_value ) {
+								if ( is_array( $fields_array ) && in_array( $field_key, $fields_array ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 
-									// If the accordian is now empty, remove it.
-									unset( $element_options[ $option_panel ]['fields'][ $key ] );
+									// If the field already exist somewhere in $sections, then don't add twice.
+									unset( $element_options[ $option_panel ]['fields'][ $key ]['fields'][ $field_key ] );
+									if ( empty( $element_options[ $option_panel ]['fields'][ $key ]['fields'] ) ) {
+
+										// If the accordian is now empty, remove it.
+										unset( $element_options[ $option_panel ]['fields'][ $key ] );
+									}
 								}
 							}
 						}
@@ -142,40 +145,40 @@ class Fusion_Builder_Options_Panel {
 				}
 			}
 		}
-		$new_options['shortcode_styling'] = array(
+		$new_options['shortcode_styling']                                      = [
 			'label'    => esc_html__( 'Fusion Builder Elements', 'fusion-builder' ),
 			'id'       => 'shortcode_styling',
 			'is_panel' => 'true',
 			'class'    => $has_addons_class,
 			'priority' => 14,
 			'icon'     => 'el-icon-check',
-			'fields'   => array(),
-		);
-		$new_options['shortcode_styling']['fields']['fusion_builder_elements'] = array(
+			'fields'   => [],
+		];
+		$new_options['shortcode_styling']['fields']['fusion_builder_elements'] = [
 			'label'    => esc_html__( 'Fusion Builder Elements', 'fusion-builder' ),
 			'id'       => 'fusion_builder_elements',
 			'type'     => 'sub-section',
 			'priority' => 14,
 			'fields'   => $element_options['shortcode_styling']['fields'],
-		);
+		];
 		if ( isset( $element_options['fusion_builder_addons'] ) ) {
-			$new_options['shortcode_styling']['fields']['fusion_builder_addons'] = array(
+			$new_options['shortcode_styling']['fields']['fusion_builder_addons'] = [
 				'label'    => esc_html__( 'Add-on Elements', 'fusion-builder' ),
 				'id'       => 'fusion_builder_addons',
 				'type'     => 'sub-section',
 				'priority' => 14,
 				'fields'   => array_merge(
-					array(
-						'fusion_builder_addons_important_note_info' => array(
+					[
+						'fusion_builder_addons_important_note_info' => [
 							'label'       => '',
 							'description' => '<div class="fusion-redux-important-notice">' . __( '<strong>IMPORTANT NOTE:</strong> This panel holds element options for any Fusion Builder Add-on you have purchased from a 3rd party source. These are not made by ThemeFusion. If you require support for these elements, please contact the individual Add-on creator you purchased them from.', 'fusion-builder' ) . '</div>',
 							'id'          => 'fusion_builder_addons_important_note_info',
 							'type'        => 'custom',
-						),
-					),
+						],
+					],
 					$element_options['fusion_builder_addons']['fields']
 				),
-			);
+			];
 		}
 
 		$sections->sections['shortcode_styling'] = $new_options['shortcode_styling'];

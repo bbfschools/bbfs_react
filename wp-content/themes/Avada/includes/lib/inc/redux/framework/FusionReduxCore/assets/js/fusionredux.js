@@ -98,6 +98,7 @@
 				data: {
 					action: fusionredux.args.opt_name + "_ajax_save",
 					nonce: $nonce,
+					_wp_http_referer: $parent.find( '> [name=_wp_http_referer]:first' ).val(),
 					'opt_name': fusionredux.args.opt_name,
 					data: $data
 				},
@@ -927,14 +928,27 @@
 
 				// Show/Hide option that is being processed.
 				if ( show === true ) {
-					$( '#' + fusionredux.args.opt_name + '-' + id ).parents( 'tr:first' ).fadeIn( 300, function() {
-						$( this ).removeClass( 'hide' );
-						//$.fusionredux.initFields();
-					});
+
+                    if ( 'info' === $( '#' + fusionredux.args.opt_name + '-' + id ).data( 'type' ) ) {
+                        $( '#' + fusionredux.args.opt_name.replace( 'fusion_options', 'info' ) + '-' + id ).fadeIn( 300, function() {
+                            $( this ).removeClass( 'hide' );
+                        });                        
+                    } else {
+                        $( '#' + fusionredux.args.opt_name + '-' + id ).parents( 'tr:first' ).fadeIn( 300, function() {
+                            $( this ).removeClass( 'hide' );
+                            //$.fusionredux.initFields();
+                        });
+                    }
 				} else if ( show === false ) {
-					$( '#' + fusionredux.args.opt_name + '-' + id ).parents( 'tr:first' ).fadeOut( 100, function() {
-						$( this ).addClass( 'hide' );
-					});
+                    if ( 'info' === $( '#' + fusionredux.args.opt_name + '-' + id ).data( 'type' ) ) {
+                        $( '#' + fusionredux.args.opt_name.replace( 'fusion_options', 'info' ) + '-' + id ).fadeOut( 300, function() {
+                            $( this ).addClass( 'hide' );
+                        });                        
+                    } else {                    
+                        $( '#' + fusionredux.args.opt_name + '-' + id ).parents( 'tr:first' ).fadeOut( 100, function() {
+                            $( this ).addClass( 'hide' );
+                        });
+                    }
 				}
 
 				// Check if option is a parent and process it's children

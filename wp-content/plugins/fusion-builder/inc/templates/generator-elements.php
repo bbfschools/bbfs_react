@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-generator-modules-template">
 	<div class="fusion-builder-modal-top-container">
 		<h2 class="fusion-builder-settings-heading">
@@ -27,7 +35,7 @@
 						</ul>
 					</div>
 					<div id="builder-regular-columns" class="fusion-tab-content">
-						<?php echo fusion_builder_generator_column_layouts(); // WPCS: XSS ok. ?>
+						<?php echo fusion_builder_generator_column_layouts(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 				<# } #>
 				<div id="default-elements" class="fusion-tab-content">
@@ -35,8 +43,8 @@
 						<# _.each( generator_elements, function(module) { #>
 							<li class="{{ module.label }} fusion-builder-element">
 								<h4 class="fusion_module_title">
-									<# if ( typeof( fusionAllElements[module.label].icon ) !== 'undefined' ) { #>
-										<div class="fusion-module-icon {{ fusionAllElements[module.label].icon }}"></div>
+									<# if ( 'undefined' !== typeof fusionAllElements[ module.label ].icon ) { #>
+										<div class="fusion-module-icon {{ fusionAllElements[ module.label ].icon }}"></div>
 									<# } #>
 									{{ module.title }}
 								</h4>
@@ -46,7 +54,7 @@
 					</ul>
 				</div>
 				<div id="default-columns" class="fusion-tab-content">
-					<?php echo fusion_builder_generator_column_layouts(); // WPCS: XSS ok. ?>
+					<?php echo fusion_builder_generator_column_layouts(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</div>
 			</div>
 		</div>

@@ -108,6 +108,10 @@ if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 
 				$sortable = ( isset( $this->field['sortable'] ) && $this->field['sortable'] ) ? ' select3-sortable"' : "";
 
+				if ( ! empty( $multi ) ) {
+					echo '<input type="hidden" name="' . $this->field['name'] . $this->field['name_suffix'] . '" value="fusion-theme-options-fake-value" />';
+				}
+
 				echo '<select ' . $multi . ' id="' . $this->field['id'] . '-select" data-placeholder="' . $placeholder . '" name="' . $this->field['name'] . $this->field['name_suffix'] . $nameBrackets . '" class="fusionredux-select-item ' . $this->field['class'] . $sortable . '"' . $width . ' rows="6">';
 				echo '<option></option>';
 

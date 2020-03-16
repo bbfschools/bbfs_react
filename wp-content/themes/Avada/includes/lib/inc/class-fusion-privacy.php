@@ -6,11 +6,6 @@
  * @since 1.5.2
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * Handle Privacy related stuff.
  *
@@ -59,10 +54,10 @@ class Fusion_Privacy {
 	 */
 	public function __construct() {
 		// Add the notices.
-		add_action( 'admin_init', array( $this, 'display_notice' ) );
+		add_action( 'admin_notices', [ $this, 'display_notice' ], 5 );
 
 		// Handle saving the data via ajax.
-		add_action( 'wp_ajax_fusion_dismiss_admin_notice', array( $this, 'dismiss_notice' ) );
+		add_action( 'wp_ajax_fusion_dismiss_admin_notice', [ $this, 'dismiss_notice' ] );
 	}
 
 	/**
@@ -73,8 +68,8 @@ class Fusion_Privacy {
 	 * @return void
 	 */
 	public function display_notice() {
-		if ( isset( $_GET['page'] ) ) {
-			$this->current_screen = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // WPCS: CSRF ok.
+		if ( isset( $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$this->current_screen = sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			$this->screens        = $this->get_allowed_screens();
 			$this->server_data    = $this->get_server_data();
 			$this->message        = $this->get_message_contents( $this->current_screen );
@@ -87,7 +82,8 @@ class Fusion_Privacy {
 					'info',
 					true,
 					'user_meta',
-					'the-meta'
+					'the-meta',
+					[ 'avada_page_' . $this->current_screen ]
 				);
 			}
 		}
@@ -136,12 +132,12 @@ class Fusion_Privacy {
 	 * @return array
 	 */
 	private function get_allowed_screens() {
-		$screens = array(
+		$screens = [
 			'avada-fusion-patcher',
 			'avada-registration',
 			'avada-plugins',
 			'avada-demos',
-		);
+		];
 
 		return $screens;
 	}
@@ -155,28 +151,32 @@ class Fusion_Privacy {
 	 */
 	private function get_server_data() {
 		global $wp_version;
-		$data = array(
-			'server' => array(
-				'name'  => __( 'PHP Version', 'Avada' ),
+		$data = [
+			'server'    => [
+				'name'  => esc_html__( 'PHP Version', 'Avada' ),
 				'value' => phpversion(),
-			),
-			'php'    => array(
-				'name'  => __( 'Server Software', 'Avada' ),
+			],
+			'php'       => [
+				'name'  => esc_html__( 'Server Software', 'Avada' ),
 				'value' => isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '',
-			),
-			'wp'     => array(
-				'name'  => __( 'WordPress Version', 'Avada' ),
+			],
+			'wp'        => [
+				'name'  => esc_html__( 'WordPress Version', 'Avada' ),
 				'value' => $wp_version,
-			),
-			'url'    => array(
-				'name'  => __( 'Encrypted Site URL', 'Avada' ),
+			],
+			'avada_ver' => [
+				'name'  => esc_html__( 'Avada Version', 'Avada' ),
+				'value' => ( defined( 'AVADA_VERSION' ) ) ? AVADA_VERSION : '',
+			],
+			'url'       => [
+				'name'  => esc_html__( 'Encrypted Site URL', 'Avada' ),
 				'value' => md5( site_url() ),
-			),
-			'token'  => array(
-				'name'  => __( 'Token', 'Avada' ),
+			],
+			'token'     => [
+				'name'  => esc_html__( 'Token', 'Avada' ),
 				'value' => class_exists( 'Avada' ) ? Avada()->registration->get_token() : '',
-			),
-		);
+			],
+		];
 		return $data;
 	}
 
@@ -229,7 +229,7 @@ class Fusion_Privacy {
 	 */
 	private function is_show() {
 
-		if ( 'avada-fusion-patcher' === $this->current_screen || ( ( 'avada-registration' === $this->current_screen || 'avada-plugins' === $this->current_screen || 'avada-demos' === $this->current_screen ) && Avada()->registration->is_registered() ) ) {
+		if ( 'avada-fusion-patcher' === $this->current_screen || ( ( 'avada-registration' === $this->current_screen || 'avada-plugins' === $this->current_screen || 'avada-demos' === $this->current_screen ) && class_exists( 'Avada' ) && Avada()->registration->is_registered() ) ) {
 			return true;
 		}
 

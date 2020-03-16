@@ -98,7 +98,7 @@
 
 						$is_plugin = false;
 						foreach ( get_plugins() as $key => $value ) {
-							if ( is_plugin_active( $key ) && strpos( $key, 'fusionredux-framework.php' ) !== false ) {
+							if ( fusion_is_plugin_activated( $key ) && strpos( $key, 'fusionredux-framework.php' ) !== false ) {
 								self::$_dir = trailingslashit( FusionRedux_Helpers::cleanFilePath( WP_CONTENT_DIR . '/plugins/' . plugin_dir_path( $key ) . 'FusionReduxCore/' ) );
 								$is_plugin  = true;
 							}
@@ -345,10 +345,11 @@
 						add_action( 'network_admin_menu', array( $this, '_options_page' ) );
 					}
 
-					// Admin Bar menu
-					add_action( 'admin_bar_menu', array(
+					// Admin Bar menu.
+					$admin_bar_name = 'admin_bar_';
+					add_action( $admin_bar_name . '_menu', array(
 						$this,
-						'_admin_bar_menu'
+						'_' . $admin_bar_name . '_add_menu'
 					), $this->args['admin_bar_priority'] );
 
 					// Register setting
@@ -401,7 +402,7 @@
 							$this,
 							'save_network_page'
 						), 10, 0 );
-						add_action( 'admin_bar_menu', array( $this, 'network_admin_bar' ), 999 );
+						add_action( $action_name, array( $this, 'network_admin_bar' ), 999 );
 					}
 					// Ajax saving!!!
 					add_action( "wp_ajax_" . $this->args['opt_name'] . '_ajax_save', array( $this, "ajax_save" ) );
@@ -631,8 +632,8 @@
                    }
                 }
 
-				$locale      = fusion_get_user_locale();
-				$text_domain = wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/redux/framework/FusionReduxCore/languages/fusionredux-framework-' . $locale . '.mo' );
+				$locale      = get_user_locale();
+				$text_domain = FUSION_LIBRARY_PATH . '/inc/redux/framework/FusionReduxCore/languages/fusionredux-framework-' . $locale . '.mo';
 				load_textdomain( 'fusionredux-framework', $text_domain );
 				 */
 			}
@@ -1473,7 +1474,7 @@
 			 * @global      $menu , $submenu, $wp_admin_bar
 			 * @return      void
 			 */
-			public function _admin_bar_menu() {
+			public function _admin_bar_add_menu() {
 				global $menu, $submenu, $wp_admin_bar;
 
 				$ct         = wp_get_theme();
@@ -1561,7 +1562,7 @@
 					$wp_admin_bar->add_node( $nodeargs );
 				}
 			}
-// _admin_bar_menu()
+// _admin_bar_add_menu()
 
 			/**
 			 * Output dynamic CSS at bottom of HEAD
@@ -1655,6 +1656,7 @@
 				if ( ! empty ( $this->typography ) && ! empty ( $this->typography ) && filter_var( $this->args['output'], FILTER_VALIDATE_BOOLEAN ) ) {
 					$version    = ! empty ( $this->transients['last_save'] ) ? $this->transients['last_save'] : '';
 					$typography = new FusionReduxFramework_typography ( null, null, $this );
+					$google_api  = 'googleapis.com';
 
 					if ( $this->args['async_typography'] && ! empty ( $this->typography ) ) {
 						$families = array();
@@ -1662,8 +1664,8 @@
 							$families[] = $key;
 						}
 						?>
-						<link rel="dns-prefetch" href="//ajax.googleapis.com">
-						<link rel="dns-prefetch" href="//fonts.googleapis.com">
+						<link rel="dns-prefetch" href="<?php echo esc_url( 'https://ajax.' . $google_api ); ?>">
+						<link rel="dns-prefetch" href="<?php echo esc_url( 'https://fonts.' . $google_api ); ?>">
 						<link rel="dns-prefetch" href="//fonts.gstatic.com">
 						<script>
 							/* You can add more configuration options to webfontloader by previously defining the WebFontConfig with your options */
@@ -1674,7 +1676,7 @@
 
 							(function() {
 								var wf = document.createElement( 'script' );
-								wf.src = 'https://ajax.googleapis.com/ajax/libs/webfont/1.5.3/webfont.js';
+								wf.src = '<?php echo esc_url( 'https://ajax.' . $google_api . '/ajax/libs/webfont/1.6.26/webfont.js' ); ?>';
 								wf.type = 'text/javascript';
 								wf.async = 'true';
 								var s = document.getElementsByTagName( 'script' )[0];
@@ -2800,21 +2802,6 @@
 				if ( ! empty ( $_POST['data'] ) && ! empty ( $fusionredux->args['opt_name'] ) ) {
 
 					$values = array();
-					//if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-					//    $process = array(&$_GET, &$_POST, &$_COOKIE, &$_REQUEST);
-					//    while (list($key, $val) = each($process)) {
-					//        foreach ($val as $k => $v) {
-					//            unset($process[$key][$k]);
-					//            if (is_array($v)) {
-					//                $process[$key][stripslashes($k)] = $v;
-					//                $process[] = &$process[$key][stripslashes($k)];
-					//            } else {
-					//                $process[$key][stripslashes($k)] = stripslashes($v);
-					//            }
-					//        }
-					//    }
-					//    unset($process);
-					//}
 					$_POST['data'] = stripslashes( $_POST['data'] );
 
 					// Old method of saving, in case we need to go back! - kp
@@ -2824,10 +2811,6 @@
 					$values = $this->fusionredux_parse_str( $_POST['data'] );
 
 					$values = $values[ $fusionredux->args['opt_name'] ];
-
-					if ( function_exists( 'get_magic_quotes_gpc' ) && get_magic_quotes_gpc() ) {
-						$values = array_map( 'stripslashes_deep', $values );
-					}
 
 					if ( ! empty ( $values ) ) {
 

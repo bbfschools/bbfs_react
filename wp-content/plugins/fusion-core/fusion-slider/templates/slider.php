@@ -10,8 +10,8 @@
 ?>
 <?php $max_width = ( 'fade' === $slider_settings['animation'] ) ? 'max-width:' . $slider_settings['slider_width'] : ''; ?>
 <?php $container_class = ( $slider_class ) ? $slider_class . '-container' : ''; ?>
-<div id="fusion-slider-<?php echo esc_attr( $slider_settings['slider_id'] ); ?>" class="fusion-slider-container fusion-slider-<?php the_ID(); ?><?php echo esc_attr( $container_class ); ?>" style="height:<?php echo esc_attr( $slider_settings['slider_height'] ); ?>;max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;">
-	<style type="text/css" scoped="scoped">
+<div id="fusion-slider-<?php echo esc_attr( $slider_settings['slider_id'] ); ?>" data-id="<?php echo esc_attr( $slider_settings['slider_id'] ); ?>" class="fusion-slider-container fusion-slider-<?php the_ID(); ?><?php echo esc_attr( $container_class ); ?>" style="height:<?php echo esc_attr( $slider_settings['slider_height'] ); ?>;max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;">
+	<style type="text/css">
 		<?php
 		echo '#fusion-slider-' . esc_attr( $slider_settings['slider_id'] ) . ' .flex-direction-nav a {';
 		if ( $slider_settings['nav_box_width'] ) {
@@ -45,22 +45,74 @@
 		?>
 	</style>
 	<div class="fusion-slider-loading"><?php esc_attr_e( 'Loading...', 'fusion-core' ); ?></div>
-	<div class="tfs-slider flexslider main-flex<?php echo esc_attr( $slider_class ); ?>" style="max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;" <?php echo $slider_data; // WPCS: XSS ok. ?>>
+	<?php
+	$typo_sensitivity = ( ! isset( $slider_settings['typo_sensitivity'] ) || empty( $slider_settings['typo_sensitivity'] ) ) ? '' : '--typography_sensitivity:' . $slider_settings['typo_sensitivity'] . ';';
+	$typo_factor      = ( ! isset( $slider_settings['typo_factor'] ) || empty( $slider_settings['typo_factor'] ) ) ? '' : '--typography_factor:' . $slider_settings['typo_factor'] . ';';
+	?>
+	<div class="tfs-slider flexslider main-flex<?php echo esc_attr( $slider_class ); ?>" style="max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;<?php echo esc_attr( $typo_sensitivity ); ?>" <?php echo $slider_data; // phpcs:ignore WordPress.Security ?>>
 		<ul class="slides" style="<?php echo esc_attr( $max_width ); ?>;">
 			<?php while ( $query->have_posts() ) : ?>
 				<?php $query->the_post(); ?>
 				<?php
-				$metadata = get_metadata( 'post', get_the_ID() );
+				$metadata = wp_parse_args(
+					fusion_data()->post_meta( get_the_ID() )->get_all_meta(),
+					[
+						'type'                => 'image',
+						'aspect_ratio'        => '16:9',
+						'youtube_id'          => '',
+						'vimeo_id'            => '',
+						'mp4'                 => '',
+						'webm'                => '',
+						'ogv'                 => '',
+						'preview_image'       => '',
+						'video_display'       => 'cover',
+						'video_bg_color'      => '',
+						'mute_video'          => 'no',
+						'autoplay_video'      => 'no',
+						'loop_video'          => 'no',
+						'hide_video_controls' => 'yes',
+						'content_alignment'   => 'center',
+						'heading'             => '',
+						'heading_separator'   => 'none',
+						'heading_size'        => 2,
+						'heading_font_size'   => '',
+						'heading_color'       => '',
+						'heading_bg'          => 'yes',
+						'heading_bg_color'    => '',
+						'caption'             => '',
+						'caption_separator'   => 'none',
+						'caption_size'        => 3,
+						'caption_font_size'   => '',
+						'caption_color'       => '',
+						'caption_bg'          => 'yes',
+						'caption_bg_color'    => '',
+						'link_type'           => 'button',
+						'slide_link'          => '',
+						'slide_target'        => 'yes',
+						'button_1'            => '',
+						'button_2'            => '',
+					]
+				);
+
+				foreach ( [ 'ogv', 'ogg', 'webm', 'mp4' ] as $filetype ) {
+					if ( ! isset( $metadata[ $filetype ] ) ) {
+						$metadata[ $filetype ] = '';
+					}
+					if ( is_array( $metadata[ $filetype ] ) ) {
+						$metadata[ $filetype ] = ( isset( $metadata[ $filetype ]['url'] ) ) ? $metadata[ $filetype ]['url'] : '';
+					}
+				}
+
 				$background_image = '';
 				$background_class = '';
 
 				$img_width = '';
-				$image_url = array( '', '' );
+				$image_url = [ '', '' ];
 
 				$vimeo_consent   = class_exists( 'Avada_Privacy_Embeds' ) ? Avada()->privacy_embeds->get_consent( 'vimeo' ) : true;
 				$youtube_consent = class_exists( 'Avada_Privacy_Embeds' ) ? Avada()->privacy_embeds->get_consent( 'youtube' ) : true;
 
-				if ( isset( $metadata['pyre_type'][0] ) && ( 'image' === $metadata['pyre_type'][0] || ( 'youtube' === $metadata['pyre_type'][0] && ! $youtube_consent ) || ( 'vimeo' === $metadata['pyre_type'][0] && ! $vimeo_consent ) ) && has_post_thumbnail() ) {
+				if ( ( 'image' === $metadata['type'] || ( 'youtube' === $metadata['type'] && ! $youtube_consent ) || ( 'vimeo' === $metadata['type'] && ! $vimeo_consent ) ) && has_post_thumbnail() ) {
 					$image_id         = get_post_thumbnail_id();
 					$image_url        = wp_get_attachment_image_src( $image_id, 'full', true );
 					$background_image = 'background-image: url(' . $image_url[0] . ');';
@@ -68,143 +120,101 @@
 					$img_width        = $image_url[1];
 				}
 
-				$aspect_ratio       = '16:9';
-				$video_attributes   = '';
+				$video_attributes   = ( 'yes' === $metadata['mute_video'] ) ? 'muted' : '';
 				$youtube_attributes = '';
 				$vimeo_attributes   = '';
-				$data_mute          = 'no';
-				$data_loop          = 'no';
-				$data_autoplay      = 'no';
-
-				if ( isset( $metadata['pyre_aspect_ratio'][0] ) && $metadata['pyre_aspect_ratio'][0] ) {
-					$aspect_ratio = $metadata['pyre_aspect_ratio'][0];
-				}
-
-				if ( isset( $metadata['pyre_mute_video'][0] ) && 'yes' === $metadata['pyre_mute_video'][0] ) {
-					$video_attributes = 'muted';
-					$data_mute        = 'yes';
-				}
 
 				// Do not set the &auoplay=1 attributes, as this is done in js to make sure the page is fully loaded before the video begins to play.
-				if ( isset( $metadata['pyre_autoplay_video'][0] ) && 'yes' === $metadata['pyre_autoplay_video'][0] ) {
-					$video_attributes   .= ' autoplay';
-					$data_autoplay       = 'yes';
+				if ( 'yes' === $metadata['autoplay_video'] ) {
+					$video_attributes .= ' autoplay';
 				}
 
-				if ( isset( $metadata['pyre_loop_video'][0] ) && 'yes' === $metadata['pyre_loop_video'][0] ) {
+				if ( 'yes' === $metadata['loop_video'] ) {
 					$video_attributes   .= ' loop';
-					$youtube_attributes .= '&amp;loop=1&amp;playlist=' . $metadata['pyre_youtube_id'][0];
+					$youtube_attributes .= '&amp;loop=1&amp;playlist=' . $metadata['youtube_id'];
 					$vimeo_attributes   .= '&amp;loop=1';
-					$data_loop           = 'yes';
 				}
 
-				if ( isset( $metadata['pyre_hide_video_controls'][0] ) && 'no' === $metadata['pyre_hide_video_controls'][0] ) {
+				if ( 'no' === $metadata['hide_video_controls'] ) {
 					$video_attributes   .= ' controls';
 					$youtube_attributes .= '&amp;controls=1';
-					$video_zindex        = 'z-index: 1;';
+					$video_zindex        = 'z-index:1;';
 				} else {
 					$youtube_attributes .= '&amp;controls=0';
-					$video_zindex        = 'z-index: -99;';
+					$video_zindex        = 'z-index:-99;';
 				}
 
 				$heading_color = 'color:#fff;';
-
-				if ( isset( $metadata['pyre_heading_color'][0] ) && $metadata['pyre_heading_color'][0] ) {
-					$heading_color = 'color:' . $metadata['pyre_heading_color'][0] . ';';
+				if ( $metadata['heading_color'] ) {
+					$heading_color = 'color:' . $metadata['heading_color'] . ';';
 				}
 
 				$heading_bg = '';
-
-				if ( isset( $metadata['pyre_heading_bg'][0] ) && 'yes' === $metadata['pyre_heading_bg'][0] ) {
-					$heading_bg = 'background-color: rgba(0,0,0, 0.4);';
-					if ( isset( $metadata['pyre_heading_bg_color'][0] ) && $metadata['pyre_heading_bg_color'][0] ) {
-						$rgb        = fusion_hex2rgb( $metadata['pyre_heading_bg_color'][0] );
+				if ( 'yes' === $metadata['heading_bg'] ) {
+					$heading_bg = 'background-color: rgba(0,0,0,0.4);';
+					if ( $metadata['heading_bg_color'] ) {
+						$rgb        = fusion_hex2rgb( $metadata['heading_bg_color'] );
 						$heading_bg = 'background-color: rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',' . 0.4 . ');';
 					}
 				}
 
 				$caption_color = 'color:#fff;';
-
-				if ( isset( $metadata['pyre_caption_color'][0] ) && $metadata['pyre_caption_color'][0] ) {
-					$caption_color = 'color:' . $metadata['pyre_caption_color'][0] . ';';
+				if ( $metadata['caption_color'] ) {
+					$caption_color = 'color:' . $metadata['caption_color'] . ';';
 				}
 
 				$caption_bg = '';
-
-				if ( isset( $metadata['pyre_caption_bg'][0] ) && 'yes' === $metadata['pyre_caption_bg'][0] ) {
-					$caption_bg = 'background-color: rgba(0, 0, 0, 0.4);';
-
-					if ( isset( $metadata['pyre_caption_bg_color'][0] ) && $metadata['pyre_caption_bg_color'][0] ) {
-						$rgb        = fusion_hex2rgb( $metadata['pyre_caption_bg_color'][0] );
-						$caption_bg = 'background-color: rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',' . 0.4 . ');';
+				if ( 'yes' === $metadata['caption_bg'] ) {
+					$caption_bg = 'background-color:rgba(0,0,0,0.4);';
+					if ( $metadata['caption_bg_color'] ) {
+						$rgb        = fusion_hex2rgb( $metadata['caption_bg_color'] );
+						$caption_bg = 'background-color:rgba(' . $rgb[0] . ',' . $rgb[1] . ',' . $rgb[2] . ',' . 0.4 . ');';
 					}
 				}
 
-				$video_bg_color = '';
-
-				if ( isset( $metadata['pyre_video_bg_color'][0] ) && $metadata['pyre_video_bg_color'][0] ) {
-					$video_bg_color_hex = fusion_hex2rgb( $metadata['pyre_video_bg_color'][0] );
-					$video_bg_color     = 'background-color: rgba(' . $video_bg_color_hex[0] . ', ' . $video_bg_color_hex[1] . ', ' . $video_bg_color_hex[2] . ', 0.4);';
+				if ( $metadata['video_bg_color'] ) {
+					$video_bg_color_hex         = fusion_hex2rgb( $metadata['video_bg_color'] );
+					$metadata['video_bg_color'] = 'background-color:rgba(' . $video_bg_color_hex[0] . ',' . $video_bg_color_hex[1] . ',' . $video_bg_color_hex[2] . ',0.4);';
 				}
 
 				$video = false;
 
-				if ( isset( $metadata['pyre_type'][0] ) ) {
-					if ( isset( $metadata['pyre_type'][0] ) && in_array( $metadata['pyre_type'][0], array( 'self-hosted-video', 'youtube', 'vimeo' ), true ) ) {
-						$video = true;
-					}
+				if ( in_array( $metadata['type'], [ 'self-hosted-video', 'youtube', 'vimeo' ], true ) ) {
+					$video = true;
 				}
 
-				if ( isset( $metadata['pyre_type'][0] ) && 'self-hosted-video' === $metadata['pyre_type'][0] ) {
+				if ( 'self-hosted-video' === $metadata['type'] ) {
 					$background_class = 'self-hosted-video-bg';
 				}
 
-				$heading_size = 2;
-				if ( isset( $metadata['pyre_heading_size'][0] ) && $metadata['pyre_heading_size'][0] ) {
-					$heading_size = $metadata['pyre_heading_size'][0];
-				}
-
 				$heading_font_size = 'font-size:60px;line-height:80px;';
-				if ( isset( $metadata['pyre_heading_font_size'][0] ) && $metadata['pyre_heading_font_size'][0] ) {
-					$line_height       = $metadata['pyre_heading_font_size'][0] * 1.2;
-					$heading_font_size = 'font-size:' . $metadata['pyre_heading_font_size'][0] . 'px;line-height:' . $line_height . 'px;';
-				}
-
-				$caption_size = 3;
-				if ( isset( $metadata['pyre_caption_size'][0] ) && $metadata['pyre_caption_size'][0] ) {
-					$caption_size = $metadata['pyre_caption_size'][0];
+				if ( $metadata['heading_font_size'] ) {
+					$line_height       = intval( $metadata['heading_font_size'] ) * 1.2;
+					$heading_font_size = 'font-size:' . intval( $metadata['heading_font_size'] ) . 'px;line-height:' . $line_height . 'px;';
 				}
 
 				$caption_font_size = 'font-size: 24px;line-height:38px;';
-				if ( isset( $metadata['pyre_caption_font_size'][0] ) && $metadata['pyre_caption_font_size'][0] ) {
-					$line_height       = $metadata['pyre_caption_font_size'][0] * 1.2;
-					$caption_font_size = 'font-size:' . $metadata['pyre_caption_font_size'][0] . 'px;line-height:' . $line_height . 'px;';
+				if ( $metadata['caption_font_size'] ) {
+					$line_height       = intval( $metadata['caption_font_size'] ) * 1.2;
+					$caption_font_size = 'font-size:' . $metadata['caption_font_size'] . 'px;line-height:' . $line_height . 'px;';
 				}
 
-				$heading_styles = $heading_color . $heading_font_size;
-				$caption_styles = $caption_color . $caption_font_size;
+				$heading_styles                 = $heading_color . $heading_font_size;
+				$caption_styles                 = $caption_color . $caption_font_size;
 				$heading_title_sc_wrapper_class = '';
 				$caption_title_sc_wrapper_class = '';
 
-				if ( ! isset( $metadata['pyre_heading_separator'][0] ) ) {
-					$metadata['pyre_heading_separator'][0] = 'none';
+				if ( 'center' !== $metadata['content_alignment'] ) {
+					$metadata['heading_separator'] = 'none';
+					$metadata['caption_separator'] = 'none';
 				}
 
-				if ( ! isset( $metadata['pyre_caption_separator'][0] ) ) {
-					$metadata['pyre_caption_separator'][0] = 'none';
-				}
-
-				if ( 'center' !== $metadata['pyre_content_alignment'][0] ) {
-					$metadata['pyre_heading_separator'][0] = 'none';
-					$metadata['pyre_caption_separator'][0] = 'none';
-				}
-
-				if ( 'center' === $metadata['pyre_content_alignment'][0] ) {
-					if ( 'none' !== $metadata['pyre_heading_separator'][0] ) {
+				if ( 'center' === $metadata['content_alignment'] ) {
+					if ( 'none' !== $metadata['heading_separator'] ) {
 						$heading_title_sc_wrapper_class = ' fusion-block-element';
 					}
 
-					if ( 'none' !== $metadata['pyre_caption_separator'][0] ) {
+					if ( 'none' !== $metadata['caption_separator'] ) {
 						$caption_title_sc_wrapper_class = ' fusion-block-element';
 					}
 				}
@@ -212,36 +222,31 @@
 				if ( ! isset( $metadata['slider_indicator_color'][0] ) ) {
 					$metadata['slider_indicator_color'][0] = '#ffffff';
 				}
-
-				$data_display = 'cover';
-				if ( isset( $metadata['pyre_video_display'][0] ) && 'contain' === $metadata['pyre_video_display'][0] ) {
-					$data_display = 'contain';
-				}
 				?>
-				<li data-mute="<?php echo esc_html( $data_mute ); ?>" data-loop="<?php echo esc_html( $data_loop ); ?>" data-autoplay="<?php echo esc_html( $data_autoplay ); ?>">
-					<div class="slide-content-container slide-content-<?php echo ( isset( $metadata['pyre_content_alignment'][0] ) && $metadata['pyre_content_alignment'][0] ) ? esc_attr( $metadata['pyre_content_alignment'][0] ) : ''; ?>" style="display: none;">
+				<li class="slide-id-<?php the_ID(); ?>" data-mute="<?php echo esc_html( $metadata['mute_video'] ); ?>" data-loop="<?php echo esc_html( $metadata['loop_video'] ); ?>" data-autoplay="<?php echo esc_html( $metadata['autoplay_video'] ); ?>">
+					<div class="slide-content-container slide-content-<?php echo esc_attr( $metadata['content_alignment'] ); ?>" style="display: none;">
 						<div class="slide-content" style="<?php echo esc_html( $content_max_width ); ?>">
-							<?php if ( isset( $metadata['pyre_heading'][0] ) && $metadata['pyre_heading'][0] ) : ?>
+							<?php if ( $metadata['heading'] ) : ?>
 								<div class="heading <?php echo ( $heading_bg ) ? 'with-bg' : ''; ?>">
 									<div class="fusion-title-sc-wrapper<?php echo esc_attr( $heading_title_sc_wrapper_class ); ?>" style="<?php echo esc_html( $heading_bg ); ?>">
-										<?php echo do_shortcode( '[fusion_title size="' . $heading_size . '" content_align="' . $metadata['pyre_content_alignment'][0] . '" sep_color="' . $metadata['pyre_heading_color'][0] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['pyre_heading_separator'][0] . '" style_tag="' . $heading_styles . '"]' . do_shortcode( $metadata['pyre_heading'][0] ) . '[/fusion_title]' ); ?>
+										<?php echo do_shortcode( '[fusion_title size="' . $metadata['heading_size'] . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['heading_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['heading_separator'] . '" style_tag="' . $heading_styles . '"]' . do_shortcode( $metadata['heading'] ) . '[/fusion_title]' ); ?>
 									</div>
 								</div>
 							<?php endif; ?>
-							<?php if ( isset( $metadata['pyre_caption'][0] ) && $metadata['pyre_caption'][0] ) : ?>
+							<?php if ( $metadata['caption'] ) : ?>
 								<div class="caption <?php echo ( $caption_bg ) ? 'with-bg' : ''; ?>">
 									<div class="fusion-title-sc-wrapper<?php echo esc_attr( $caption_title_sc_wrapper_class ); ?>" style="<?php echo esc_attr( $caption_bg ); ?>">
-										<?php echo do_shortcode( '[fusion_title size="' . $caption_size . '" content_align="' . $metadata['pyre_content_alignment'][0] . '" sep_color="' . $metadata['pyre_caption_color'][0] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['pyre_caption_separator'][0] . '" style_tag="' . $caption_styles . '"]' . do_shortcode( $metadata['pyre_caption'][0] ) . '[/fusion_title]' ); ?>
+										<?php echo do_shortcode( '[fusion_title size="' . $metadata['caption_size'] . '" content_align="' . $metadata['content_alignment'] . '" sep_color="' . $metadata['caption_color'] . '" margin_top="0px" margin_bottom="0px" style_type="' . $metadata['caption_separator'] . '" style_tag="' . $caption_styles . '"]' . do_shortcode( $metadata['caption'] ) . '[/fusion_title]' ); ?>
 									</div>
 								</div>
 							<?php endif; ?>
-							<?php if ( isset( $metadata['pyre_link_type'][0] ) && 'button' === $metadata['pyre_link_type'][0] ) : ?>
+							<?php if ( 'button' === $metadata['link_type'] ) : ?>
 								<div class="buttons" >
-									<?php if ( isset( $metadata['pyre_button_1'][0] ) && $metadata['pyre_button_1'][0] ) : ?>
-										<div class="tfs-button-1"><?php echo do_shortcode( $metadata['pyre_button_1'][0] ); ?></div>
+									<?php if ( $metadata['button_1'] ) : ?>
+										<div class="tfs-button-1"><?php echo do_shortcode( $metadata['button_1'] ); ?></div>
 									<?php endif; ?>
-									<?php if ( isset( $metadata['pyre_button_2'][0] ) && $metadata['pyre_button_2'][0] ) : ?>
-										<div class="tfs-button-2"><?php echo do_shortcode( $metadata['pyre_button_2'][0] ); ?></div>
+									<?php if ( $metadata['button_2'] ) : ?>
+										<div class="tfs-button-2"><?php echo do_shortcode( $metadata['button_2'] ); ?></div>
 									<?php endif; ?>
 								</div>
 							<?php endif; ?>
@@ -250,43 +255,38 @@
 					<?php if ( isset( $slider_settings['slider_indicator'] ) && 'scroll_down_indicator' === $slider_settings['slider_indicator'] ) : ?>
 						<a class="tfs-scroll-down-indicator fusion-one-page-text-link" href="#main" style="opacity:0;color:<?php echo esc_attr( $slider_settings['slider_indicator_color'] ); ?>;"></a>
 					<?php endif; ?>
-					<?php if ( isset( $metadata['pyre_link_type'][0] ) && 'full' === $metadata['pyre_link_type'][0] && isset( $metadata['pyre_slide_link'][0] ) && $metadata['pyre_slide_link'][0] ) : ?>
-						<a href="<?php echo esc_url_raw( $metadata['pyre_slide_link'][0] ); ?>" class="overlay-link" <?php echo ( isset( $metadata['pyre_slide_target'][0] ) && 'yes' === $metadata['pyre_slide_target'][0] ) ? 'target="_blank" rel="noopener noreferrer"' : ''; ?> aria-label="<?php the_title_attribute(); ?>"></a>
+					<?php if ( 'full' === $metadata['link_type'] && $metadata['slide_link'] ) : ?>
+						<a href="<?php echo esc_url_raw( $metadata['slide_link'] ); ?>" class="overlay-link" <?php echo ( 'yes' === $metadata['slide_target'] ) ? 'target="_blank" rel="noopener noreferrer"' : ''; ?> aria-label="<?php the_title_attribute(); ?>"></a>
 					<?php endif; ?>
-					<?php if ( isset( $metadata['pyre_preview_image'][0] ) && $metadata['pyre_preview_image'][0] && isset( $metadata['pyre_type'][0] ) && 'self-hosted-video' === $metadata['pyre_type'][0] ) : ?>
-						<div class="mobile_video_image" style="background-image: url('<?php echo esc_url_raw( Fusion_Sanitize::css_asset_url( $metadata['pyre_preview_image'][0] ) ); ?>');"></div>
-					<?php elseif ( isset( $metadata['pyre_type'][0] ) && 'self-hosted-video' === $metadata['pyre_type'][0] ) : ?>
+					<?php if ( $metadata['preview_image'] && 'self-hosted-video' === $metadata['type'] ) : ?>
+						<div class="mobile_video_image" style="background-image: url('<?php echo esc_url_raw( Fusion_Sanitize::css_asset_url( $metadata['preview_image'] ) ); ?>');"></div>
+					<?php elseif ( 'self-hosted-video' === $metadata['type'] ) : ?>
 						<div class="mobile_video_image" style="background-image: url('<?php echo esc_url_raw( Fusion_Sanitize::css_asset_url( FUSION_CORE_URL . '/images/video_preview.jpg' ) ); ?>');"></div>
 					<?php endif; ?>
-					<?php if ( $video_bg_color && true === $video || 1 === $video || '1' === $video || 'true' === $video ) : ?>
-						<div class="overlay" style="<?php echo esc_html( $video_bg_color ); ?>"></div>
+					<?php if ( $metadata['video_bg_color'] && ( true === $video || 1 === $video || '1' === $video || 'true' === $video ) ) : ?>
+						<div class="overlay" style="<?php echo esc_html( $metadata['video_bg_color'] ); ?>"></div>
 					<?php endif; ?>
-					<div class="background <?php echo esc_attr( $background_class ); ?>" style="<?php echo esc_html( $background_image ); ?>max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;height:<?php echo esc_attr( $slider_settings['slider_height'] ); ?>;filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='<?php echo esc_url_raw( $image_url[0] ); ?>', sizingMethod='scale');-ms-filter:'progid:DXImageTransform.Microsoft.AlphaImageLoader(src='<?php echo esc_url_raw( $image_url[0] ); ?>', sizingMethod='scale')';" data-imgwidth="<?php echo esc_attr( $img_width ); ?>">
-						<?php if ( isset( $metadata['pyre_type'][0] ) ) : ?>
-							<?php if ( 'self-hosted-video' === $metadata['pyre_type'][0] && ( $metadata['pyre_webm'][0] || $metadata['pyre_mp4'][0] || $metadata['pyre_ogg'][0] ) && ( ( function_exists( 'avada_jetpack_is_mobile' ) && ! avada_jetpack_is_mobile() ) || ( function_exists( 'jetpack_is_mobile' ) && ! jetpack_is_mobile() ) || ! wp_is_mobile() ) ) : ?>
-								<video width="1800" height="700" <?php echo $video_attributes; // WPCS: XSS ok. ?> preload="auto">
-									<?php if ( array_key_exists( 'pyre_ogg', $metadata ) && $metadata['pyre_ogg'][0] ) : ?>
-										<source src="<?php echo esc_url_raw( $metadata['pyre_ogg'][0] ); ?>" type="video/ogg">
-									<?php endif; ?>
-									<?php if ( array_key_exists( 'pyre_webm', $metadata ) && $metadata['pyre_webm'][0] ) : ?>
-										<source src="<?php echo esc_url_raw( $metadata['pyre_webm'][0] ); ?>" type="video/webm">
-									<?php endif; ?>
-									<?php if ( array_key_exists( 'pyre_mp4', $metadata ) && $metadata['pyre_mp4'][0] ) : ?>
-										<source src="<?php echo esc_url_raw( $metadata['pyre_mp4'][0] ); ?>" type="video/mp4">
-									<?php endif; ?>
-								</video>
-							<?php endif; ?>
+					<div class="background <?php echo esc_attr( $background_class ); ?>" style="<?php echo esc_html( $background_image ); ?>max-width:<?php echo esc_attr( $slider_settings['slider_width'] ); ?>;height:<?php echo esc_attr( $slider_settings['slider_height'] ); ?>;filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='<?php echo esc_url_raw( $image_url[0] ); ?>', sizingMethod='scale');" data-imgwidth="<?php echo esc_attr( $img_width ); ?>">
+						<?php if ( 'self-hosted-video' === $metadata['type'] && ( ( isset( $metadata['webm'] ) && $metadata['webm'] ) || ( isset( $metadata['mp4'] ) && $metadata['mp4'] ) || ( isset( $metadata['ogg'] ) && $metadata['ogg'] ) ) ) : ?>
+							<span
+								class="fusion-slider-self-hosted-video-placeholder"
+								data-ogg="<?php echo ( isset( $metadata['ogg'] ) ) ? esc_url_raw( $metadata['ogg'] ) : ''; ?>"
+								data-webm="<?php echo ( isset( $metadata['webm'] ) ) ? esc_url_raw( $metadata['webm'] ) : ''; ?>"
+								data-mp4="<?php echo ( isset( $metadata['mp4'] ) ) ? esc_url_raw( $metadata['mp4'] ) : ''; ?>"
+								<?php echo $video_attributes; // phpcs:ignore WordPress.Security ?>
+								preload="auto"
+							></span>
 						<?php endif; ?>
-						<?php if ( isset( $metadata['pyre_type'][0] ) && isset( $metadata['pyre_youtube_id'][0] ) && 'youtube' === $metadata['pyre_type'][0] && $metadata['pyre_youtube_id'][0] ) : ?>
-							<div style="position: absolute; top: 0; left: 0; <?php echo esc_attr( $video_zindex ); ?> width: 100%; height: 100%" data-youtube-video-id="<?php echo esc_attr( $metadata['pyre_youtube_id'][0] ); ?>" data-video-aspect-ratio="<?php echo esc_attr( $aspect_ratio ); ?>" data-display="<?php echo esc_attr( $data_display ); ?>">
-								<div id="video-<?php echo esc_attr( $metadata['pyre_youtube_id'][0] ); ?>-inner">
-									<?php echo apply_filters( 'privacy_iframe_embed', '<iframe height="100%" width="100%" src="https://www.youtube.com/embed/' . esc_attr( $metadata['pyre_youtube_id'][0] ) . '?wmode=transparent&amp;modestbranding=1&amp;showinfo=0&amp;autohide=1&amp;enablejsapi=1&amp;rel=0&amp;vq=hd720&amp;' . esc_attr( $youtube_attributes ) . '" data-fusion-no-placeholder></iframe>' ); // WPCS: XSS ok. ?>
+						<?php if ( 'youtube' === $metadata['type'] && $metadata['youtube_id'] ) : ?>
+							<div style="position: absolute; top: 0; left: 0; <?php echo esc_attr( $video_zindex ); ?> width: 100%; height: 100%" data-youtube-video-id="<?php echo esc_attr( $metadata['youtube_id'] ); ?>" data-video-aspect-ratio="<?php echo esc_attr( $metadata['aspect_ratio'] ); ?>" data-display="<?php echo esc_attr( $metadata['video_display'] ); ?>">
+								<div id="video-<?php echo esc_attr( $metadata['youtube_id'] ); ?>-inner">
+									<?php echo apply_filters( 'privacy_iframe_embed', '<iframe height="100%" width="100%" src="https://www.youtube.com/embed/' . esc_attr( $metadata['youtube_id'] ) . '?wmode=transparent&amp;modestbranding=1&amp;showinfo=0&amp;autohide=1&amp;enablejsapi=1&amp;rel=0&amp;vq=hd720&amp;' . esc_attr( $youtube_attributes ) . '" data-fusion-no-placeholder allowfullscreen allow="autoplay; fullscreen"></iframe>' ); // phpcs:ignore WordPress.Security ?>
 								</div>
 							</div>
 						<?php endif; ?>
-						<?php if ( isset( $metadata['pyre_type'][0] ) && isset( $metadata['pyre_vimeo_id'][0] ) && 'vimeo' === $metadata['pyre_type'][0] && $metadata['pyre_vimeo_id'][0] ) : ?>
-							<div style="position: absolute; top: 0; left: 0; <?php echo esc_attr( $video_zindex ); ?> width: 100%; height: 100%" data-mute="<?php echo esc_attr( $data_mute ); ?>" data-vimeo-video-id="<?php echo esc_attr( $metadata['pyre_vimeo_id'][0] ); ?>" data-video-aspect-ratio="<?php echo esc_attr( $aspect_ratio ); ?>">
-								<?php echo apply_filters( 'privacy_iframe_embed', '<iframe src="https://player.vimeo.com/video/' . esc_attr( $metadata['pyre_vimeo_id'][0] ) . '?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff&amp;badge=0&amp;autopause=0' . esc_attr( $vimeo_attributes ) . '" height="100%" width="100%" webkitallowfullscreen mozallowfullscreen allowfullscreen data-fusion-no-placeholder></iframe>' ); // WPCS: XSS ok. ?>
+						<?php if ( 'vimeo' === $metadata['type'] && $metadata['vimeo_id'] ) : ?>
+							<div style="position: absolute; top: 0; left: 0; <?php echo esc_attr( $video_zindex ); ?> width: 100%; height: 100%" data-mute="<?php echo esc_attr( $metadata['mute_video'] ); ?>" data-vimeo-video-id="<?php echo esc_attr( $metadata['vimeo_id'] ); ?>" data-video-aspect-ratio="<?php echo esc_attr( $metadata['aspect_ratio'] ); ?>" data-display="<?php echo esc_attr( $metadata['video_display'] ); ?>">
+								<?php echo apply_filters( 'privacy_iframe_embed', '<iframe src="https://player.vimeo.com/video/' . esc_attr( $metadata['vimeo_id'] ) . '?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff&amp;badge=0&amp;autopause=0' . esc_attr( $vimeo_attributes ) . '" height="100%" width="100%" data-fusion-no-placeholder allowfullscreen allow="autoplay; fullscreen"></iframe>' ); // phpcs:ignore WordPress.Security ?>
 							</div>
 						<?php endif; ?>
 					</div>

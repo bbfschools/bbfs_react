@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-column-library-template">
 	<div class="fusion-builder-modal-top-container">
 		<h2 class="fusion-builder-settings-heading">
@@ -6,7 +14,7 @@
 			<# } else { #>
 				{{ fusionBuilderText.insert_columns }}
 			<# } #>
-			<input type="text" class="fusion-elements-filter" placeholder="{{ fusionBuilderText.search_elements }}" />
+			<input type="text" class="fusion-elements-filter" placeholder="{{ fusionBuilderText.search_containers }}" />
 		</h2>
 		<ul class="fusion-tabs-menu">
 
@@ -26,9 +34,9 @@
 			<div class="fusion-tabs">
 				<div id="default-columns" class="fusion-tab-content">
 					<# if ( FusionPageBuilderApp.activeModal == 'container' ) { #>
-						<?php echo fusion_builder_column_layouts( 'container' ); // WPCS: XSS ok. ?>
+						<?php echo fusion_builder_column_layouts( 'container' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					<# } else { #>
-						<?php echo fusion_builder_column_layouts(); // WPCS: XSS ok. ?>
+						<?php echo fusion_builder_column_layouts(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					<# } #>
 				</div>
 

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
@@ -6,7 +12,6 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_ContentBoxes extends Fusion_Element {
@@ -92,22 +97,302 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_filter( 'fusion_attr_content-box-shortcode', array( $this, 'child_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-content-wrapper', array( $this, 'content_wrapper_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-heading-wrapper', array( $this, 'heading_wrapper_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-content-container', array( $this, 'content_container_attr' ) );
+				add_filter( 'fusion_attr_content-box-shortcode', [ $this, 'child_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-content-wrapper', [ $this, 'content_wrapper_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-heading-wrapper', [ $this, 'heading_wrapper_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-content-container', [ $this, 'content_container_attr' ] );
 
-				add_filter( 'fusion_attr_content-box-shortcode-link', array( $this, 'link_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-icon-parent', array( $this, 'icon_parent_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-icon-wrapper', array( $this, 'icon_wrapper_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-icon', array( $this, 'icon_attr' ) );
-				add_filter( 'fusion_attr_content-box-shortcode-timeline', array( $this, 'timeline_attr' ) );
-				add_filter( 'fusion_attr_content-box-heading', array( $this, 'content_box_heading_attr' ) );
-				add_shortcode( 'fusion_content_box', array( $this, 'render_child' ) );
+				add_filter( 'fusion_attr_content-box-shortcode-link', [ $this, 'link_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-icon-parent', [ $this, 'icon_parent_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-icon-wrapper', [ $this, 'icon_wrapper_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-icon', [ $this, 'icon_attr' ] );
+				add_filter( 'fusion_attr_content-box-shortcode-timeline', [ $this, 'timeline_attr' ] );
+				add_filter( 'fusion_attr_content-box-heading', [ $this, 'content_box_heading_attr' ] );
+				add_shortcode( 'fusion_content_box', [ $this, 'render_child' ] );
 
-				add_filter( 'fusion_attr_content-boxes-shortcode', array( $this, 'parent_attr' ) );
-				add_shortcode( 'fusion_content_boxes', array( $this, 'render_parent' ) );
+				add_filter( 'fusion_attr_content-boxes-shortcode', [ $this, 'parent_attr' ] );
+				add_shortcode( 'fusion_content_boxes', [ $this, 'render_parent' ] );
 
+				add_action( 'wp_ajax_get_fusion_content_box_image_data', [ $this, 'ajax_query_single_child' ] );
+
+				add_action( 'wp_ajax_get_fusion_content_boxes_children_data', [ $this, 'query_children' ] );
+			}
+
+			/**
+			 * Gets the query data.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return void
+			 */
+			public function ajax_query_single_child() {
+				check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
+				$this->query_single_child();
+			}
+
+			/**
+			 * Gets the query data for single children.
+			 *
+			 * @access public
+			 * @since 2.0.0
+			 */
+			public function query_single_child() {
+
+				$return_data = [];
+
+				if ( isset( $_POST['model'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+					if ( isset( $_POST['model']['params'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+						$defaults = $_POST['model']['params']; // phpcs:ignore WordPress.Security
+					}
+
+					if ( isset( $defaults['image_id'] ) ) {
+						$image_index                 = '' !== $defaults['image_id'] ? $defaults['image_id'] : $defaults['image'];
+						$return_data[ $image_index ] = fusion_library()->images->get_attachment_data_by_helper( $defaults['image_id'], $defaults['image'] );
+					}
+					echo wp_json_encode( $return_data );
+				}
+				wp_die();
+			}
+
+			/**
+			 * Gets the query data for all children.
+			 *
+			 * @access public
+			 * @since 2.0.0
+			 */
+			public function query_children() {
+				check_ajax_referer( 'fusion_load_nonce', 'fusion_load_nonce' );
+
+				$return_data = [];
+
+				// From Ajax Request.
+				if ( isset( $_POST['children'] ) ) {
+					$children = $_POST['children']; // phpcs:ignore WordPress.Security
+
+					foreach ( $children as $cid => $params ) {
+						if ( isset( $params['image_id'] ) ) {
+							$image_index                 = isset( $params['image_id'] ) && '' !== $params['image_id'] ? $params['image_id'] : $params['image'];
+							$return_data[ $image_index ] = fusion_library()->images->get_attachment_data_by_helper( $params['image_id'], $params['image'] );
+						}
+					}
+
+					echo wp_json_encode( $return_data );
+				}
+				wp_die();
+			}
+
+			/**
+			 * Gets the default values.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @param string $context Whether we want parent or child.
+			 *                        Returns array( parent, child ) if empty.
+			 * @return array
+			 */
+			public static function get_element_defaults( $context = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
+
+				$parent = [
+					'hide_on_mobile'         => fusion_builder_default_visibility( 'string' ),
+					'class'                  => '',
+					'id'                     => '',
+					'backgroundcolor'        => $fusion_settings->get( 'content_box_bg_color' ),
+					'columns'                => '',
+					'circle'                 => '',
+					'heading_size'           => '2',
+					'icon'                   => '',
+					'iconflip'               => '',
+					'iconrotate'             => '',
+					'iconspin'               => '',
+					'iconcolor'              => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_icon_color' ) ),
+					'circlecolor'            => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_color' ) ),
+					'circlebordercolor'      => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ) ),
+					'circlebordersize'       => intval( $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ) ) . 'px',
+					'outercirclebordercolor' => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ) ),
+					'outercirclebordersize'  => intval( $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ) ) . 'px',
+					'icon_circle'            => $fusion_settings->get( 'content_box_icon_circle' ),
+					'icon_circle_radius'     => $fusion_settings->get( 'content_box_icon_circle_radius' ),
+					'icon_size'              => fusion_library()->sanitize->size( $fusion_settings->get( 'content_box_icon_size' ) ),
+					'icon_align'             => '',
+					'icon_hover_type'        => $fusion_settings->get( 'content_box_icon_hover_type' ),
+					'hover_accent_color'     => ( '' !== $fusion_settings->get( 'content_box_hover_animation_accent_color' ) ) ? fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_hover_animation_accent_color' ) ) : fusion_library()->sanitize->color( $fusion_settings->get( 'primary_color' ) ),
+					'image'                  => '',
+					'image_id'               => '',
+					'image_max_width'        => '',
+					'layout'                 => 'icon-with-title',
+					'margin_top'             => $fusion_settings->get( 'content_box_margin', 'top' ),
+					'margin_bottom'          => $fusion_settings->get( 'content_box_margin', 'bottom' ),
+					'title_size'             => fusion_library()->sanitize->size( $fusion_settings->get( 'content_box_title_size' ) ),
+					'title_color'            => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_title_color' ) ),
+					'body_color'             => fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_body_color' ) ),
+					'link_type'              => $fusion_settings->get( 'content_box_link_type' ),
+					'button_span'            => $fusion_settings->get( 'content_box_button_span' ),
+					'link_area'              => $fusion_settings->get( 'content_box_link_area' ),
+					'link_target'            => $fusion_settings->get( 'content_box_link_target' ),
+					'animation_type'         => '',
+					'animation_delay'        => '',
+					'animation_direction'    => 'left',
+					'animation_speed'        => '0.1',
+					'animation_offset'       => $fusion_settings->get( 'animation_offset' ),
+					'settings_lvl'           => 'child',
+					'linktarget'             => '', // Deprecated.
+				];
+
+				$child = [
+					'class'                  => '',
+					'id'                     => '',
+					'backgroundcolor'        => '',
+					'circle'                 => '',
+					'circlecolor'            => '',
+					'circlebordercolor'      => '',
+					'circlebordersize'       => '',
+					'outercirclebordercolor' => '',
+					'outercirclebordersize'  => '',
+					'icon'                   => $parent['icon'],
+					'iconcolor'              => '',
+					'iconflip'               => '',
+					'iconrotate'             => '',
+					'iconspin'               => '',
+					'image'                  => '',
+					'image_max_width'        => '',
+					'link'                   => '',
+					'link_target'            => '',
+					'linktext'               => '',
+					'textcolor'              => '',
+					'title'                  => '',
+					'animation_type'         => '',
+					'animation_direction'    => '',
+					'animation_speed'        => '',
+					'animation_offset'       => '',
+					'linktarget'             => '', // Deprecated.
+				];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				} elseif ( 'child' === $context ) {
+					return $child;
+				} else {
+					return [
+						'parent' => $parent,
+						'child'  => $child,
+					];
+				}
+			}
+
+			/**
+			 * Maps settings to param variables.
+			 *
+			 * @static
+			 * @access public
+			 * @param string $context Whether we want parent or child.
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function settings_to_params( $context = '' ) {
+
+				$parent = [
+					'content_box_icon_color'         => 'iconcolor',
+					'content_box_bg_color'           => 'backgroundcolor',
+					'content_box_icon_bg_color'      => 'circlecolor',
+					'content_box_icon_bg_inner_border_color' => 'circlebordercolor',
+					'content_box_icon_bg_inner_border_size' => 'circlebordersize',
+					'content_box_icon_bg_outer_border_color' => 'outercirclebordercolor',
+					'content_box_icon_bg_outer_border_size' => 'outercirclebordersize',
+					'content_box_icon_circle'        => 'icon_circle',
+					'content_box_icon_circle_radius' => 'icon_circle_radius',
+					'content_box_icon_size'          => 'icon_size',
+					'content_box_icon_hover_type'    => 'icon_hover_type',
+					'content_box_hover_animation_accent_color' => 'hover_accent_color',
+					'content_box_margin[top]'        => 'margin_top',
+					'content_box_margin[bottom]'     => 'margin_bottom',
+					'content_box_title_size'         => 'title_size',
+					'content_box_title_color'        => 'title_color',
+					'content_box_body_color'         => 'body_color',
+					'content_box_link_type'          => 'link_type',
+					'content_box_link_area'          => 'link_area',
+					'content_box_link_target'        => 'link_target',
+					'animation_offset'               => 'animation_offset',
+					'content_box_button_span'        => 'button_span',
+				];
+
+				$child = [];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				} elseif ( 'child' === $context ) {
+					return $child;
+				} else {
+					return [
+						'parent' => $parent,
+						'child'  => $child,
+					];
+				}
+			}
+
+			/**
+			 * Used to set any other variables for use on front-end editor template.
+			 *
+			 * @static
+			 * @access public
+			 * @param string $context Whether we want parent or child.
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function get_element_extras( $context = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
+
+				$parent = [];
+
+				$child = [
+					'button_size'  => strtolower( $fusion_settings->get( 'button_size' ) ),
+					'button_shape' => strtolower( $fusion_settings->get( 'button_shape' ) ),
+					'button_type'  => strtolower( $fusion_settings->get( 'button_type' ) ),
+				];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				}
+				if ( 'child' === $context ) {
+					return $child;
+				}
+				return [
+					'parent' => $parent,
+					'child'  => $child,
+				];
+			}
+
+			/**
+			 * Maps settings to extra variables.
+			 *
+			 * @static
+			 * @access public
+			 * @param string $context Whether we want parent or child.
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function settings_to_extras( $context = '' ) {
+
+				$parent = [];
+
+				$child = [
+					'button_size'  => 'button_size',
+					'button_shape' => 'button_shape',
+					'button_type'  => 'button_type',
+				];
+
+				if ( 'parent' === $context ) {
+					return $parent;
+				} elseif ( 'child' === $context ) {
+					return $child;
+				} else {
+					return [
+						'parent' => $parent,
+						'child'  => $child,
+					];
+				}
 			}
 
 			/**
@@ -120,61 +405,18 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_parent( $args, $content = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
 
-				global $fusion_library, $fusion_settings;
-				if ( ! $fusion_settings ) {
-					$fusion_settings = Fusion_Settings::get_instance();
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults( 'parent' ), $args, 'fusion_content_boxes' );
+
+				// Backwards compatibility for when we had image width and height params.
+				if ( isset( $args['image_width'] ) ) {
+					$defaults['image_width'] = ( $args['image_width'] ) ? $args['image_width'] : '35';
+				} else {
+					$defaults['image_width'] = $defaults['image_max_width'];
 				}
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'hide_on_mobile'         => fusion_builder_default_visibility( 'string' ),
-						'class'                  => '',
-						'id'                     => '',
-						'backgroundcolor'        => $fusion_settings->get( 'content_box_bg_color' ),
-						'columns'                => '',
-						'circle'                 => '',
-						'heading_size'           => '2',
-						'icon'                   => '',
-						'iconflip'               => '',
-						'iconrotate'             => '',
-						'iconspin'               => '',
-						'iconcolor'              => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_icon_color' ) ),
-						'circlecolor'            => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_color' ) ),
-						'circlebordercolor'      => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ) ),
-						'circlebordersize'       => intval( $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ) ) . 'px',
-						'outercirclebordercolor' => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ) ),
-						'outercirclebordersize'  => intval( $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ) ) . 'px',
-						'icon_circle'            => $fusion_settings->get( 'content_box_icon_circle' ),
-						'icon_circle_radius'     => $fusion_settings->get( 'content_box_icon_circle_radius' ),
-						'icon_size'              => $fusion_library->sanitize->size( $fusion_settings->get( 'content_box_icon_size' ) ),
-						'icon_align'             => '',
-						'icon_hover_type'        => $fusion_settings->get( 'content_box_icon_hover_type' ),
-						'hover_accent_color'     => ( '' !== $fusion_settings->get( 'content_box_hover_animation_accent_color' ) ) ? $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_hover_animation_accent_color' ) ) : $fusion_library->sanitize->color( $fusion_settings->get( 'primary_color' ) ),
-						'image'                  => '',
-						'image_width'            => '35',
-						'image_height'           => '35',
-						'layout'                 => 'icon-with-title',
-						'margin_top'             => $fusion_settings->get( 'content_box_margin', 'top' ),
-						'margin_bottom'          => $fusion_settings->get( 'content_box_margin', 'bottom' ),
-						'title_size'             => $fusion_library->sanitize->size( $fusion_settings->get( 'content_box_title_size' ) ),
-						'title_color'            => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_title_color' ) ),
-						'body_color'             => $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_body_color' ) ),
-						'link_type'              => $fusion_settings->get( 'content_box_link_type' ),
-						'button_span'            => $fusion_settings->get( 'content_box_button_span' ),
-						'link_area'              => $fusion_settings->get( 'content_box_link_area' ),
-						'link_target'            => $fusion_settings->get( 'content_box_link_target' ),
-						'animation_type'         => '',
-						'animation_delay'        => '',
-						'animation_direction'    => 'left',
-						'animation_speed'        => '0.1',
-						'animation_offset'       => $fusion_settings->get( 'animation_offset' ),
-						'settings_lvl'           => 'child',
-						'linktarget'             => '', // Deprecated.
-					), $args
-				);
-
-				$defaults['title_size']            = ( FusionBuilder::validate_shortcode_attr_value( $defaults['title_size'], 'px', false ) ) ? FusionBuilder::validate_shortcode_attr_value( $defaults['title_size'], 'px' ) : $fusion_library->sanitize->size( $fusion_settings->get( 'content_box_title_size' ) );
+				$defaults['title_size']            = ( $defaults['title_size'] ) ? (float) fusion_library()->sanitize->number( $defaults['title_size'] ) : (float) fusion_library()->sanitize->number( $fusion_settings->get( 'content_box_title_size' ) );
 				$defaults['icon_circle_radius']    = FusionBuilder::validate_shortcode_attr_value( $defaults['icon_circle_radius'], 'px' );
 				$defaults['icon_size']             = FusionBuilder::validate_shortcode_attr_value( $defaults['icon_size'], 'px' );
 				$defaults['margin_top']            = FusionBuilder::validate_shortcode_attr_value( $defaults['margin_top'], 'px' );
@@ -200,7 +442,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				extract( $defaults );
 
-				$this->parent_args       = $defaults;
+				$this->parent_args = $defaults;
 
 				$this->column_counter    = 1;
 				$this->row_counter       = 1;
@@ -220,7 +462,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$this->num_of_columns = 6;
 				}
 
-				$styles = '<style type="text/css" scoped="scoped">';
+				$styles = '<style type="text/css">';
 
 				if ( $title_color ) {
 					$styles .= ".fusion-content-boxes-{$this->content_box_counter} .heading .content-box-heading {color:{$title_color};}";
@@ -251,19 +493,19 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					}";
 
 				$styles .= ".fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-box.link-area-box-hover .fusion-content-box-button {";
-				$styles .= 'background: ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ';';
-				$styles .= 'color: ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . ';';
+				$styles .= 'background: ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ';';
+				$styles .= 'color: ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . ';';
 				if ( $fusion_settings->get( 'button_gradient_top_color_hover' ) !== $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) {
-					$styles .= 'background-image: -webkit-gradient( linear, left bottom, left top, from( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ' ), to( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' ) );';
-					$styles .= 'background-image: linear-gradient( to top, ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ', ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' )';
+					$styles .= 'background-image: -webkit-gradient( linear, left bottom, left top, from( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ' ), to( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' ) );';
+					$styles .= 'background-image: linear-gradient( to top, ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ', ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' )';
 				}
 				$styles .= '}';
 				$styles .= ".fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-box.link-area-box-hover .fusion-content-box-button .fusion-button-text {";
-				$styles .= 'color: ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . ';';
+				$styles .= 'color: ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . ';';
 				$styles .= '}';
 
 				$circle_hover_accent_color = $hover_accent_color;
-				if ( 'transparent' === $circlecolor || 0 === Fusion_Color::new_color( $circlecolor )->alpha ) {
+				if ( fusion_is_color_transparent( $circlecolor ) ) {
 					$circle_hover_accent_color = 'transparent';
 				}
 
@@ -299,7 +541,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				$this->content_box_counter++;
 
-				return $html;
+				return apply_filters( 'fusion_element_content_boxes_parent_content', $html, $args );
 
 			}
 
@@ -312,9 +554,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function parent_attr() {
 
-				$attr = array(
+				$attr = [
 					'class' => '',
-				);
+				];
 
 				$attr['class']  = 'fusion-content-boxes content-boxes columns row';
 				$attr['class'] .= ' fusion-columns-' . $this->num_of_columns;
@@ -327,6 +569,10 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				if ( 'timeline-horizontal' === $this->parent_args['layout'] || 'clean-vertical' === $this->parent_args['layout'] ) {
 					$attr['class'] .= ' content-boxes-icon-on-top';
+				}
+
+				if ( 'timeline-vertical' === $this->parent_args['layout'] || 'timeline-horizontal' === $this->parent_args['layout'] ) {
+					$attr['class'] .= ' content-boxes-timeline-layout';
 				}
 
 				if ( 'timeline-vertical' === $this->parent_args['layout'] ) {
@@ -347,14 +593,14 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				if ( $this->parent_args['animation_delay'] ) {
 					$attr['data-animation-delay'] = $this->parent_args['animation_delay'];
-					$attr['class'] .= ' fusion-delayed-animation';
+					$attr['class']               .= ' fusion-delayed-animation';
 				}
 
 				if ( $this->parent_args['animation_offset'] ) {
 					$animations = FusionBuilder::animations(
-						array(
-							'offset'     => $this->parent_args['animation_offset'],
-						)
+						[
+							'offset' => $this->parent_args['animation_offset'],
+						]
 					);
 
 					$attr = array_merge( $attr, $animations );
@@ -376,10 +622,8 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render_child( $args, $content = '' ) {
-				global $fusion_library;
-
 				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
+					[
 						'class'                  => '',
 						'id'                     => '',
 						'backgroundcolor'        => $this->parent_args['backgroundcolor'],
@@ -396,8 +640,8 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						'iconrotate'             => $this->parent_args['iconrotate'],
 						'iconspin'               => $this->parent_args['iconspin'],
 						'image'                  => $this->parent_args['image'],
-						'image_width'            => $this->parent_args['image_width'],
-						'image_height'           => $this->parent_args['image_height'],
+						'image_id'               => $this->parent_args['image_id'],
+						'image_max_width'        => $this->parent_args['image_max_width'],
 						'link'                   => '',
 						'link_target'            => $this->parent_args['link_target'],
 						'linktext'               => '',
@@ -408,16 +652,42 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						'animation_speed'        => $this->parent_args['animation_speed'],
 						'animation_offset'       => $this->parent_args['animation_offset'],
 						'linktarget'             => '', // Deprecated.
-					), $args
+					],
+					$args,
+					'fusion_content_box'
 				);
+
+				$content = apply_filters( 'fusion_shortcode_content', $content, 'fusion_content_box', $args );
 
 				// Case when image is set on parent element and icon on child element.
 				if ( empty( $args['image'] ) && ! empty( $args['icon'] ) ) {
 					$defaults['image'] = '';
 				}
 
+				// Backwards compatibility for when we had image width and height params.
+				if ( isset( $args['image_width'] ) && $args['image_width'] ) {
+					$defaults['image_width'] = $args['image_width'];
+				} else {
+					$defaults['image_width'] = $defaults['image_max_width'];
+				}
+
 				$defaults['image_width'] = FusionBuilder::validate_shortcode_attr_value( $defaults['image_width'], '' );
-				$defaults['image_height'] = FusionBuilder::validate_shortcode_attr_value( $defaults['image_height'], '' );
+
+				if ( $defaults['image'] ) {
+					$image_data   = fusion_library()->images->get_attachment_data_by_helper( $defaults['image_id'], $defaults['image'] );
+					$image_width  = $image_data['width'];
+					$image_height = $image_data['height'];
+
+					if ( '-1' === $defaults['image_width'] || '' === $defaults['image_width'] ) {
+						$defaults['image_width'] = ( $image_width ) ? $image_width : '35';
+					}
+
+					$defaults['image_height'] = ( $image_width ) ? round( $defaults['image_width'] / $image_width * $image_height, 2 ) : $defaults['image_width'];
+
+				} else {
+					$defaults['image_width']  = '' === $defaults['image_width'] ? '35' : $defaults['image_width'];
+					$defaults['image_height'] = '35';
+				}
 
 				if ( $defaults['linktarget'] ) {
 					$defaults['link_target'] = $defaults['linktarget'];
@@ -447,6 +717,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				// Make sure original child animation type is accessible, for later check on column-wrapper attributes.
 				$defaults['animation_type_original'] = ( isset( $args['animation_type'] ) ) ? $args['animation_type'] : '';
 
+				$defaults['circlebordersize']      = FusionBuilder::validate_shortcode_attr_value( $defaults['circlebordersize'], 'px' );
+				$defaults['outercirclebordersize'] = FusionBuilder::validate_shortcode_attr_value( $defaults['outercirclebordersize'], 'px' );
+
 				extract( $defaults );
 
 				$this->child_args = $defaults;
@@ -460,12 +733,20 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				$heading        = '';
 
 				if ( $image && $image_width && $image_height ) {
-					$image_id = $fusion_library->images->get_attachment_id_from_url( $image );
-					if ( $image_id ) {
-						$alt = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
+
+					$image_data = fusion_library()->images->get_attachment_data_by_helper( $this->child_args['image_id'], $image );
+
+					$alt = $image_data['alt'];
+
+					if ( $image_data['url'] ) {
+						$image = $image_data['url'];
 					}
+
+					$image = '<img src="' . $image . '" width="' . $image_width . '" height="' . $image_height . '" alt="' . $alt . '" />';
+					$image = fusion_library()->images->apply_lazy_loading( $image, null, $this->child_args['image_id'], 'full' );
+
 					$icon_output  = '<div ' . FusionBuilder::attributes( 'content-box-shortcode-icon' ) . '>';
-					$icon_output .= '<img src="' . $image . '" width="' . $image_width . '" height="' . $image_height . '" alt="' . $alt . '" />';
+					$icon_output .= $image;
 					$icon_output .= '</div>';
 				} elseif ( $icon ) {
 					$icon_output  = '<div ' . FusionBuilder::attributes( 'content-box-shortcode-icon-parent' ) . '>';
@@ -483,14 +764,14 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$title_output = '<h' . $heading_size . ' ' . FusionBuilder::attributes( 'content-box-heading' ) . '>' . $title . '</h' . $heading_size . '>';
 				}
 
-				if ( 'right' === $this->parent_args['icon_align'] && in_array( $this->parent_args['layout'], array( 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ), true ) ) {
+				if ( 'right' === $this->parent_args['icon_align'] && in_array( $this->parent_args['layout'], [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ], true ) ) {
 					$heading_content = $title_output . $icon_output;
 				} else {
 					$heading_content = $icon_output . $title_output;
 				}
 
 				if ( $link ) {
-					$heading_content = '<a ' . FusionBuilder::attributes( 'content-box-shortcode-link', array( 'heading_link' => true ) ) . '>' . $heading_content . '</a>';
+					$heading_content = '<a ' . FusionBuilder::attributes( 'content-box-shortcode-link', [ 'heading_link' => true ] ) . '>' . $heading_content . '</a>';
 				}
 
 				if ( $heading_content ) {
@@ -500,24 +781,24 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				if ( $link && $linktext ) {
 					if ( 'text' === $this->parent_args['link_type'] || 'button-bar' === $this->parent_args['link_type'] ) {
 						$link_output  = '<div class="fusion-clearfix"></div>';
-						$link_output .= '<a ' . FusionBuilder::attributes( 'fusion-read-more' ) . ' ' . FusionBuilder::attributes( 'content-box-shortcode-link', array( 'readmore' => true ) ) . '>' . $linktext . '</a>';
+						$link_output .= '<a ' . FusionBuilder::attributes( 'fusion-read-more' ) . ' ' . FusionBuilder::attributes( 'content-box-shortcode-link', [ 'readmore' => true ] ) . '>' . $linktext . '</a>';
 						$link_output .= '<div class="fusion-clearfix"></div>';
 					} elseif ( 'button' === $this->parent_args['link_type'] ) {
 						$link_output  = '<div class="fusion-clearfix"></div>';
-						$link_output .= '<a ' . FusionBuilder::attributes( 'content-box-shortcode-link', array( 'readmore' => true ) ) . '><span class="fusion-button-text">' . $linktext . '</span></a>';
+						$link_output .= '<a ' . FusionBuilder::attributes( 'content-box-shortcode-link', [ 'readmore' => true ] ) . '><span class="fusion-button-text">' . $linktext . '</span></a>';
 						$link_output .= '<div class="fusion-clearfix"></div>';
 					}
 				}
 
 				if ( $content ) {
-					$content_output  .= '<div class="fusion-clearfix"></div>';
+					$content_output .= '<div class="fusion-clearfix"></div>';
 					$content_output .= '<div ' . FusionBuilder::attributes( 'content-box-shortcode-content-container' ) . '>' . do_shortcode( $content ) . '</div>';
 				}
 
-				$output          = $heading . $content_output . $link_output;
-				$timeline        = '';
+				$output   = $heading . $content_output . $link_output;
+				$timeline = '';
 
-				if ( $icon && 'yes' === $this->parent_args['icon_circle'] && 'timeline-horizontal' === $this->parent_args['layout'] && '1' != $this->parent_args['columns'] ) {
+				if ( $icon && 'yes' === $this->parent_args['icon_circle'] && 'timeline-horizontal' === $this->parent_args['layout'] && '1' != $this->parent_args['columns'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
 					$timeline = '<div ' . FusionBuilder::attributes( 'content-box-shortcode-timeline' ) . '></div>';
 				}
 
@@ -531,20 +812,20 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				$this->column_counter++;
 
-				if ( 'transparent' === $circlecolor || 0 === Fusion_Color::new_color( $circlecolor )->alpha ) {
+				if ( fusion_is_color_transparent( $circlecolor ) ) {
 					$this->transparent_child = true;
 				}
 
 				if ( ( 1 + $this->total_num_of_columns ) === $this->column_counter && true === $this->transparent_child ) {
 					$hover_accent_color        = $this->parent_args['hover_accent_color'];
-					$styles                    = '<style type="text/css" scoped="scoped">';
+					$styles                    = '<style type="text/css">';
 					$circle_hover_accent_color = $hover_accent_color;
 
-					if ( 'transparent' === $circlecolor || 0 === Fusion_Color::new_color( $circlecolor )->alpha ) {
+					if ( fusion_is_color_transparent( $circlecolor ) ) {
 						$circle_hover_accent_color = 'transparent';
 					}
 
-					$styles .= "
+					$styles     .= "
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .heading-link:hover .icon i.circle-yes,
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-box:hover .heading-link .icon i.circle-yes,
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-link-icon-hover .heading .icon i.circle-yes,
@@ -557,10 +838,10 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						$html .= $styles;
 
 				} elseif ( ( 1 + $this->total_num_of_columns ) === $this->column_counter && false === $this->transparent_child ) {
-					$hover_accent_color        = $this->parent_args['hover_accent_color'];
-					$styles                    = '<style type="text/css" scoped="scoped">';
+					$hover_accent_color = $this->parent_args['hover_accent_color'];
+					$styles             = '<style type="text/css">';
 
-					$styles .= "
+					$styles     .= "
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .heading-link:hover .icon i.circle-yes,
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-box:hover .heading-link .icon i.circle-yes,
 						.fusion-content-boxes-{$this->content_box_counter} .fusion-content-box-hover .link-area-link-icon-hover .heading .icon i.circle-yes,
@@ -574,7 +855,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				}
 
-				return $html;
+				return apply_filters( 'fusion_element_content_boxes_child_content', $html, $args );
 
 			}
 
@@ -593,13 +874,13 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$this->row_counter = 1;
 				}
 
-				$attr = array(
+				$attr           = [
 					'style' => '',
 					'class' => 'fusion-column content-box-column',
-				);
+				];
 				$attr['class'] .= ' content-box-column content-box-column-' . $this->column_counter . ' col-lg-' . $columns . ' col-md-' . $columns . ' col-sm-' . $columns;
 
-				if ( '5' == $this->num_of_columns ) {
+				if ( '5' == $this->num_of_columns ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
 					$attr['class'] = 'fusion-column content-box-column content-box-column-' . $this->column_counter . ' col-lg-2 col-md-2 col-sm-2';
 				}
 
@@ -619,7 +900,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$border_color = '#f6f6f6';
 				}
 
-				if ( 1 === $this->column_counter % $this->num_of_columns ) {
+				if ( 1 === $this->column_counter % (int) $this->num_of_columns ) {
 					$attr['class'] .= ' content-box-column-first-in-row';
 				}
 
@@ -627,11 +908,11 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$attr['class'] .= ' content-box-column-last';
 				}
 
-				if ( $this->num_of_columns === $this->row_counter ) {
+				if ( (int) $this->num_of_columns === $this->row_counter ) {
 					$attr['class'] .= ' content-box-column-last-in-row';
 				}
 
-				if ( $border_color && in_array( $this->parent_args['layout'], array( 'clean-vertical', 'clean-horizontal' ), true ) ) {
+				if ( $border_color && in_array( $this->parent_args['layout'], [ 'clean-vertical', 'clean-horizontal' ], true ) ) {
 					$attr['style'] .= 'border-color:' . $border_color . ';';
 				}
 
@@ -658,9 +939,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function content_wrapper_attr() {
 
-				$attr = array(
-					'class' => 'col content-wrapper',
-				);
+				$attr = [
+					'class' => 'col content-box-wrapper content-wrapper',
+				];
 
 				// Set parent values if child values are unset to get downwards compatibility.
 				if ( ! $this->child_args['backgroundcolor'] ) {
@@ -670,7 +951,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				if ( $this->child_args['backgroundcolor'] ) {
 					$attr['style'] = 'background-color:' . $this->child_args['backgroundcolor'] . ';';
 
-					if ( 'transparent' !== $this->child_args['backgroundcolor'] && '0' != Fusion_Color::new_color( $this->child_args['backgroundcolor'] )->alpha ) {
+					if ( ! fusion_is_color_transparent( $this->child_args['backgroundcolor'] ) ) {
 						$attr['class'] .= '-background';
 					}
 				}
@@ -709,23 +990,23 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					if ( '' === $this->child_args['animation_type_original'] ) {
 
 						$animations = FusionBuilder::animations(
-							array(
+							[
 								'type'      => $this->parent_args['animation_type'],
 								'direction' => $this->parent_args['animation_direction'],
 								'speed'     => $this->parent_args['animation_speed'],
 								'offset'    => $this->parent_args['animation_offset'],
-							)
+							]
 						);
 
 					} else {
 
 						$animations = FusionBuilder::animations(
-							array(
+							[
 								'type'      => $this->child_args['animation_type'],
 								'direction' => $this->child_args['animation_direction'],
 								'speed'     => $this->child_args['animation_speed'],
 								'offset'    => $this->child_args['animation_offset'],
-							)
+							]
 						);
 					}
 
@@ -752,15 +1033,12 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function link_attr( $args ) {
 
-				global $fusion_settings;
-				if ( ! $fusion_settings ) {
-					$fusion_settings = Fusion_Settings::get_instance();
-				}
+				$fusion_settings = fusion_get_fusion_settings();
 
-				$attr = array(
+				$attr = [
 					'class' => '',
 					'style' => '',
-				);
+				];
 
 				if ( isset( $args['heading_link'] ) ) {
 					$attr['class'] .= 'heading-link';
@@ -783,7 +1061,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				if ( 'button-bar' === $this->parent_args['link_type'] && 'timeline-vertical' === $this->parent_args['layout'] && isset( $args['readmore'] ) ) {
 
 					$addition_margin = 20 + 15;
-					if ( $this->child_args['backgroundcolor'] && 'transparent' !== $this->child_args['backgroundcolor'] && '0' != Fusion_Color::new_color( $this->child_args['backgroundcolor'] )->alpha ) {
+					if ( $this->child_args['backgroundcolor'] && ! fusion_is_color_transparent( $this->child_args['backgroundcolor'] ) ) {
 						$addition_margin += 35;
 					}
 
@@ -791,9 +1069,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						$full_icon_size = $this->child_args['image_width'];
 					} elseif ( $this->child_args['icon'] ) {
 						if ( 'yes' === $this->parent_args['icon_circle'] ) {
-							$full_icon_size = ( $this->parent_args['icon_size'] + intval( $this->child_args['circlebordersize'] ) + intval( $this->child_args['outercirclebordersize'] ) ) * 2;
+							$full_icon_size = ( intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) + intval( $this->child_args['outercirclebordersize'] ) ) * 2;
 						} else {
-							$full_icon_size = $this->parent_args['icon_size'];
+							$full_icon_size = intval( $this->parent_args['icon_size'] );
 						}
 					}
 
@@ -804,7 +1082,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					}
 
 					$attr['style'] .= 'width:calc(100% - ' . ( $full_icon_size + $addition_margin + 15 ) . 'px);';
-				} elseif ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'clean-horizontal', 'timeline-vertical' ), true ) && in_array( $this->parent_args['link_type'], array( 'text', 'button' ), true ) && isset( $args['readmore'] ) ) {
+				} elseif ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'clean-horizontal', 'timeline-vertical' ], true ) && in_array( $this->parent_args['link_type'], [ 'text', 'button' ], true ) && isset( $args['readmore'] ) ) {
 
 					$addition_margin = 20;
 
@@ -814,7 +1092,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						if ( 'yes' === $this->parent_args['icon_circle'] ) {
 							$full_icon_size = ( intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) + intval( $this->child_args['outercirclebordersize'] ) ) * 2;
 						} else {
-							$full_icon_size = $this->parent_args['icon_size'];
+							$full_icon_size = intval( $this->parent_args['icon_size'] );
 						}
 					}
 
@@ -830,7 +1108,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$attr['style'] .= 'float:' . $this->parent_args['icon_align'] . ';';
 				}
 
-				if ( ! in_array( $this->parent_args['layout'], array( 'icon-on-side', 'clean-horizontal', 'timeline-vertical' ), true ) && 'button' === $this->parent_args['link_type'] && 'yes' === $this->parent_args['button_span'] ) {
+				if ( ! in_array( $this->parent_args['layout'], [ 'icon-on-side', 'clean-horizontal', 'timeline-vertical' ], true ) && 'button' === $this->parent_args['link_type'] && 'yes' === $this->parent_args['button_span'] ) {
 					$attr['style'] .= 'width: 100%;';
 				}
 
@@ -847,10 +1125,10 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function heading_wrapper_attr() {
 
-				$attr = array(
+				$attr = [
 					'class' => 'heading',
 					'style' => '',
-				);
+				];
 
 				if ( $this->child_args['icon'] || $this->child_args['image'] ) {
 					$attr['class'] .= ' heading-with-icon';
@@ -861,6 +1139,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						if ( $this->child_args['image'] && $this->child_args['image_width'] && $this->child_args['image_height'] ) {
 
 							$image_height = $this->child_args['image_height'];
+
 							if ( $image_height > $this->parent_args['title_size'] && $image_height - $this->parent_args['title_size'] - 15 > 0 ) {
 								$attr['style'] .= 'margin-top:' . ( $image_height - $this->parent_args['title_size'] ) . 'px;';
 							}
@@ -873,8 +1152,8 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 								$full_icon_size = intval( $this->parent_args['icon_size'] );
 							}
 
-							if ( $full_icon_size > intval( $this->parent_args['title_size'] ) && $full_icon_size - intval( $this->parent_args['title_size'] ) - 15 > 0 ) {
-								$attr['style'] .= 'margin-top:' . ( ( intval( $full_icon_size ) - intval( $this->parent_args['title_size'] ) ) / 2 ) . 'px;';
+							if ( $full_icon_size > $this->parent_args['title_size'] && $full_icon_size - $this->parent_args['title_size'] - 15 > 0 ) {
+								$attr['style'] .= 'margin-top:' . ( ( intval( $full_icon_size ) - $this->parent_args['title_size'] ) / 2 ) . 'px;';
 							}
 						}
 					}
@@ -896,10 +1175,10 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function icon_parent_attr() {
-				$attr = array(
+				$attr = [
 					'class' => 'icon',
 					'style' => '',
-				);
+				];
 
 				if ( 'yes' !== $this->parent_args['icon_circle'] && 'icon-boxed' === $this->parent_args['layout'] ) {
 					$attr['style'] .= 'position:absolute;width: 100%;top:-' . ( 50 + ( intval( $this->parent_args['icon_size'] ) / 2 ) ) . 'px;';
@@ -928,17 +1207,17 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 							$full_icon_size = intval( $this->parent_args['icon_size'] );
 						}
 
-						if ( $full_icon_size > intval( $this->parent_args['title_size'] ) && $full_icon_size - intval( $this->parent_args['title_size'] ) - 15 > 0 ) {
-							$attr['style'] .= 'margin-top:-' . ( ( intval( $full_icon_size ) - intval( $this->parent_args['title_size'] ) ) / 2 ) . 'px;';
-							$attr['style'] .= 'margin-bottom:-' . ( ( intval( $full_icon_size ) - intval( $this->parent_args['title_size'] ) ) / 2 ) . 'px;';
+						if ( $full_icon_size > $this->parent_args['title_size'] && $full_icon_size - $this->parent_args['title_size'] - 15 > 0 ) {
+							$attr['style'] .= 'margin-top:-' . ( ( intval( $full_icon_size ) - $this->parent_args['title_size'] ) / 2 ) . 'px;';
+							$attr['style'] .= 'margin-bottom:-' . ( ( intval( $full_icon_size ) - $this->parent_args['title_size'] ) / 2 ) . 'px;';
 						}
 					}
 				}
 
 				if ( $this->parent_args['animation_delay'] ) {
 					$animation_delay = $this->parent_args['animation_delay'];
-					$attr['style'] .= '-webkit-animation-duration: ' . $animation_delay . 'ms;';
-					$attr['style'] .= 'animation-duration: ' . $animation_delay . 'ms;';
+					$attr['style']  .= '-webkit-animation-duration: ' . $animation_delay . 'ms;';
+					$attr['style']  .= 'animation-duration: ' . $animation_delay . 'ms;';
 				}
 
 				return $attr;
@@ -953,9 +1232,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function icon_wrapper_attr() {
 
-				$attr = array(
+				$attr = [
 					'style' => '',
-				);
+				];
 
 				if ( $this->child_args['icon'] ) {
 
@@ -974,19 +1253,21 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 						$attr['style'] .= 'border-style:solid;';
 
-						if ( $this->child_args['circlebordercolor'] ) {
+						if ( $this->child_args['circlebordercolor'] && intval( $this->child_args['circlebordersize'] ) ) {
 							$attr['style'] .= 'background-color:' . $this->child_args['circlebordercolor'] . ';';
+						} elseif ( $this->child_args['outercirclebordersize'] && intval( $this->child_args['outercirclebordersize'] ) && ! fusion_is_color_transparent( $this->child_args['circlecolor'] ) ) {
+							$attr['style'] .= 'background-color:' . $this->child_args['outercirclebordercolor'] . ';';
 						}
 
 						if ( 'icon-boxed' === $this->parent_args['layout'] ) {
-							$attr['style'] .= 'position:absolute;top:-' . ( 50 + $this->parent_args['icon_size'] + intval( $this->child_args['circlebordersize'] ) ) . 'px;margin-left:-' . ( $this->parent_args['icon_size'] + intval( $this->child_args['circlebordersize'] ) ) . 'px;';
+							$attr['style'] .= 'position:absolute;top:-' . ( 50 + intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) ) . 'px;margin-left:-' . ( intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) ) . 'px;';
 						}
 
 						if ( 'round' === $this->parent_args['icon_circle_radius'] ) {
 							$this->parent_args['icon_circle_radius'] = '100%';
 						}
 
-						if ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ), true ) ) {
+						if ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ], true ) ) {
 							$margin_direction = 'margin-right';
 							if ( 'right' === $this->parent_args['icon_align'] ) {
 								$margin_direction = 'margin-left';
@@ -1017,11 +1298,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function icon_attr() {
-				global $fusion_library;
-
-				$attr = array(
+				$attr = [
 					'style' => '',
-				);
+				];
 
 				if ( $this->child_args['image'] ) {
 					$attr['class'] = 'image';
@@ -1032,7 +1311,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					}
 				} elseif ( $this->child_args['icon'] ) {
 
-					$attr['class'] = 'fontawesome-icon ' . FusionBuilder::font_awesome_name_handler( $this->child_args['icon'] );
+					$attr['class'] = 'fontawesome-icon ' . fusion_font_awesome_name_handler( $this->child_args['icon'] );
 
 					// Set parent values if child values are unset to get downwards compatibility.
 					if ( ! $this->child_args['circle'] ) {
@@ -1083,7 +1362,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 						$attr['class'] .= ' circle-no';
 
-						$attr['style'] .= 'background-color:transparent;border-color:transparent;height:auto;width: ' . $fusion_library->sanitize->get_value_with_unit( $this->parent_args['icon_size'] ) . ';line-height:normal;';
+						$attr['style'] .= 'background-color:transparent;border-color:transparent;height:auto;width: ' . fusion_library()->sanitize->get_value_with_unit( $this->parent_args['icon_size'] ) . ';line-height:normal;';
 
 						if ( 'icon-boxed' === $this->parent_args['layout'] ) {
 							$attr['style'] .= 'position:relative;left:auto;right:auto;top:auto;margin-left:auto;margin-right:auto;';
@@ -1121,12 +1400,12 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function content_container_attr() {
-				$attr = array(
+				$attr = [
 					'class' => 'content-container',
 					'style' => '',
-				);
+				];
 
-				if ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ), true ) && $this->child_args['image'] && $this->child_args['image_width'] && $this->child_args['image_height'] ) {
+				if ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ], true ) && $this->child_args['image'] && $this->child_args['image_width'] && $this->child_args['image_height'] ) {
 					if ( 'clean-horizontal' === $this->parent_args['layout'] ) {
 						$attr['style'] .= 'padding-left:' . ( $this->child_args['image_width'] + 20 ) . 'px;';
 					} else {
@@ -1136,11 +1415,11 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 							$attr['style'] .= 'padding-left:' . ( $this->child_args['image_width'] + 20 ) . 'px;';
 						}
 					}
-				} elseif ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ), true ) && $this->child_args['icon'] ) {
+				} elseif ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'timeline-vertical', 'clean-horizontal' ], true ) && $this->child_args['icon'] ) {
 					if ( 'yes' === $this->parent_args['icon_circle'] ) {
 						$full_icon_size = ( intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) + intval( $this->child_args['outercirclebordersize'] ) ) * 2;
 					} else {
-						$full_icon_size = $this->parent_args['icon_size'];
+						$full_icon_size = intval( $this->parent_args['icon_size'] );
 					}
 
 					if ( 'clean-horizontal' === $this->parent_args['layout'] ) {
@@ -1154,9 +1433,9 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					}
 				}
 
-				if ( 'right' === $this->parent_args['icon_align'] && isset( $attr['style'] ) && ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ), true ) ) ) {
+				if ( 'right' === $this->parent_args['icon_align'] && isset( $attr['style'] ) && ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ], true ) ) ) {
 					$attr['style'] .= ' text-align:' . $this->parent_args['icon_align'] . ';';
-				} elseif ( 'right' === $this->parent_args['icon_align'] && ! isset( $attr['style'] ) && ( in_array( $this->parent_args['layout'], array( 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ), true ) ) ) {
+				} elseif ( 'left' === $this->parent_args['icon_align'] && is_rtl() && ( in_array( $this->parent_args['layout'], [ 'icon-on-side', 'icon-with-title', 'timeline-vertical', 'clean-horizontal' ], true ) ) ) {
 					$attr['style'] .= ' text-align:' . $this->parent_args['icon_align'] . ';';
 				}
 
@@ -1176,7 +1455,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function timeline_attr() {
-				$attr = array();
+				$attr = [];
 				if ( 'timeline-horizontal' === $this->parent_args['layout'] ) {
 					$attr['class'] = 'content-box-shortcode-timeline';
 					$attr['style'] = '';
@@ -1196,7 +1475,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 					$position_top = $full_icon_size / 2;
 
-					if ( $this->child_args['backgroundcolor'] && 'transparent' !== $this->child_args['backgroundcolor'] && '0' != Fusion_Color::new_color( $this->child_args['backgroundcolor'] )->alpha ) {
+					if ( $this->child_args['backgroundcolor'] && ! fusion_is_color_transparent( $this->child_args['backgroundcolor'] ) ) {
 						$position_top += 35;
 					}
 
@@ -1238,12 +1517,12 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					}
 
 					$position_top = $full_icon_size / 2;
-					if ( intval( $this->parent_args['title_size'] ) > $full_icon_size ) {
-						$position_top = intval( $this->parent_args['title_size'] ) / 2;
+					if ( $this->parent_args['title_size'] > $full_icon_size ) {
+						$position_top = $this->parent_args['title_size'] / 2;
 					}
 					$position_horizontal = $full_icon_size / 2 + 15;
 
-					if ( $this->child_args['backgroundcolor'] && 'transparent' !== $this->child_args['backgroundcolor'] && '0' != Fusion_Color::new_color( $this->child_args['backgroundcolor'] )->alpha ) {
+					if ( $this->child_args['backgroundcolor'] && ! fusion_is_color_transparent( $this->child_args['backgroundcolor'] ) ) {
 						$position_top        += 35;
 						$position_horizontal += 35;
 					}
@@ -1252,9 +1531,8 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						$border_color = $this->child_args['circlebordercolor'];
 					}
 
-					if ( $this->child_args['outercirclebordercolor'] && $this->child_args['outercirclebordersize'] ) {
+					if ( $this->child_args['outercirclebordercolor'] && intval( $this->child_args['outercirclebordersize'] ) ) {
 						$border_color = $this->child_args['outercirclebordercolor'];
-
 					}
 
 					if ( ! $this->child_args['circlebordercolor'] && ! $this->child_args['outercirclebordercolor'] ) {
@@ -1280,8 +1558,8 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 
 				if ( $this->parent_args['animation_delay'] ) {
 					$animation_delay = $this->parent_args['animation_delay'];
-					$attr['style'] .= '-webkit-transition-duration: ' . $animation_delay . 'ms;';
-					$attr['style'] .= 'animation-duration: ' . $animation_delay . 'ms;';
+					$attr['style']  .= '-webkit-transition-duration: ' . $animation_delay . 'ms;';
+					$attr['style']  .= 'animation-duration: ' . $animation_delay . 'ms;';
 				}
 
 				return $attr;
@@ -1295,13 +1573,13 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function content_box_heading_attr() {
-				$attr = array(
+				$attr = [
 					'class' => 'content-box-heading',
 					'style' => '',
-				);
+				];
 
 				if ( $this->parent_args['title_size'] ) {
-					$font_size = FusionBuilder::strip_unit( $this->parent_args['title_size'] );
+					$font_size = $this->parent_args['title_size'];
 
 					$attr['style'] = 'font-size:' . $font_size . 'px;line-height:' . ( $font_size + 5 ) . 'px;';
 				}
@@ -1319,7 +1597,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 						if ( 'yes' === $this->parent_args['icon_circle'] ) {
 							$full_icon_size = ( intval( $this->parent_args['icon_size'] ) + intval( $this->child_args['circlebordersize'] ) + intval( $this->child_args['outercirclebordersize'] ) ) * 2;
 						} else {
-							$full_icon_size = $this->parent_args['icon_size'];
+							$full_icon_size = intval( $this->parent_args['icon_size'] );
 						}
 
 						if ( 'right' === $this->parent_args['icon_align'] ) {
@@ -1341,18 +1619,18 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 * @return array
 			 */
 			public function add_styling() {
-				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $fusion_library, $fusion_settings, $dynamic_css_helpers;
+				global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $fusion_settings, $dynamic_css_helpers;
 
-				$main_elements = apply_filters( 'fusion_builder_element_classes', array( '.fusion-content-boxes' ), '.fusion-content-boxes' );
-				$elements = $dynamic_css_helpers->map_selector( $main_elements, ' .content-box-heading' );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['font-size'] = $fusion_library->sanitize->size( $fusion_settings->get( 'content_box_title_size' ) );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_title_color' ) );
+				$main_elements = apply_filters( 'fusion_builder_element_classes', [ '.fusion-content-boxes' ], '.fusion-content-boxes' );
+				$elements      = $dynamic_css_helpers->map_selector( $main_elements, ' .content-box-heading' );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['font-size'] = fusion_library()->sanitize->size( $fusion_settings->get( 'content_box_title_size' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color']     = fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_title_color' ) );
 
 				$elements = $dynamic_css_helpers->map_selector( $main_elements, ' .content-container' );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_body_color' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_body_color' ) );
 
 				$elements = $dynamic_css_helpers->map_selector( $main_elements, '  .content-wrapper-background' );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'content_box_bg_color' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'content_box_bg_color' ) );
 
 				$elements = array_merge(
 					$dynamic_css_helpers->map_selector( $main_elements, '.content-boxes-clean-vertical .content-box-column' ),
@@ -1364,33 +1642,29 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['display'] = 'none';
 
 				$elements = $dynamic_css_helpers->map_selector( $main_elements, '.content-boxes-icon-boxed .content-wrapper-boxed' );
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom'] = '20px';
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']   = '3%';
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']  = '3%';
-				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['min-height']     = 'inherit !important';
-				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom'] = '20px';
-				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']   = '3% !important';
-				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']  = '3% !important';
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom']                 = '20px';
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']                   = '3%';
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']                  = '3%';
+				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['min-height']                  = 'inherit !important';
+				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom']              = '20px';
+				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']                = '3% !important';
+				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']               = '3% !important';
 				$css[ $three_twenty_six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['min-height']     = 'inherit !important';
 				$css[ $three_twenty_six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom'] = '20px';
 				$css[ $three_twenty_six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']   = '3% !important';
 				$css[ $three_twenty_six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']  = '3% !important';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom'] = '20px';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']   = '3%';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']  = '3%';
-
-				// Single column changes for 1268.
-				$css[ $content_media_query ]['.fusion-content-boxes .fusion-column']['margin-bottom'] = '55px';
-				$css[ $content_media_query ]['.fusion-content-boxes .fusion-read-more-button']['margin-top'] = '8px';
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-bottom']           = '20px';
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-left']             = '3%';
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['padding-right']            = '3%';
 
 				$elements = array_merge(
 					$dynamic_css_helpers->map_selector( $main_elements, '.content-boxes-icon-on-top .content-box-column' ),
 					$dynamic_css_helpers->map_selector( $main_elements, '.content-boxes-icon-boxed .content-box-column' )
 				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '55px';
-				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '55px';
+				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom']                 = '55px';
+				$css[ $six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom']              = '55px';
 				$css[ $three_twenty_six_fourty_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '55px';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '55px';
+				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom']           = '55px';
 
 				for ( $i = 1; $i <= 6; $i++ ) {
 					$elements = $dynamic_css_helpers->map_selector( $main_elements, '.content-boxes-icon-boxed .content-box-column .heading h' . $i );
@@ -1407,28 +1681,28 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 				$elements = array_merge(
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar .fusion-read-more' )
 				);
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background'] = $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color']      = $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_color' ) );
-				if ( $fusion_settings->get( 'button_gradient_top_color' ) != $fusion_settings->get( 'button_gradient_bottom_color' ) ) {
-					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = '-webkit-gradient( linear, left bottom, left top, from( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color' ) ) . ' ), to( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) ) . ' ) )';
-					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = 'linear-gradient( to top, ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color' ) ) . ', ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) ) . ' )';
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background'] = fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color']      = fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_color' ) );
+				if ( $fusion_settings->get( 'button_gradient_top_color' ) != $fusion_settings->get( 'button_gradient_bottom_color' ) ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = '-webkit-gradient( linear, left bottom, left top, from( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color' ) ) . ' ), to( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) ) . ' ) )';
+					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = 'linear-gradient( to top, ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color' ) ) . ', ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color' ) ) . ' )';
 				}
 
 				$elements = array_merge(
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar .fusion-read-more:after' ),
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar .fusion-read-more:before' )
 				);
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color']      = $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_color' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_color' ) );
 
 				$elements = array_merge(
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar .fusion-read-more:hover' ),
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar.link-area-box:hover .fusion-read-more' )
 				);
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background'] = $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . '!important';
-				if ( $fusion_settings->get( 'button_gradient_top_color_hover' ) != $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) {
-					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = '-webkit-gradient( linear, left bottom, left top, from( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ' ), to( ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' ) )';
-					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = 'linear-gradient( to top, ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ', ' . $fusion_library->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' )';
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background'] = fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) );
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color']      = fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . '!important';
+				if ( $fusion_settings->get( 'button_gradient_top_color_hover' ) != $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = '-webkit-gradient( linear, left bottom, left top, from( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ' ), to( ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' ) )';
+					$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['background-image'][] = 'linear-gradient( to top, ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_bottom_color_hover' ) ) . ', ' . fusion_library()->sanitize->color( $fusion_settings->get( 'button_gradient_top_color_hover' ) ) . ' )';
 				}
 
 				$elements = array_merge(
@@ -1437,7 +1711,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar.link-area-box:hover .fusion-read-more:after' ),
 					$dynamic_css_helpers->map_selector( $main_elements, ' .link-type-button-bar.link-area-box:hover .fusion-read-more:before' )
 				);
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . '!important';
+				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = fusion_library()->sanitize->color( $fusion_settings->get( 'button_accent_hover_color' ) ) . '!important';
 
 				return $css;
 			}
@@ -1455,7 +1729,7 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 					'fusion-content-boxes',
 					FusionBuilder::$js_folder_url . '/general/fusion-content-boxes.js',
 					FusionBuilder::$js_folder_path . '/general/fusion-content-boxes.js',
-					array( 'jquery', 'fusion-animations', 'fusion-equal-heights' ),
+					[ 'jquery', 'fusion-animations', 'fusion-equal-heights' ],
 					'1',
 					true
 				);
@@ -1470,254 +1744,233 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
 			 */
 			public function add_options() {
 
-				return array(
-					'content_boxes_shortcode_section' => array(
-						'label'       => esc_html__( 'Content Box Element', 'fusion-builder' ),
-						'id'          => 'content_box_shortcode_section',
-						'type'        => 'accordion',
-						'fields'      => array(
-							'content_box_bg_color' => array(
+				return [
+					'content_boxes_shortcode_section' => [
+						'label'  => esc_html__( 'Content Boxes', 'fusion-builder' ),
+						'id'     => 'content_boxes_shortcode_section',
+						'icon'   => 'fusiona-newspaper',
+						'type'   => 'accordion',
+						'fields' => [
+							'content_box_bg_color'        => [
 								'label'       => esc_html__( 'Content Box Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the background color for content boxes.', 'fusion-builder' ),
 								'id'          => 'content_box_bg_color',
 								'default'     => 'rgba(255,255,255,0)',
 								'type'        => 'color-alpha',
-							),
-							'content_box_title_size' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_title_size'      => [
 								'label'       => esc_html__( 'Content Box Title Font Size', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the size of the title text.', 'fusion-builder' ),
 								'id'          => 'content_box_title_size',
-								'default'     => '18px',
+								'default'     => '24px',
 								'type'        => 'dimension',
-							),
-							'content_box_title_color' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_title_color'     => [
 								'label'       => esc_html__( 'Content Box Title Font Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the title font.', 'fusion-builder' ),
 								'id'          => 'content_box_title_color',
-								'default'     => '#333333',
+								'default'     => '#212934',
 								'type'        => 'color-alpha',
-							),
-							'content_box_body_color' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_body_color'      => [
 								'label'       => esc_html__( 'Content Box Body Font Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the body font.', 'fusion-builder' ),
 								'id'          => 'content_box_body_color',
-								'default'     => '#747474',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
-							),
-							'content_box_icon_size' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_icon_size'       => [
 								'label'       => esc_html__( 'Content Box Icon Font Size', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the size of the icon.', 'fusion-builder' ),
 								'id'          => 'content_box_icon_size',
-								'default'     => '21',
+								'default'     => '20',
 								'type'        => 'slider',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'min'  => '0',
 									'max'  => '250',
 									'step' => '1',
-								),
-							),
-							'content_box_icon_color' => array(
+								],
+							],
+							'content_box_icon_color'      => [
 								'label'       => esc_html__( 'Content Box Icon Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the content box icon.', 'fusion-builder' ),
 								'id'          => 'content_box_icon_color',
 								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
-							),
-							'content_box_icon_circle' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_icon_circle'     => [
 								'label'       => esc_html__( 'Content Box Icon Background', 'fusion-builder' ),
 								'description' => esc_html__( 'Turn on to display a background behind the icon.', 'fusion-builder' ),
 								'id'          => 'content_box_icon_circle',
 								'default'     => 'yes',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'yes' => esc_html__( 'On', 'fusion-builder' ),
 									'no'  => esc_html__( 'Off', 'fusion-builder' ),
-								),
-							),
-							'content_box_icon_circle_radius' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Radius', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the border radius of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_circle_radius',
-								'default'     => '50%',
-								'type'        => 'dimension',
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_bg_color' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Color', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the color of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_bg_color',
-								'default'     => '#333333',
-								'type'        => 'color-alpha',
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_bg_inner_border_color' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Inner Border Color', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the inner border color of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_bg_inner_border_color',
-								'default'     => '#333333',
-								'type'        => 'color-alpha',
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_bg_inner_border_size' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Inner Border Size', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the inner border size of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_bg_inner_border_size',
-								'default'     => '1',
-								'type'        => 'slider',
-								'choices'     => array(
+								],
+							],
+							'content_box_icon_circle_radius' => [
+								'label'           => esc_html__( 'Content Box Icon Background Radius', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the border radius of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_circle_radius',
+								'default'         => '50%',
+								'type'            => 'dimension',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'content_box_icon_bg_color'   => [
+								'label'           => esc_html__( 'Content Box Icon Background Color', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the color of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_bg_color',
+								'default'         => '#212934',
+								'type'            => 'color-alpha',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'content_box_icon_bg_inner_border_color' => [
+								'label'           => esc_html__( 'Content Box Icon Background Inner Border Color', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the inner border color of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_bg_inner_border_color',
+								'default'         => '#212934',
+								'type'            => 'color-alpha',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'content_box_icon_bg_inner_border_size' => [
+								'label'           => esc_html__( 'Content Box Icon Background Inner Border Size', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the inner border size of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_bg_inner_border_size',
+								'default'         => '1',
+								'type'            => 'slider',
+								'transport'       => 'postMessage',
+								'choices'         => [
 									'min'  => '0',
 									'max'  => '20',
 									'step' => '1',
-								),
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_bg_outer_border_color' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Outer Border Color', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the outer border color of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_bg_outer_border_color',
-								'default'     => 'rgba(255,255,255,0)',
-								'type'        => 'color-alpha',
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_bg_outer_border_size' => array(
-								'label'       => esc_html__( 'Content Box Icon Background Outer Border Size', 'fusion-builder' ),
-								'description' => esc_html__( 'Controls the outer border size of the icon background.', 'fusion-builder' ),
-								'id'          => 'content_box_icon_bg_outer_border_size',
-								'default'     => '0',
-								'type'        => 'slider',
-								'choices'     => array(
+								],
+								'soft_dependency' => true,
+							],
+							'content_box_icon_bg_outer_border_color' => [
+								'label'           => esc_html__( 'Content Box Icon Background Outer Border Color', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the outer border color of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_bg_outer_border_color',
+								'default'         => 'rgba(255,255,255,0)',
+								'type'            => 'color-alpha',
+								'transport'       => 'postMessage',
+								'soft_dependency' => true,
+							],
+							'content_box_icon_bg_outer_border_size' => [
+								'label'           => esc_html__( 'Content Box Icon Background Outer Border Size', 'fusion-builder' ),
+								'description'     => esc_html__( 'Controls the outer border size of the icon background.', 'fusion-builder' ),
+								'id'              => 'content_box_icon_bg_outer_border_size',
+								'default'         => '1',
+								'type'            => 'slider',
+								'transport'       => 'postMessage',
+								'choices'         => [
 									'min'  => '0',
 									'max'  => '20',
 									'step' => '1',
-								),
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_icon_circle',
-										'operator' => '==',
-										'value'    => 'yes',
-									),
-								),
-							),
-							'content_box_icon_hover_type' => array(
+								],
+								'soft_dependency' => true,
+							],
+							'content_box_icon_hover_type' => [
 								'label'       => esc_html__( 'Content Box Hover Animation Type', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the hover effect of the icon.', 'fusion-builder' ),
 								'id'          => 'content_box_icon_hover_type',
 								'default'     => 'fade',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'none'    => esc_html__( 'None', 'fusion-builder' ),
 									'fade'    => esc_html__( 'Fade', 'fusion-builder' ),
 									'slide'   => esc_html__( 'Slide', 'fusion-builder' ),
 									'pulsate' => esc_html__( 'Pulsate', 'fusion-builder' ),
-								),
-							),
-							'content_box_hover_animation_accent_color' => array(
+								],
+							],
+							'content_box_hover_animation_accent_color' => [
 								'label'       => esc_html__( 'Content Box Hover Accent Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the accent color on hover.', 'fusion-builder' ),
 								'id'          => 'content_box_hover_animation_accent_color',
-								'default'     => '#a0ce4e',
+								'default'     => '#65bc7b',
 								'type'        => 'color-alpha',
-							),
-							'content_box_link_type' => array(
+								'transport'   => 'postMessage',
+							],
+							'content_box_link_type'       => [
 								'label'       => esc_html__( 'Content Box Link Type', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the type of link that displays in the content box.', 'fusion-builder' ),
 								'id'          => 'content_box_link_type',
 								'default'     => 'text',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'text'       => esc_html__( 'Text', 'fusion-builder' ),
 									'button-bar' => esc_html__( 'Button Bar', 'fusion-builder' ),
 									'button'     => esc_html__( 'Button', 'fusion-builder' ),
-								),
-							),
-							'content_box_button_span' => array(
-								'label'       => esc_html__( 'Button Span', 'fusion-builder' ),
-								'description' => esc_html__( 'Choose to have the button span the full width.', 'fusion-builder' ),
-								'id'          => 'content_box_button_span',
-								'default'     => 'no',
-								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								],
+							],
+							'content_box_button_span'     => [
+								'label'           => esc_html__( 'Button Span', 'fusion-builder' ),
+								'description'     => esc_html__( 'Choose to have the button span the full width.', 'fusion-builder' ),
+								'id'              => 'content_box_button_span',
+								'default'         => 'no',
+								'type'            => 'radio-buttonset',
+								'transport'       => 'postMessage',
+								'choices'         => [
 									'yes' => esc_html__( 'Yes', 'fusion-builder' ),
 									'no'  => esc_html__( 'No', 'fusion-builder' ),
-								),
-								'required'    => array(
-									array(
-										'setting'  => 'content_box_link_type',
-										'operator' => '==',
-										'value'    => 'button',
-									),
-								),
-							),
-							'content_box_link_area' => array(
+								],
+								'soft_dependency' => true,
+							],
+							'content_box_link_area'       => [
 								'label'       => esc_html__( 'Content Box Link Area', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls which area the link will be assigned to.', 'fusion-builder' ),
 								'id'          => 'content_box_link_area',
 								'default'     => 'link-icon',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'link-icon' => esc_html__( 'Link + Icon', 'fusion-builder' ),
 									'box'       => esc_html__( 'Entire Content Box', 'fusion-builder' ),
-								),
-							),
-							'content_box_link_target' => array(
+								],
+							],
+							'content_box_link_target'     => [
 								'label'       => esc_html__( 'Content Box Link Target', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls how the link will open.', 'fusion-builder' ),
 								'id'          => 'content_box_link_target',
 								'default'     => '_self',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'transport'   => 'postMessage',
+								'choices'     => [
 									'_self'  => esc_html__( 'Same Window', 'fusion-builder' ),
 									'_blank' => esc_html__( 'New Window/Tab', 'fusion-builder' ),
-								),
-							),
-							'content_box_margin' => array(
+								],
+							],
+							'content_box_margin'          => [
 								'label'       => esc_html__( 'Content Box Top/Bottom Margins', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the top/bottom margin for content boxes.', 'fusion-builder' ),
 								'id'          => 'content_box_margin',
 								'type'        => 'spacing',
-								'choices'     => array(
-									'top'     => true,
-									'bottom'  => true,
-									'units'   => array( 'px', '%' ),
-								),
-								'default'     => array(
-									'top'     => '0px',
-									'bottom'  => '60px',
-								),
-							),
-						),
-					),
-				);
+								'transport'   => 'postMessage',
+								'choices'     => [
+									'top'    => true,
+									'bottom' => true,
+									'units'  => [ 'px', '%' ],
+								],
+								'default'     => [
+									'top'    => '',
+									'bottom' => '',
+								],
+							],
+						],
+					],
+				];
 			}
 		}
 	}
@@ -1733,576 +1986,619 @@ if ( fusion_is_element_enabled( 'fusion_content_boxes' ) ) {
  */
 function fusion_element_content_boxes() {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
+	$fusion_settings = fusion_get_fusion_settings();
 
 	fusion_builder_map(
-		array(
-			'name'          => esc_attr__( 'Content Boxes', 'fusion-builder' ),
-			'shortcode'     => 'fusion_content_boxes',
-			'multi'         => 'multi_element_parent',
-			'element_child' => 'fusion_content_box',
-			'icon'          => 'fusiona-newspaper',
-			'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-content-boxes-preview.php',
-			'preview_id'    => 'fusion-builder-block-module-content-boxes-preview-template',
-			'params'        => array(
-				array(
-					'type'        => 'tinymce',
-					'heading'     => esc_attr__( 'Content', 'fusion-builder' ),
-					'description' => esc_attr__( 'Enter some content for this contentbox', 'fusion-builder' ),
-					'param_name'  => 'element_content',
-					'value'       => '[fusion_content_box title="' . esc_attr__( 'Your Content Goes Here', 'fusion-builder' ) . '" backgroundcolor="" icon="" iconflip="" iconrotate="" iconspin="no" iconcolor="" circlecolor="" circlebordercolor="" image="" image_width="" image_height="" link="" linktext="Read More" linktarget="default" animation_type="" animation_direction="left" animation_speed="0.3" ]' . esc_attr__( 'Your Content Goes Here', 'fusion-builder' ) . '[/fusion_content_box]',
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Box Layout', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the layout for the content box', 'fusion-builder' ),
-					'param_name'  => 'layout',
-					'default'     => 'icon-with-title',
-					'value'       => array(
-						'icon-with-title'     => esc_attr__( 'Classic Icon With Title', 'fusion-builder' ),
-						'icon-on-top'         => esc_attr__( 'Classic Icon On Top', 'fusion-builder' ),
-						'icon-on-side'        => esc_attr__( 'Classic Icon On Side', 'fusion-builder' ),
-						'icon-boxed'          => esc_attr__( 'Classic Icon Boxed', 'fusion-builder' ),
-						'clean-vertical'      => esc_attr__( 'Clean Layout Vertical', 'fusion-builder' ),
-						'clean-horizontal'    => esc_attr__( 'Clean Layout Horizontal', 'fusion-builder' ),
-						'timeline-vertical'   => esc_attr__( 'Timeline Vertical', 'fusion-builder' ),
-						'timeline-horizontal' => esc_attr__( 'Timeline Horizontal', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Number of Columns', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set the number of columns per row.', 'fusion-builder' ),
-					'param_name'  => 'columns',
-					'value'       => '1',
-					'min'         => '1',
-					'max'         => '6',
-					'step'        => '1',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Title Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the size of the title.  In pixels ex: 18px.', 'fusion-builder' ),
-					'param_name'  => 'title_size',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Heading Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the title size, H1-H6.', 'fusion-builder' ),
-					'param_name'  => 'heading_size',
-					'value'       => array(
-						'1' => 'H1',
-						'2' => 'H2',
-						'3' => 'H3',
-						'4' => 'H4',
-						'5' => 'H5',
-						'6' => 'H6',
-					),
-					'default' => '2',
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Title Font Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the color of the title font.  ex: #000.', 'fusion-builder' ),
-					'param_name'  => 'title_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_title_color' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Body Font Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the color of the body font.  ex: #000.', 'fusion-builder' ),
-					'param_name'  => 'body_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_body_color' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Content Box Background Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'backgroundcolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_bg_color' ),
-				),
-				array(
-					'type'        => 'iconpicker',
-					'heading'     => esc_attr__( 'Icon', 'fusion-builder' ),
-					'param_name'  => 'icon',
-					'value'       => '',
-					'description' => esc_attr__( 'Global setting for all content boxes, this can be overridden individually. Click an icon to select, click again to deselect.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Flip Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to flip the icon.', 'fusion-builder' ),
-					'param_name'  => 'iconflip',
-					'value'       => array(
-						''           => esc_attr__( 'None', 'fusion-builder' ),
-						'horizontal' => esc_attr__( 'Horizontal', 'fusion-builder' ),
-						'vertical'   => esc_attr__( 'Vertical', 'fusion-builder' ),
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Rotate Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to rotate the icon.', 'fusion-builder' ),
-					'param_name'  => 'iconrotate',
-					'value'       => array(
-						''     => esc_attr__( 'None', 'fusion-builder' ),
-						'90'   => '90',
-						'180'  => '180',
-						'270'  => '270',
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Spinning Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to let the icon spin.', 'fusion-builder' ),
-					'param_name'  => 'iconspin',
-					'value'       => array(
-						'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'  => esc_attr__( 'No', 'fusion-builder' ),
-					),
-					'default'     => 'no',
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'iconcolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_color' ),
-				),
-				array(
-					'type'             => 'radio_button_set',
-					'heading'          => esc_attr__( 'Icon Background', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Choose to show a background behind the icon. Select default for theme option selection.', 'fusion-builder' ),
-					'param_name'       => 'icon_circle',
-					'value'            => array(
-						''    => esc_attr__( 'Default', 'fusion-builder' ),
-						'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'  => esc_attr__( 'No', 'fusion-builder' ),
-					),
-					'child_dependency' => true,
-					'default'          => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Icon Background Radius', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the border radius of the icon background.  In pixels (px), ex: 1px, or "round".', 'fusion-builder' ),
-					'param_name'  => 'icon_circle_radius',
-					'value'       => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'circlecolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Icon Background Inner Border Size', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'circlebordersize',
-					'value'       => '',
-					'min'         => '0',
-					'max'         => '20',
-					'step'        => '1',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Inner Border Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'circlebordercolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'circlebordersize',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Icon Background Outer Border Size', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'outercirclebordersize',
-					'value'       => '',
-					'min'         => '0',
-					'max'         => '20',
-					'step'        => '1',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Outer Border Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'outercirclebordercolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'outercirclebordersize',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Icon Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the size of the icon. In pixels.', 'fusion-builder' ),
-					'param_name'  => 'icon_size',
-					'value'       => '',
-					'min'         => '0',
-					'max'         => '250',
-					'step'        => '1',
-					'default'     => $fusion_settings->get( 'content_box_icon_size' ),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Icon Hover Animation Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the animation type for icon on hover. Select default for theme option selection.', 'fusion-builder' ),
-					'param_name'  => 'icon_hover_type',
-					'value'       => array(
-						''        => esc_attr__( 'Default', 'fusion-builder' ),
-						'none'    => esc_attr__( 'None', 'fusion-builder' ),
-						'fade'    => esc_attr__( 'Fade', 'fusion-builder' ),
-						'slide'   => esc_attr__( 'Slide', 'fusion-builder' ),
-						'pulsate' => esc_attr__( 'Pulsate', 'fusion-builder' ),
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Hover Accent Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the accent color on hover.', 'fusion-builder' ),
-					'param_name'  => 'hover_accent_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_hover_animation_accent_color' ),
-				),
-				array(
-					'type'        => 'upload',
-					'heading'     => esc_attr__( 'Icon Image', 'fusion-builder' ),
-					'description' => esc_attr__( 'To upload your own icon image, deselect the icon above and then upload your icon image.', 'fusion-builder' ),
-					'param_name'  => 'image',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Icon Image Width', 'fusion-builder' ),
-					'description' => esc_attr__( 'If using an icon image, specify the image width in pixels but do not add px, ex: 35.', 'fusion-builder' ),
-					'param_name'  => 'image_width',
-					'dependency'  => array(
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Icon Image Height', 'fusion-builder' ),
-					'description' => esc_attr__( 'If using an icon image, specify the image height in pixels but do not add px, ex: 35.', 'fusion-builder' ),
-					'param_name'  => 'image_height',
-					'dependency'  => array(
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Link Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the type of link that should show in the content box. Select default for theme option selection.', 'fusion-builder' ),
-					'param_name'  => 'link_type',
-					'value'       => array(
-						''           => esc_attr__( 'Default', 'fusion-builder' ),
-						'text'       => esc_attr__( 'Text', 'fusion-builder' ),
-						'button-bar' => esc_attr__( 'Button Bar', 'fusion-builder' ),
-						'button'     => esc_attr__( 'Button', 'fusion-builder' ),
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Button Span', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to have the button span the full width.', 'fusion-builder' ),
-					'param_name'  => 'button_span',
-					'value'       => array(
-						''          => esc_attr__( 'Default', 'fusion-builder' ),
-						'yes'       => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'        => esc_attr__( 'No', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'link_type',
-							'value'    => 'text',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'link_type',
-							'value'    => 'button-bar',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Link Area', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select which area the link will be assigned to. Select default for theme option selection.', 'fusion-builder' ),
-					'param_name'  => 'link_area',
-					'value'       => array(
-						''          => esc_attr__( 'Default', 'fusion-builder' ),
-						'link-icon' => esc_attr__( 'Link+Icon', 'fusion-builder' ),
-						'box'       => esc_attr__( 'Entire Content Box', 'fusion-builder' ),
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-					'description' => __( '_self = open in same window <br />_blank = open in new window', 'fusion-builder' ),
-					'param_name'  => 'link_target',
-					'value'       => array(
-						''       => esc_attr__( 'Default', 'fusion-builder' ),
-						'_self'  => esc_attr__( 'Same Window', 'fusion-builder' ),
-						'_blank' => esc_attr__( 'New Window/Tab', 'fusion-builder' ),
-					),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Content Alignment', 'fusion-builder' ),
-					'description' => esc_attr__( 'Works with "Classic Icon With Title" and "Classic Icon On Side" layout options.', 'fusion-builder' ),
-					'param_name'  => 'icon_align',
-					'value'       => array(
-						'left'  => esc_attr__( 'Left', 'fusion-builder' ),
-						'right' => esc_attr__( 'Right', 'fusion-builder' ),
-					),
-					'default'     => 'left',
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Animation Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the type of animation to use on the element.', 'fusion-builder' ),
-					'param_name'  => 'animation_type',
-					'value'       => fusion_builder_available_animations(),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-vertical',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-horizontal',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Animation Delay', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the delay of animation between each element in a set. In milliseconds, 1000 = 1 second.', 'fusion-builder' ),
-					'param_name'  => 'animation_delay',
-					'value'       => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-vertical',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-horizontal',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Offset of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls when the animation should start.', 'fusion-builder' ),
-					'param_name'  => 'animation_offset',
-					'value'       => array(
-						''                => esc_attr__( 'Default', 'fusion-builder' ),
-						'top-into-view'   => esc_attr__( 'Top of element hits bottom of viewport', 'fusion-builder' ),
-						'top-mid-of-view' => esc_attr__( 'Top of element hits middle of viewport', 'fusion-builder' ),
-						'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-vertical',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-horizontal',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Direction of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the incoming direction for the animation.', 'fusion-builder' ),
-					'param_name'  => 'animation_direction',
-					'value'       => array(
-						'down'   => esc_attr__( 'Top', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						'up'     => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-						'static' => esc_attr__( 'Static', 'fusion-builder' ),
-					),
-					'default'     => 'left',
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-vertical',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-horizontal',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Speed of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Type in speed of animation in seconds (0.1 - 1).', 'fusion-builder' ),
-					'param_name'  => 'animation_speed',
-					'min'         => '0.1',
-					'max'         => '1',
-					'step'        => '0.1',
-					'value'       => '0.3',
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-vertical',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'layout',
-							'value'    => 'timeline-horizontal',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'             => 'dimension',
-					'remove_from_atts' => true,
-					'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Spacing above and below the content boxes. In px, em or %, e.g. 10px.', 'fusion-builder' ),
-					'param_name'       => 'dimensions',
-					'value'            => array(
-						'margin_top'    => '',
-						'margin_bottom' => '',
-					),
-				),
-				array(
-					'type'        => 'checkbox_button_set',
-					'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
-					'param_name'  => 'hide_on_mobile',
-					'value'       => fusion_builder_visibility_options( 'full' ),
-					'default'     => fusion_builder_default_visibility( 'array' ),
-					'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_ContentBoxes',
+			[
+				'name'          => esc_attr__( 'Content Boxes', 'fusion-builder' ),
+				'shortcode'     => 'fusion_content_boxes',
+				'multi'         => 'multi_element_parent',
+				'element_child' => 'fusion_content_box',
+				'icon'          => 'fusiona-newspaper',
+				'child_ui'      => true,
+				'preview'       => FUSION_BUILDER_PLUGIN_DIR . 'inc/templates/previews/fusion-content-boxes-preview.php',
+				'preview_id'    => 'fusion-builder-block-module-content-boxes-preview-template',
+				'help_url'      => 'https://theme-fusion.com/documentation/fusion-builder/elements/content-boxes-element/',
+				'params'        => [
+					[
+						'type'        => 'tinymce',
+						'heading'     => esc_attr__( 'Content', 'fusion-builder' ),
+						'description' => esc_attr__( 'Enter some content for this content box.', 'fusion-builder' ),
+						'param_name'  => 'element_content',
+						'value'       => '[fusion_content_box title="' . esc_attr__( 'Your Content Goes Here', 'fusion-builder' ) . '" backgroundcolor="" icon="" iconflip="" iconrotate="" iconspin="" iconcolor="" circlecolor="" circlebordercolor="" image="" image_id="" image_max_width="" link="" linktext="Read More" animation_type="" animation_direction="left" animation_speed="0.3" ]' . esc_attr__( 'Your Content Goes Here', 'fusion-builder' ) . '[/fusion_content_box]',
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Box Layout', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the layout for the content box.', 'fusion-builder' ),
+						'param_name'  => 'layout',
+						'default'     => 'icon-with-title',
+						'value'       => [
+							'icon-with-title'     => esc_attr__( 'Classic Icon With Title', 'fusion-builder' ),
+							'icon-on-top'         => esc_attr__( 'Classic Icon On Top', 'fusion-builder' ),
+							'icon-on-side'        => esc_attr__( 'Classic Icon On Side', 'fusion-builder' ),
+							'icon-boxed'          => esc_attr__( 'Classic Icon Boxed', 'fusion-builder' ),
+							'clean-vertical'      => esc_attr__( 'Clean Layout Vertical', 'fusion-builder' ),
+							'clean-horizontal'    => esc_attr__( 'Clean Layout Horizontal', 'fusion-builder' ),
+							'timeline-vertical'   => esc_attr__( 'Timeline Vertical', 'fusion-builder' ),
+							'timeline-horizontal' => esc_attr__( 'Timeline Horizontal', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Number of Columns', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set the number of columns per row.', 'fusion-builder' ),
+						'param_name'  => 'columns',
+						'value'       => '1',
+						'min'         => '1',
+						'max'         => '6',
+						'step'        => '1',
+						'dependency'  => [
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Title Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the size of the title.  In pixels ex: 18px.', 'fusion-builder' ),
+						'param_name'  => 'title_size',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Heading Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the title size, H1-H6.', 'fusion-builder' ),
+						'param_name'  => 'heading_size',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'value'       => [
+							'1' => 'H1',
+							'2' => 'H2',
+							'3' => 'H3',
+							'4' => 'H4',
+							'5' => 'H5',
+							'6' => 'H6',
+						],
+						'default'     => '2',
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Title Font Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the title font.  ex: #000.', 'fusion-builder' ),
+						'param_name'  => 'title_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_title_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Body Font Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the body font.  ex: #000.', 'fusion-builder' ),
+						'param_name'  => 'body_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_body_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Content Box Background Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'backgroundcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'iconpicker',
+						'heading'     => esc_attr__( 'Icon', 'fusion-builder' ),
+						'param_name'  => 'icon',
+						'value'       => '',
+						'description' => esc_attr__( 'Global setting for all content boxes, this can be overridden individually. Click an icon to select, click again to deselect.', 'fusion-builder' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Flip Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to flip the icon.', 'fusion-builder' ),
+						'param_name'  => 'iconflip',
+						'value'       => [
+							''           => esc_attr__( 'None', 'fusion-builder' ),
+							'horizontal' => esc_attr__( 'Horizontal', 'fusion-builder' ),
+							'vertical'   => esc_attr__( 'Vertical', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Rotate Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to rotate the icon.', 'fusion-builder' ),
+						'param_name'  => 'iconrotate',
+						'value'       => [
+							''    => esc_attr__( 'None', 'fusion-builder' ),
+							'90'  => '90',
+							'180' => '180',
+							'270' => '270',
+						],
+						'default'     => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Spinning Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to let the icon spin.', 'fusion-builder' ),
+						'param_name'  => 'iconspin',
+						'value'       => [
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+						'default'     => 'no',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'iconcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'             => 'radio_button_set',
+						'heading'          => esc_attr__( 'Icon Background', 'fusion-builder' ),
+						'description'      => esc_attr__( 'Choose to show a background behind the icon. Select default for theme option selection.', 'fusion-builder' ),
+						'param_name'       => 'icon_circle',
+						'value'            => [
+							''    => esc_attr__( 'Default', 'fusion-builder' ),
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+						'child_dependency' => true,
+						'default'          => '',
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Icon Background Radius', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the border radius of the icon background.  In pixels (px), ex: 1px, or "round".', 'fusion-builder' ),
+						'param_name'  => 'icon_circle_radius',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'circlecolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Icon Background Inner Border Size', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'circlebordersize',
+						'value'       => '',
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Inner Border Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'circlebordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'circlebordersize',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Icon Background Outer Border Size', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'outercirclebordersize',
+						'value'       => '',
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Outer Border Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'outercirclebordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'outercirclebordersize',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Icon Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the size of the icon. In pixels.', 'fusion-builder' ),
+						'param_name'  => 'icon_size',
+						'value'       => '',
+						'min'         => '0',
+						'max'         => '250',
+						'step'        => '1',
+						'default'     => $fusion_settings->get( 'content_box_icon_size' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Icon Hover Animation Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the animation type for icon on hover. Select default for theme option selection.', 'fusion-builder' ),
+						'param_name'  => 'icon_hover_type',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'value'       => [
+							''        => esc_attr__( 'Default', 'fusion-builder' ),
+							'none'    => esc_attr__( 'None', 'fusion-builder' ),
+							'fade'    => esc_attr__( 'Fade', 'fusion-builder' ),
+							'slide'   => esc_attr__( 'Slide', 'fusion-builder' ),
+							'pulsate' => esc_attr__( 'Pulsate', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'preview'     => [
+							'selector' => '.link-area-box,.link-area-link-icon,.link-area-link-icon',
+							'type'     => 'class',
+							'toggle'   => '-hover',
+							'append'   => true,
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Hover Accent Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the accent color on hover.', 'fusion-builder' ),
+						'param_name'  => 'hover_accent_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_hover_animation_accent_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.link-area-box,.link-area-link-icon,.link-area-link-icon',
+							'type'     => 'class',
+							'toggle'   => '-hover',
+							'append'   => true,
+						],
+					],
+					[
+						'type'        => 'upload',
+						'heading'     => esc_attr__( 'Icon Image', 'fusion-builder' ),
+						'description' => esc_attr__( 'To upload your own icon image, deselect the icon above and then upload your icon image.', 'fusion-builder' ),
+						'param_name'  => 'image',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Icon Image ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Icon Image ID from Media Library.', 'fusion-builder' ),
+						'param_name'  => 'image_id',
+						'value'       => '',
+						'hidden'      => true,
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Icon Image Max Width', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set the icon image max width. Leave empty to use image\'s native width. In pixels, ex: 35.', 'fusion-builder' ),
+						'param_name'  => 'image_max_width',
+						'default'     => '35',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Link Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the type of link that should show in the content box. Select default for theme option selection.', 'fusion-builder' ),
+						'param_name'  => 'link_type',
+						'value'       => [
+							''           => esc_attr__( 'Default', 'fusion-builder' ),
+							'text'       => esc_attr__( 'Text', 'fusion-builder' ),
+							'button-bar' => esc_attr__( 'Button Bar', 'fusion-builder' ),
+							'button'     => esc_attr__( 'Button', 'fusion-builder' ),
+						],
+						'default'     => '',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Button Span', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to have the button span the full width.', 'fusion-builder' ),
+						'param_name'  => 'button_span',
+						'value'       => [
+							''    => esc_attr__( 'Default', 'fusion-builder' ),
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'link_type',
+								'value'    => 'text',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'link_type',
+								'value'    => 'button-bar',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Link Area', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select which area the link will be assigned to. Select default for theme option selection.', 'fusion-builder' ),
+						'param_name'  => 'link_area',
+						'value'       => [
+							''          => esc_attr__( 'Default', 'fusion-builder' ),
+							'link-icon' => esc_attr__( 'Link+Icon', 'fusion-builder' ),
+							'box'       => esc_attr__( 'Entire Content Box', 'fusion-builder' ),
+						],
+						'default'     => '',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
+						'description' => __( '_self = open in same window <br />_blank = open in new window', 'fusion-builder' ),
+						'param_name'  => 'link_target',
+						'value'       => [
+							''       => esc_attr__( 'Default', 'fusion-builder' ),
+							'_self'  => esc_attr__( 'Same Window', 'fusion-builder' ),
+							'_blank' => esc_attr__( 'New Window/Tab', 'fusion-builder' ),
+						],
+						'default'     => '',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Content Alignment', 'fusion-builder' ),
+						'description' => esc_attr__( 'Works with "Classic Icon With Title" and "Classic Icon On Side" layout options.', 'fusion-builder' ),
+						'param_name'  => 'icon_align',
+						'value'       => [
+							'left'  => esc_attr__( 'Left', 'fusion-builder' ),
+							'right' => esc_attr__( 'Right', 'fusion-builder' ),
+						],
+						'default'     => 'left',
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Animation Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the type of animation to use on the element.', 'fusion-builder' ),
+						'param_name'  => 'animation_type',
+						'value'       => fusion_builder_available_animations(),
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-horizontal',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.content-box-column',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Direction of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the incoming direction for the animation.', 'fusion-builder' ),
+						'param_name'  => 'animation_direction',
+						'value'       => [
+							'down'   => esc_attr__( 'Top', 'fusion-builder' ),
+							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+							'up'     => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+							'static' => esc_attr__( 'Static', 'fusion-builder' ),
+						],
+						'default'     => 'left',
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-horizontal',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.content-box-column',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Speed of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Type in speed of animation in seconds (0.1 - 1).', 'fusion-builder' ),
+						'param_name'  => 'animation_speed',
+						'min'         => '0.1',
+						'max'         => '1',
+						'step'        => '0.1',
+						'value'       => '0.3',
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-horizontal',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.content-box-column',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Animation Delay', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the delay of animation between each element in a set. In milliseconds, 1000 = 1 second.', 'fusion-builder' ),
+						'param_name'  => 'animation_delay',
+						'value'       => '',
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-horizontal',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.content-box-column',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Offset of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls when the animation should start.', 'fusion-builder' ),
+						'param_name'  => 'animation_offset',
+						'value'       => [
+							''                => esc_attr__( 'Default', 'fusion-builder' ),
+							'top-into-view'   => esc_attr__( 'Top of element hits bottom of viewport', 'fusion-builder' ),
+							'top-mid-of-view' => esc_attr__( 'Top of element hits middle of viewport', 'fusion-builder' ),
+							'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-vertical',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'layout',
+								'value'    => 'timeline-horizontal',
+								'operator' => '!=',
+							],
+						],
+					],
+					'fusion_margin_placeholder' => [
+						'param_name'  => 'dimensions',
+						'description' => esc_attr__( 'Spacing above and below the content boxes. In px, em or %, e.g. 10px.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'checkbox_button_set',
+						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
+						'param_name'  => 'hide_on_mobile',
+						'value'       => fusion_builder_visibility_options( 'full' ),
+						'default'     => fusion_builder_default_visibility( 'array' ),
+						'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+					],
+				],
+			],
+			'parent'
 		)
 	);
 }
@@ -2315,452 +2611,470 @@ add_action( 'fusion_builder_before_init', 'fusion_element_content_boxes' );
  */
 function fusion_element_content_box() {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
+	$fusion_settings = fusion_get_fusion_settings();
 
 	fusion_builder_map(
-		array(
-			'name'              => esc_attr__( 'Content Box', 'fusion-builder' ),
-			'description'       => esc_attr__( 'Enter some content for this textblock', 'fusion-builder' ),
-			'shortcode'         => 'fusion_content_box',
-			'hide_from_builder' => true,
-			'allow_generator'   => true,
-			'params'            => array(
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Title', 'fusion-builder' ),
-					'description' => esc_attr__( 'The box title.', 'fusion-builder' ),
-					'param_name'  => 'title',
-					'value'       => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
-					'placeholder' => true,
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Content Box Background Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'backgroundcolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_bg_color' ),
-				),
-				array(
-					'type'        => 'iconpicker',
-					'heading'     => esc_attr__( 'Icon', 'fusion-builder' ),
-					'param_name'  => 'icon',
-					'value'       => '',
-					'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Flip Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to flip the icon.', 'fusion-builder' ),
-					'param_name'  => 'iconflip',
-					'value'       => array(
-						''           => esc_attr__( 'Default', 'fusion-builder' ),
-						'none'       => esc_attr__( 'None', 'fusion-builder' ),
-						'horizontal' => esc_attr__( 'Horizontal', 'fusion-builder' ),
-						'vertical'   => esc_attr__( 'Vertical', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Rotate Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to rotate the icon.', 'fusion-builder' ),
-					'param_name'  => 'iconrotate',
-					'value'       => array(
-						''     => esc_attr__( 'Default', 'fusion-builder' ),
-						'none' => esc_attr__( 'None', 'fusion-builder' ),
-						'90'   => '90',
-						'180'  => '180',
-						'270'  => '270',
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Spinning Icon', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to let the icon spin.', 'fusion-builder' ),
-					'param_name'  => 'iconspin',
-					'value'       => array(
-						''    => esc_attr__( 'Default', 'fusion-builder' ),
-						'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'  => esc_attr__( 'No', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the color of the icon. ', 'fusion-builder' ),
-					'param_name'  => 'iconcolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to show a background behind the icon.', 'fusion-builder' ),
-					'param_name'  => 'circlecolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'parent_icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Icon Background Inner Border Size', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'circlebordersize',
-					'value'       => '',
-					'min'         => '0',
-					'max'         => '20',
-					'step'        => '1',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'parent_icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Inner Border Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'circlebordercolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'slidercirclebordersize',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'parent_icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Icon Background Outer Border Size', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'outercirclebordersize',
-					'value'       => '',
-					'min'         => '0',
-					'max'         => '20',
-					'step'        => '1',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'parent_icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Icon Background Outer Border Color', 'fusion-builder' ),
-					'description' => '',
-					'param_name'  => 'outercirclebordercolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'icon',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '==',
-						),
-						array(
-							'element'  => 'slideroutercirclebordersize',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'parent_icon_circle',
-							'value'    => 'no',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'upload',
-					'heading'     => esc_attr__( 'Icon Image', 'fusion-builder' ),
-					'description' => esc_attr__( 'To upload your own icon image, deselect the icon above and then upload your icon image.', 'fusion-builder' ),
-					'param_name'  => 'image',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Icon Image Width', 'fusion-builder' ),
-					'description' => esc_attr__( 'If using an icon image, specify the image width in pixels but do not add px, ex: 35.', 'fusion-builder' ),
-					'param_name'  => 'image_width',
-					'dependency'  => array(
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Icon Image Height', 'fusion-builder' ),
-					'description' => esc_attr__( 'If using an icon image, specify the image height in pixels but do not add px, ex: 35.', 'fusion-builder' ),
-					'param_name'  => 'image_height',
-					'dependency'  => array(
-						array(
-							'element'  => 'image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'link_selector',
-					'heading'     => esc_attr__( 'Read More Link Url', 'fusion-builder' ),
-					'description' => esc_attr__( "Add the link's url ex: http://example.com.", 'fusion-builder' ),
-					'param_name'  => 'link',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Read More Link Text', 'fusion-builder' ),
-					'description' => esc_attr__( 'Insert the text to display as the link.', 'fusion-builder' ),
-					'param_name'  => 'linktext',
-					'value'       => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'link',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Read More Link Target', 'fusion-builder' ),
-					'description' => __( 'Default = use option selected in parent.', 'fusion-builder' ),
-					'param_name'  => 'link_target',
-					'value'       => array(
-						''       => esc_attr__( 'Default', 'fusion-builder' ),
-						'_self'  => esc_attr__( 'Same Window', 'fusion-builder' ),
-						'_blank' => esc_attr__( 'New Window/Tab', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'dependency'  => array(
-						array(
-							'element'  => 'link',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'tinymce',
-					'heading'     => esc_attr__( 'Content Box Content', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add content for content box.', 'fusion-builder' ),
-					'param_name'  => 'element_content',
-					'value'       => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
-					'placeholder' => true,
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Animation Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the type of animation to use on the element.', 'fusion-builder' ),
-					'param_name'  => 'animation_type',
-					'value'       => fusion_builder_available_animations(),
-					'default'     => '',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Direction of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the incoming direction for the animation.', 'fusion-builder' ),
-					'param_name'  => 'animation_direction',
-					'value'       => array(
-						'down'   => esc_attr__( 'Top', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						'up'     => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-						'static' => esc_attr__( 'Static', 'fusion-builder' ),
-					),
-					'default'     => 'left',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'animation_type',
-							'value'    => 'none',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Speed of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Type in speed of animation in seconds (0.1 - 1).', 'fusion-builder' ),
-					'param_name'  => 'animation_speed',
-					'min'         => '0.1',
-					'max'         => '1',
-					'step'        => '0.1',
-					'value'       => '0.3',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'animation_type',
-							'value'    => 'none',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Offset of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls when the animation should start.', 'fusion-builder' ),
-					'param_name'  => 'animation_offset',
-					'value'       => array(
-						''                => esc_attr__( 'Default', 'fusion-builder' ),
-						'top-into-view'   => esc_attr__( 'Top of element hits bottom of viewport', 'fusion-builder' ),
-						'top-mid-of-view' => esc_attr__( 'Top of element hits middle of viewport', 'fusion-builder' ),
-						'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
-					),
-					'default'     => '',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-						array(
-							'element'  => 'animation_type',
-							'value'    => 'none',
-							'operator' => '!=',
-						),
-					),
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_ContentBoxes',
+			[
+				'name'                     => esc_attr__( 'Content Box', 'fusion-builder' ),
+				'description'              => esc_attr__( 'Enter some content for this textblock', 'fusion-builder' ),
+				'shortcode'                => 'fusion_content_box',
+				'hide_from_builder'        => true,
+				'allow_generator'          => true,
+				'inline_editor'            => true,
+				'inline_editor_shortcodes' => true,
+				'params'                   => [
+					[
+						'type'         => 'textfield',
+						'heading'      => esc_attr__( 'Title', 'fusion-builder' ),
+						'description'  => esc_attr__( 'The box title.', 'fusion-builder' ),
+						'param_name'   => 'title',
+						'value'        => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
+						'placeholder'  => true,
+						'dynamic_data' => true,
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Content Box Background Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'backgroundcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_bg_color' ),
+					],
+					[
+						'type'        => 'iconpicker',
+						'heading'     => esc_attr__( 'Icon', 'fusion-builder' ),
+						'param_name'  => 'icon',
+						'value'       => '',
+						'description' => esc_attr__( 'Click an icon to select, click again to deselect.', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Flip Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to flip the icon.', 'fusion-builder' ),
+						'param_name'  => 'iconflip',
+						'value'       => [
+							''           => esc_attr__( 'Default', 'fusion-builder' ),
+							'none'       => esc_attr__( 'None', 'fusion-builder' ),
+							'horizontal' => esc_attr__( 'Horizontal', 'fusion-builder' ),
+							'vertical'   => esc_attr__( 'Vertical', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Rotate Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to rotate the icon.', 'fusion-builder' ),
+						'param_name'  => 'iconrotate',
+						'value'       => [
+							''     => esc_attr__( 'Default', 'fusion-builder' ),
+							'none' => esc_attr__( 'None', 'fusion-builder' ),
+							'90'   => '90',
+							'180'  => '180',
+							'270'  => '270',
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Spinning Icon', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to let the icon spin.', 'fusion-builder' ),
+						'param_name'  => 'iconspin',
+						'value'       => [
+							''    => esc_attr__( 'Default', 'fusion-builder' ),
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of the icon. ', 'fusion-builder' ),
+						'param_name'  => 'iconcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_color' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to show a background behind the icon.', 'fusion-builder' ),
+						'param_name'  => 'circlecolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_color' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'parent_icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Icon Background Inner Border Size', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'circlebordersize',
+						'value'       => '',
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_size' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'parent_icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Inner Border Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'circlebordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_inner_border_color' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'slidercirclebordersize',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'parent_icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Icon Background Outer Border Size', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'outercirclebordersize',
+						'value'       => '',
+						'min'         => '0',
+						'max'         => '20',
+						'step'        => '1',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_size' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'parent_icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Icon Background Outer Border Color', 'fusion-builder' ),
+						'description' => '',
+						'param_name'  => 'outercirclebordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'content_box_icon_bg_outer_border_color' ),
+						'dependency'  => [
+							[
+								'element'  => 'icon',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '==',
+							],
+							[
+								'element'  => 'slideroutercirclebordersize',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'parent_icon_circle',
+								'value'    => 'no',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'upload',
+						'heading'     => esc_attr__( 'Icon Image', 'fusion-builder' ),
+						'description' => esc_attr__( 'To upload your own icon image, deselect the icon above and then upload your icon image.', 'fusion-builder' ),
+						'param_name'  => 'image',
+						'value'       => '',
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Icon Image ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Icon Image ID from Media Library.', 'fusion-builder' ),
+						'param_name'  => 'image_id',
+						'value'       => '',
+						'hidden'      => true,
+						'callback'    => [
+							'function' => 'fusion_ajax',
+							'action'   => 'get_fusion_content_box_image_data',
+							'ajax'     => true,
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Icon Image Max Width', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set the icon image max width. Leave empty for value set in parent option. Set to -1 to use image\'s native width. In pixels, ex: 35.', 'fusion-builder' ),
+						'param_name'  => 'image_max_width',
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'link_selector',
+						'heading'     => esc_attr__( 'Read More Link Url', 'fusion-builder' ),
+						'description' => esc_attr__( "Add the link's url ex: http://example.com.", 'fusion-builder' ),
+						'param_name'  => 'link',
+						'value'       => '',
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Read More Link Text', 'fusion-builder' ),
+						'description' => esc_attr__( 'Insert the text to display as the link.', 'fusion-builder' ),
+						'param_name'  => 'linktext',
+						'value'       => '',
+						'dependency'  => [
+							[
+								'element'  => 'link',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Read More Link Target', 'fusion-builder' ),
+						'description' => __( 'Default = use option selected in parent.', 'fusion-builder' ),
+						'param_name'  => 'link_target',
+						'value'       => [
+							''       => esc_attr__( 'Default', 'fusion-builder' ),
+							'_self'  => esc_attr__( 'Same Window', 'fusion-builder' ),
+							'_blank' => esc_attr__( 'New Window/Tab', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'dependency'  => [
+							[
+								'element'  => 'link',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'         => 'tinymce',
+						'heading'      => esc_attr__( 'Content Box Content', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Add content for content box.', 'fusion-builder' ),
+						'param_name'   => 'element_content',
+						'value'        => esc_attr__( 'Your Content Goes Here', 'fusion-builder' ),
+						'placeholder'  => true,
+						'dynamic_data' => true,
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Animation Type', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the type of animation to use on the element.', 'fusion-builder' ),
+						'param_name'  => 'animation_type',
+						'value'       => fusion_builder_available_animations(),
+						'default'     => '',
+						'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.link-area-box,.link-area-link-icon,.link-area-link-icon',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Direction of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Select the incoming direction for the animation.', 'fusion-builder' ),
+						'param_name'  => 'animation_direction',
+						'value'       => [
+							'down'   => esc_attr__( 'Top', 'fusion-builder' ),
+							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+							'up'     => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+							'static' => esc_attr__( 'Static', 'fusion-builder' ),
+						],
+						'default'     => 'left',
+						'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'animation_type',
+								'value'    => 'none',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.link-area-box,.link-area-link-icon,.link-area-link-icon',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Speed of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Type in speed of animation in seconds (0.1 - 1).', 'fusion-builder' ),
+						'param_name'  => 'animation_speed',
+						'min'         => '0.1',
+						'max'         => '1',
+						'step'        => '0.1',
+						'value'       => '0.3',
+						'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'animation_type',
+								'value'    => 'none',
+								'operator' => '!=',
+							],
+						],
+						'preview'     => [
+							'selector' => '.link-area-box,.link-area-link-icon,.link-area-link-icon',
+							'type'     => 'animation',
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Offset of Animation', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls when the animation should start.', 'fusion-builder' ),
+						'param_name'  => 'animation_offset',
+						'value'       => [
+							''                => esc_attr__( 'Default', 'fusion-builder' ),
+							'top-into-view'   => esc_attr__( 'Top of element hits bottom of viewport', 'fusion-builder' ),
+							'top-mid-of-view' => esc_attr__( 'Top of element hits middle of viewport', 'fusion-builder' ),
+							'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
+						],
+						'default'     => '',
+						'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'animation_type',
+								'value'    => '',
+								'operator' => '!=',
+							],
+							[
+								'element'  => 'animation_type',
+								'value'    => 'none',
+								'operator' => '!=',
+							],
+						],
+					],
+				],
+			],
+			'child'
 		)
 	);
 }

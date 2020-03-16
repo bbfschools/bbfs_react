@@ -6,11 +6,6 @@
  * @subpackage Fusion-Patcher
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * Periodically checks for patches and adds admin bubbles in menu.
  *
@@ -45,7 +40,7 @@ class Fusion_Patcher_Checker {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	private $patcher = array();
+	private $patcher = [];
 
 	/**
 	 * The patches.
@@ -54,7 +49,7 @@ class Fusion_Patcher_Checker {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	protected $patches = array();
+	protected $patches = [];
 
 	/**
 	 * The patches that have already been applied.
@@ -63,7 +58,7 @@ class Fusion_Patcher_Checker {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	protected $applied_patches = array();
+	protected $applied_patches = [];
 
 	/**
 	 * How many new patches do we have?
@@ -96,7 +91,9 @@ class Fusion_Patcher_Checker {
 			return;
 		}
 
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_scripts' ) );
+		if ( ! is_customize_preview() ) {
+			add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
+		}
 
 	}
 
@@ -108,21 +105,22 @@ class Fusion_Patcher_Checker {
 	 * @return void
 	 */
 	public function admin_scripts() {
+		global $fusion_library_latest_version;
 
 		wp_enqueue_script(
 			'fusion-patcher-checker',
 			FUSION_LIBRARY_URL . '/assets/min/js/general/fusion-patcher-admin-menu-notices.js',
-			array( 'jquery', 'underscore' ),
-			false,
+			[ 'jquery', 'underscore' ],
+			$fusion_library_latest_version,
 			true
 		);
 		$patcher_instances = $this->patcher->get_instance();
-		$args = array(
+		$args              = [
 			'patches' => $this->get_cache(),
-			'args'    => array(),
-		);
+			'args'    => [],
+		];
 		foreach ( $patcher_instances as $instance ) {
-			$instance_args = $instance->get_args();
+			$instance_args  = $instance->get_args();
 			$args['args'][] = $instance_args;
 		}
 		wp_localize_script( 'fusion-patcher-checker', 'patcherVars', $args );
@@ -138,7 +136,7 @@ class Fusion_Patcher_Checker {
 	public function get_cache() {
 		$cache = get_site_transient( self::$transient_name );
 		if ( ! is_array( $cache ) ) {
-			$cache = array();
+			$cache = [];
 		}
 		$context = $this->patcher->get_args( 'context' );
 		if ( ! isset( $cache[ $context ] ) ) {
@@ -160,9 +158,9 @@ class Fusion_Patcher_Checker {
 		$args    = $this->patcher->get_args();
 		$bundles = $this->patcher->get_args( 'bundled' );
 		if ( ! $bundles ) {
-			$bundles = array();
+			$bundles = [];
 		}
-		$contexts = $bundles;
+		$contexts   = $bundles;
 		$contexts[] = $this->patcher->get_args( 'context' );
 
 		$this->patches = Fusion_Patcher_Client::get_patches( $this->patcher->get_args() );
@@ -183,7 +181,7 @@ class Fusion_Patcher_Checker {
 		}
 
 		// Get an array of the already applied patches.
-		$this->applied_patches = get_site_option( 'fusion_applied_patches', array() );
+		$this->applied_patches = get_site_option( 'fusion_applied_patches', [] );
 
 		if ( $this->checked ) {
 			return (int) $this->new_patches;
@@ -199,11 +197,11 @@ class Fusion_Patcher_Checker {
 					continue;
 				}
 
-				if ( in_array( $file_patch['context'], $contexts ) ) {
+				if ( in_array( $file_patch['context'], $contexts ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 					$valid_patch = true;
 				}
 			}
-			if ( $valid_patch && ! in_array( $patch_id, $this->applied_patches ) ) {
+			if ( $valid_patch && ! in_array( $patch_id, $this->applied_patches ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 				$this->new_patches++;
 			}
 		}

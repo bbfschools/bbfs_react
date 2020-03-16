@@ -1,4 +1,7 @@
-/* global FusionPageBuilderApp, fusionBuilderGetContent, fusionBuilderText, console, fusionHistoryState */
+/* global FusionPageBuilderApp, fusionBuilderGetContent, fusionBuilderText, fusionHistoryState */
+/* eslint no-native-reassign: 0 */
+/* eslint no-global-assign: 0 */
+
 /*
  * Adds undo and redo functionality to the Fusion Page Builder
  */
@@ -44,10 +47,10 @@
 			allElements = fusionBuilderGetContent( 'content', true );
 
 			// Add editor data to Array
-			fusionCommands[currStep] = allElements;
+			fusionCommands[ currStep ] = allElements;
 
 			// Add history state
-			fusionCommandsStates[currStep] = fusionHistoryState;
+			fusionCommandsStates[ currStep ] = fusionHistoryState;
 
 			// Update buttons
 			fusionHistoryManager.updateButtons();
@@ -172,7 +175,7 @@
 		}
 
 		// Get data
-		stepData = fusionCommands[step];
+		stepData = fusionCommands[ step ];
 
 		// Remove all current editor elements first
 		FusionPageBuilderApp.clearBuilderLayout();
@@ -285,4 +288,4 @@
 		}
 	};
 
-} ( jQuery ) );
+}( jQuery ) );

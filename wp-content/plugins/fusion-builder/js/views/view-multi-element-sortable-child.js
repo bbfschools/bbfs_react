@@ -1,4 +1,4 @@
-/* global FusionPageBuilderEvents, FusionPageBuilderViewManager, FusionPageBuilderApp */
+/* global FusionPageBuilderEvents, FusionPageBuilderViewManager, FusionPageBuilderApp, fusionBuilderText */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -92,7 +92,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			updatePreview: function() {
 				var $title,
 					$attributes = this.model.attributes,
-					$model      = this.model;
+					$model      = this.model,
+					$image,
+					$extension,
+					objImg;
 
 				if ( 'undefined' !== typeof $attributes ) {
 					$title = '';
@@ -100,13 +103,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						$title = $attributes.params.title;
 					} else if ( 'fusion_flip_box' === $model.get( 'element_type' ) && 'undefined' !== typeof $attributes.params.title_front && $attributes.params.title_front.length ) {
 						$title = $attributes.params.title_front;
-					} else if ( 'undefined' !== typeof $attributes.params.image && $attributes.params.image.length ) {
+					} else if ( 'fusion_testimonial' === $model.get( 'element_type' ) && 'undefined' !== typeof $attributes.params.name && $attributes.params.name.length ) {
+						$title = $attributes.params.name;
+
+						if ( 'undefined' !== typeof $attributes.params.company && $attributes.params.company.length ) {
+							$title += ', ' + $attributes.params.company;
+						}
+					} else if ( 'fusion_testimonial' === $model.get( 'element_type' ) && 'undefined' !== typeof $attributes.params.name && $attributes.params.name.length ) {
+						$title = $attributes.params.name;
+					} else if ( 'undefined' !== typeof $attributes.params.image && $attributes.params.image.length &&  'fusion_testimonial' !== $model.get( 'element_type' ) ) {
 						$title = $attributes.params.image;
+						$image = $title;
 
 						// If contains backslash, retreive only last part.
 						if ( -1 !== $title.indexOf( '/' ) && -1 === $title.indexOf( '[' ) ) {
 							$title = $title.split( '/' );
-							$title = $title.slice( -1 )[0];
+							$title = $title.slice( -1 )[ 0 ];
+						}
+
+						if ( _.isEmpty( $title ) ) {
+							$title = fusionBuilderText.image;
 						}
 					} else if ( 'undefined' !== typeof $attributes.params.video && $attributes.params.video.length ) {
 						$title = $attributes.params.video;
@@ -118,8 +134,29 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					$title = jQuery( '<div/>' ).html( $title ).text();
 					$title = jQuery( '<div/>' ).html( $title ).text();
 					if ( $title ) {
-						$title = ( 15  < $title.length ) ? $title.substring( 0, 15 ) + '...' : $title;
-						jQuery( 'li[data-cid=' + $model.get( 'cid' ) + '] .multi-element-child-name' ).text( $title );
+						$title = '<span class="fusion-child-name-label">' + $title + '</span>';
+
+						if ( ! _.isEmpty( $image ) ) {
+							$extension = $image.substr( $image.lastIndexOf( '.' ) );
+
+							if ( 0 === $extension.indexOf( '.' ) ) {
+								$image = $image.replace( /-\d+x\d+\./, '.' );
+								$image = $image.replace( $extension, '-66x66' + $extension );
+							}
+
+							objImg = new Image();
+							objImg.src = $image;
+							objImg.onload = function() {
+								$title = '<img class="fusion-child-element-image" src="' + $image + '" >' + $title;
+								jQuery( 'li[data-cid=' + $model.get( 'cid' ) + '] .multi-element-child-name' ).html( $title );
+							};
+							objImg.onerror = function() {
+								$title = '<span class="fusion-image-placeholder fusiona fusiona-image"></span>' + $title;
+								jQuery( 'li[data-cid=' + $model.get( 'cid' ) + '] .multi-element-child-name' ).html( $title );
+							};
+						} else {
+							jQuery( 'li[data-cid=' + $model.get( 'cid' ) + '] .multi-element-child-name' ).html( $title );
+						}
 					}
 				}
 			},
@@ -137,4 +174,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.1.0
@@ -12,7 +12,7 @@
 
 global $product, $woocommerce;
 
-$items_in_cart = array();
+$items_in_cart = [];
 
 if ( $woocommerce->cart && $woocommerce->cart->get_cart() && is_array( $woocommerce->cart->get_cart() ) ) {
 	foreach ( $woocommerce->cart->get_cart() as $cart ) {
@@ -20,12 +20,12 @@ if ( $woocommerce->cart && $woocommerce->cart->get_cart() && is_array( $woocomme
 	}
 }
 
-$id             = get_the_ID();
+$id             = get_the_ID(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 $in_cart        = in_array( $id, $items_in_cart );
 $size           = 'shop_catalog';
 $post_permalink = get_permalink();
 
 ?>
 <div class="fusion-clean-product-image-wrapper <?php echo ( $in_cart ) ? 'fusion-item-in-cart' : ''; ?>">
-	<?php echo fusion_render_first_featured_image_markup( $id, $size, $post_permalink, true, false, true, 'disable', 'disable', '', '', 'yes', true ); // WPCS: XSS ok. ?>
+	<?php echo fusion_render_first_featured_image_markup( $id, $size, $post_permalink, true, false, true, 'disable', 'disable', '', '', 'yes', true ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 </div>

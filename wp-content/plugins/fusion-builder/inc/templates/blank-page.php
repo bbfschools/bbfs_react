@@ -1,9 +1,27 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-blank-page-template">
 	<div class="fusion-builder-blank-page-content fusion-builder-data-cid" data-cid="{{ cid }}">
-		<h3 class="title">{{ fusionBuilderText.to_get_started }}</h3>
+		<h3 class="title">
+			<?php if ( 'fusion_tb_section' === get_post_type() && 'page_title_bar' === wp_get_post_terms( get_the_ID(), 'fusion_tb_category' )[0]->slug ) : ?>
+				{{ fusionBuilderText.to_get_started_ptb }}
+			<?php elseif ( 'fusion_tb_section' === get_post_type() && 'footer' === wp_get_post_terms( get_the_ID(), 'fusion_tb_category' )[0]->slug ) : ?>
+				{{ fusionBuilderText.to_get_started_footer }}
+			<?php else : ?>
+				{{ fusionBuilderText.to_get_started }}
+			<?php endif; ?>
+		</h3>
 		<h4 class="subtitle">{{ fusionBuilderText.to_get_started_sub }}</h4>
 		<a href="#" class="fusion-builder-new-section-add fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.full_width_section }}</a>
-		<a href="#" id="fusion-load-template-dialog" class="fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.pre_built_page }}</a>
+		<?php if ( 'fusion_tb_section' !== get_post_type() || 'content' === wp_get_post_terms( get_the_ID(), 'fusion_tb_category' )[0]->slug ) : ?>
+			<a href="#" id="fusion-load-template-dialog" class="fusion-builder-submit-button"><span class="fusiona-plus"></span> {{ fusionBuilderText.pre_built_page }}</a>
+		<?php endif; ?>
 	</div>
 
 	<div class="fusion-builder-blank-page-info fusion-builder-blank-page-icons">
@@ -27,7 +45,7 @@
 	</div>
 
 	<div id="video-dialog" title="{{{ fusionBuilderText.getting_started_video }}}">
-		<p><iframe width="560" height="315" src="https://www.youtube.com/embed/UDyNsnB_COA?rel=0" frameborder="0" allowfullscreen></iframe></p>
+		<p><iframe width="560" height="315" src="https://www.youtube.com/embed/569TlvRLn90?rel=0&enablejsapi=1" frameborder="0" allowfullscreen></iframe></p>
 	</div>
 </div>
 

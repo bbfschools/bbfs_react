@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.0.0
@@ -36,7 +36,7 @@ class Fusion_Builder_Filters {
 	 * @since 5.0.0
 	 * @var array
 	 */
-	private static $shortcode_option_map_descriptions = array();
+	private static $shortcode_option_map_descriptions = [];
 
 	/**
 	 * Access the single instance of this class.
@@ -62,11 +62,28 @@ class Fusion_Builder_Filters {
 	 */
 	private function __construct() {
 
-		add_filter( 'fusion_builder_option_value', array( $this, 'set_builder_values' ), 10, 3 );
-		add_filter( 'fusion_builder_option_dependency', array( $this, 'set_builder_dependencies' ), 10, 3 );
-		add_filter( 'fusion_builder_import_message', array( $this, 'add_builder_import_message' ) );
-		add_filter( 'fusion_builder_import_title', array( $this, 'add_builder_import_title' ) );
-		add_filter( 'fusion_builder_width_hundred_percent', array( $this, 'is_post_width_hundred_percent' ) );
+		add_filter( 'fusion_builder_option_value', [ $this, 'set_builder_values' ], 10, 3 );
+		add_filter( 'fusion_builder_option_dependency', [ $this, 'set_builder_dependencies' ], 10, 3 );
+		add_filter( 'fusion_builder_import_message', [ $this, 'add_builder_import_message' ] );
+		add_filter( 'fusion_builder_import_title', [ $this, 'add_builder_import_title' ] );
+		add_filter( 'fusion_builder_width_hundred_percent', [ $this, 'is_post_width_hundred_percent' ] );
+		add_filter( 'fusion_button_extras', [ $this, 'custom_color_extras' ] );
+	}
+
+	/**
+	 * Set the custom color schemes for button view.
+	 *
+	 * @access public
+	 * @since   6.0.0
+	 * @param   array $extras extra params for view.
+	 */
+	public function custom_color_extras( $extras ) {
+		if ( get_option( 'avada_custom_color_schemes' ) ) {
+			$extras['custom_color_schemes'] = get_option( 'avada_custom_color_schemes' );
+		}
+
+		return $extras;
+
 	}
 
 	/**
@@ -81,10 +98,10 @@ class Fusion_Builder_Filters {
 	 */
 	public function set_builder_values( $value, $shortcode, $option ) {
 
-		$shortcode_option_map = array();
+		$shortcode_option_map = [];
 
 		// If needs custom color schemes, add in.
-		if ( ( 'color' === $option && 'fusion_button' == $shortcode ) || ( 'buttoncolor' === $option && 'fusion_tagline_box' == $shortcode ) ) {
+		if ( ( 'color' === $option && 'fusion_button' === $shortcode ) || ( 'buttoncolor' === $option && 'fusion_tagline_box' === $shortcode ) ) {
 			return Avada()->settings->get_custom_color_schemes( $value );
 		}
 		return $value;
@@ -101,46 +118,46 @@ class Fusion_Builder_Filters {
 	 * @return array  dependency checks.
 	 */
 	public function set_builder_dependencies( $dependencies, $shortcode, $option ) {
-		$shortcode_option_map = array();
+		$shortcode_option_map = [];
 
 		// Sharing box.
-		$shortcode_option_map['icons_boxed_radius']['fusion_sharing'][] = array(
-			'check' => array(
+		$shortcode_option_map['icons_boxed_radius']['fusion_sharing'][] = [
+			'check'  => [
 				'theme-option' => 'social_links_boxed',
-				'value' => '0',
-				'operator' => '==',
-			),
-			'output' => array(
-				'element' => 'icons_boxed',
-				'value' => '',
+				'value'        => '0',
+				'operator'     => '==',
+			],
+			'output' => [
+				'element'  => 'icons_boxed',
+				'value'    => '',
 				'operator' => '!=',
-			),
-		);
-		$shortcode_option_map['box_colors']['fusion_sharing'][] = array(
-			'check' => array(
+			],
+		];
+		$shortcode_option_map['box_colors']['fusion_sharing'][]         = [
+			'check'  => [
 				'theme-option' => 'social_links_boxed',
-				'value' => '0',
-				'operator' => '==',
-			),
-			'output' => array(
-				'element' => 'icons_boxed',
-				'value' => '',
+				'value'        => '0',
+				'operator'     => '==',
+			],
+			'output' => [
+				'element'  => 'icons_boxed',
+				'value'    => '',
 				'operator' => '!=',
-			),
-		);
+			],
+		];
 
 		// If has TO related dependency, do checks.
 		if ( isset( $shortcode_option_map[ $option ][ $shortcode ] ) && is_array( $shortcode_option_map[ $option ][ $shortcode ] ) ) {
 			foreach ( $shortcode_option_map[ $option ][ $shortcode ] as $option_check ) {
 				$option_value = Avada()->settings->get( $option_check['check']['theme-option'] );
-				$pass = false;
+				$pass         = false;
 
 				// Check the result of check.
-				if ( '==' == $option_check['check']['operator'] ) {
-					$pass = ( $option_value == $option_check['check']['value'] ) ? true : false;
+				if ( '==' === $option_check['check']['operator'] ) {
+					$pass = (bool) ( $option_value == $option_check['check']['value'] ); // phpcs:ignore WordPress.PHP.StrictComparisons
 				}
-				if ( '!=' == $option_check['check']['operator'] ) {
-					$pass = ( $option_value != $option_check['check']['value'] ) ? true : false;
+				if ( '!=' === $option_check['check']['operator'] ) {
+					$pass = (bool) ( $option_value != $option_check['check']['value'] ); // phpcs:ignore WordPress.PHP.StrictComparisons
 				}
 
 				// If check passes then add dependency for checking.
@@ -208,11 +225,21 @@ class Fusion_Builder_Filters {
 	public function is_post_width_hundred_percent() {
 		global $post;
 
-		if ( ( ( '1' === fusion_library()->get_option( 'portfolio_width_100' ) || 'yes' === fusion_library()->get_option( 'portfolio_width_100' ) ) && 'avada_portfolio' === get_post_type( $post ) ) ||
-			( ( '1' === fusion_library()->get_option( 'blog_width_100' ) || 'yes' === fusion_library()->get_option( 'blog_width_100' ) ) && 'post' === get_post_type( $post ) ) ) {
-			return true;
+		$post_type = get_post_type( $post );
+
+		switch ( $post_type ) {
+			case 'avada_portfolio':
+				return (bool) fusion_get_option( 'portfolio_width_100' );
+
+			case 'post':
+				return (bool) fusion_get_option( 'blog_width_100' );
+
+			case 'product':
+				return (bool) fusion_get_option( 'product_width_100' );
+
+			default:
+				return ( 'yes' === fusion_data()->post_meta( $post->ID )->get( 'blog_width_100' ) );
 		}
-		return false;
 	}
 }
 

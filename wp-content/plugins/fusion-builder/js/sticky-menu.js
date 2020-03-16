@@ -1,4 +1,9 @@
-! function( name, definition ) {
+/* global define */
+/* jshint -W062 */
+/* eslint no-undef: 0 */
+/* eslint guard-for-in: 0 */
+/* eslint no-shadow: 0 */
+! ( function( name, definition ) {
 
 	if ( 'undefined' !== typeof module && module.exports ) {
 		module.exports = definition();
@@ -25,7 +30,7 @@
 				'border-top': topBorderSize + 'px solid #ffffff',
 				'z-index': 999
 			},
-			requiredOriginalStyles = ['position', 'top', 'left', 'z-index', 'border-top'],
+			requiredOriginalStyles = [ 'position', 'top', 'left', 'z-index', 'border-top' ],
 			originalStyles = {},
 			onscroll,
 			onresize;
@@ -33,7 +38,7 @@
 		requiredOriginalStyles.forEach( function( key ) {
 			originalStyles[ key ]  = el.style[ key ];
 			originalStyles.width = '100%';
-		});
+		} );
 
 		jQuery( '.fusion-builder-history-list' ).css( 'max-height', jQuery( window ).height() - 100 );
 
@@ -54,11 +59,11 @@
 
 		window.onresize = function( event ) {
 			var parentWidth            = jQuery( '#fusion_builder_container' ).outerWidth() + 'px',
-					mainContainerTopBefore = $mainContainer.top;
+				mainContainerTopBefore = $mainContainer.top;
 			originalRect       = calcRect( el );
 
 			if ( 'undefined' !== typeof $mainContainerRect && $mainContainerRect.top !== mainContainerTopBefore ) {
-				el.style['position'] = 'absolute';
+				el.style.position = 'absolute';
 				originalRect         = calcRect( el );
 			}
 
@@ -82,8 +87,8 @@
 				left,
 				key;
 
-				$mainContainerRect   = calcRect( $mainContainer );
-				$mainContainerHeight = ( 'fixed' === jQuery( '#fusion_builder_controls' ).css( 'position' ) ) ? $mainContainerRect.height + originalRect.height - $builderControlsHeight : $mainContainerRect.height;
+			$mainContainerRect   = calcRect( $mainContainer );
+			$mainContainerHeight = ( 'fixed' === jQuery( '#fusion_builder_controls' ).css( 'position' ) ) ? $mainContainerRect.height + originalRect.height - $builderControlsHeight : $mainContainerRect.height;
 
 			jQuery( '.fusion-builder-history-list' ).css( 'max-height', jQuery( window ).height() - 100 );
 			if ( getWindowScroll().top > originalRect.top - requiredTop - topBorderSize && getWindowScroll().top + requiredTop + topBorderSize + originalRect.height < $mainContainerRect.top + $mainContainerHeight ) {
@@ -97,14 +102,14 @@
 					el.style[ key ] = styles[ key ];
 				}
 
-				jQuery( '.fusion-builder-update-buttons' ).stop().animate( { 'bottom': 0 }, 100 );
+				jQuery( '.fusion-builder-update-buttons' ).stop().animate( { bottom: 0 }, 100 );
 			} else {
 				for ( key in originalStyles ) {
 					el.style[ key ] = originalStyles[ key ];
 				}
 
 				if ( getWindowScroll().top + requiredTop + topBorderSize + originalRect.height < $mainContainerRect.top ) {
-					jQuery( '.fusion-builder-update-buttons' ).stop().animate( { 'bottom': '-50px' }, 100 );
+					jQuery( '.fusion-builder-update-buttons' ).stop().animate( { bottom: '-50px' }, 100 );
 				}
 			}
 		}
@@ -118,7 +123,7 @@
 			// If the whole panel is collapsed, the top position needs checked from the heading
 			top = rect.top + windowScroll.top;
 			if ( jQuery( el ).parents( '#fusion_builder_layout' ).hasClass( 'closed' ) ) {
-				headingRect = jQuery( el ).parents( '#fusion_builder_layout' ).find( '.ui-sortable-handle' )[0].getBoundingClientRect();
+				headingRect = jQuery( el ).parents( '#fusion_builder_layout' ).find( '.ui-sortable-handle' )[ 0 ].getBoundingClientRect();
 				top =  headingRect.top + headingRect.height + windowScroll.top;
 			}
 
@@ -137,4 +142,4 @@
 			};
 		}
 	};
-});
+} ) );

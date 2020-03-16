@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      3.8
@@ -85,10 +85,9 @@ class Avada_Helper {
 	 * @return  string
 	 */
 	public static function get_slider_type( $post_id, $is_archive = false ) {
-		if ( true === $is_archive ) {
-			$fusion_taxonomy_options = get_term_meta( $post_id, 'fusion_taxonomy_options', true );
-		}
-		return ( true === $is_archive ? self::get_fusion_tax_meta( $fusion_taxonomy_options, 'slider_type' ) : get_post_meta( $post_id, 'pyre_slider_type', true ) );
+		return ( true === $is_archive )
+			? fusion_data()->term_meta( $post_id )->get( 'slider_type' )
+			: fusion_data()->post_meta( $post_id )->get( 'slider_type' );
 	}
 
 	/**
@@ -125,7 +124,7 @@ class Avada_Helper {
 	 * @param array $values The CSS values we want to merge.
 	 * @return  int In pixels.
 	 */
-	public static function merge_to_pixels( $values = array() ) {
+	public static function merge_to_pixels( $values = [] ) {
 		$final_value = 0;
 		foreach ( $values as $value ) {
 			if ( false !== strpos( $value, '%' ) ) {
@@ -170,21 +169,6 @@ class Avada_Helper {
 	}
 
 	/**
-	 * Check if we're in an events archive.
-	 *
-	 * @access public
-	 * @static
-	 * @param int|null $post_id The post ID.
-	 * @return bool
-	 */
-	public static function is_events_archive( $post_id = null ) {
-		if ( is_post_type_archive( 'tribe_events' ) || ( self::tribe_is_event( $post_id ) && is_archive() ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Checks if currently an admin post screen is viewed.
 	 *
 	 * @static
@@ -203,13 +187,13 @@ class Avada_Helper {
 
 		// Edit post screen.
 		if ( 'edit' === $type ) {
-			return in_array( $pagenow, array( 'post.php' ) );
+			return in_array( $pagenow, [ 'post.php' ] );
 			// New post screen.
 		} elseif ( 'new' === $type ) {
-			return in_array( $pagenow, array( 'post-new.php' ) );
+			return in_array( $pagenow, [ 'post-new.php' ] );
 			// Edit or new post screen.
 		} else {
-			return in_array( $pagenow, array( 'post.php', 'post-new.php', 'admin-ajax.php' ) );
+			return in_array( $pagenow, [ 'post.php', 'post-new.php', 'admin-ajax.php' ] );
 		}
 
 	}
@@ -223,7 +207,7 @@ class Avada_Helper {
 	 */
 	public static function init_filesystem() {
 
-		$credentials = array();
+		$credentials = [];
 
 		if ( ! defined( 'FS_METHOD' ) ) {
 			define( 'FS_METHOD', 'direct' );
@@ -269,74 +253,6 @@ class Avada_Helper {
 	}
 
 	/**
-	 * Check if we're on a WooCommerce page.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.1.0
-	 * @return bool
-	 */
-	public static function is_woocommerce() {
-
-		if ( function_exists( 'is_woocommerce' ) ) {
-			return (bool) is_woocommerce();
-		}
-		return false;
-
-	}
-
-	/**
-	 * Check if we're on a bbPress page.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.1.0
-	 * @return bool
-	 */
-	public static function is_bbpress() {
-
-		if ( function_exists( 'is_bbpress' ) ) {
-			return (bool) is_bbpress();
-		}
-		return false;
-
-	}
-
-	/**
-	 * Check if we're on a bbPress forum archive.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.1.0
-	 * @return bool
-	 */
-	public static function bbp_is_forum_archive() {
-
-		if ( function_exists( 'bbp_is_forum_archive' ) ) {
-			return (bool) bbp_is_forum_archive();
-		}
-		return false;
-
-	}
-
-	/**
-	 * Check if we're on a bbPress topic archive.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.1.0
-	 * @return bool
-	 */
-	public static function bbp_is_topic_archive() {
-
-		if ( function_exists( 'bbp_is_topic_archive' ) ) {
-			return (bool) bbp_is_topic_archive();
-		}
-		return false;
-
-	}
-
-	/**
 	 * Check if we're on a bbPress user's home.
 	 *
 	 * @static
@@ -371,23 +287,6 @@ class Avada_Helper {
 	}
 
 	/**
-	 * Check if we're on a bbPress search-results page.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.1.0
-	 * @return bool
-	 */
-	public static function bbp_is_search() {
-
-		if ( function_exists( 'bbp_is_search' ) ) {
-			return (bool) bbp_is_search();
-		}
-		return false;
-
-	}
-
-	/**
 	 * Check if we're on a buddyPress page.
 	 *
 	 * @static
@@ -405,34 +304,23 @@ class Avada_Helper {
 	}
 
 	/**
-	 * Check if we're on an Event post.
+	 * Retrieves header color for post id.
 	 *
 	 * @static
 	 * @access public
-	 * @since 5.1.0
-	 * @param int|null $post_id The post ID.
-	 * @return bool
-	 */
-	public static function tribe_is_event( $post_id = null ) {
-		if ( function_exists( 'tribe_is_event' ) ) {
-			return tribe_is_event( $post_id );
-		}
-		return false;
-
-	}
-
-	/**
-	 * Retrieves metadata for a term.
-	 *
-	 * @static
-	 * @access public
-	 * @since 5.3
-	 * @param array  $fusion_taxonomy_options array of all taxonomy options.
-	 * @param string $option_name             name of option.
+	 * @since 5.7
+	 * @param int  $post_id The post ID.
+	 * @param bool $mobile  Whether we want mobile color or not.
 	 * @return string
 	 */
-	public static function get_fusion_tax_meta( $fusion_taxonomy_options = array(), $option_name ) {
-		return isset( $fusion_taxonomy_options[ $option_name ] ) ? $fusion_taxonomy_options[ $option_name ] : '';
+	public static function get_header_color( $post_id = false, $mobile = false ) {
+		if ( ! $post_id ) {
+			$post_id = Avada()->fusion_library->get_page_id();
+		}
+
+		$is_archive = false !== strpos( $post_id, 'archive' ) || false === $post_id;
+		$option     = ( $mobile ) ? 'mobile_header_bg_color' : 'header_bg_color';
+		return Fusion_Sanitize::color( fusion_get_option( $option ) );
 	}
 }
 

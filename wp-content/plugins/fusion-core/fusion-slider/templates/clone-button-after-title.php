@@ -10,9 +10,9 @@
 ?>
 <div id="fusion-slide-clone">
 	<?php
-	$post_id = 0;
-	if ( isset( $_GET['post'] ) ) {
-		$post_id = wp_unslash( $_GET['post'] ); // WPCS: sanitization ok.
+	$post_id = 0; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+	if ( isset( $_GET['post'] ) ) { // phpcs:ignore WordPress.Security
+		$post_id = wp_unslash( $_GET['post'] ); // phpcs:ignore WordPress.Security
 	}
 	?>
 	<a href="<?php echo esc_url_raw( $this->get_slide_clone_link( $post_id ) ); ?>" class="button">

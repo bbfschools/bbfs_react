@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-next-page-template">
 	<div class="fusion-builder-section-header">
 		<div class="fusion-builder-next-page-title">

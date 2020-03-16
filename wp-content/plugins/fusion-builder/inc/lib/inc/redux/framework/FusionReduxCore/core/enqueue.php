@@ -210,7 +210,7 @@
 				// Select3 JS
 				//*****************************************************************
 
-				// JWp6 plugin giving us problems.  They need to update.
+				// JWp6 plugin giving us problems. They need to update.
 				if (  wp_script_is ( 'jquerySelect3' )) {
 					wp_deregister_script( 'jquerySelect3' );
 					wp_dequeue_script('jquerySelect3');
@@ -263,17 +263,15 @@
 				//*****************************************************************
 				// Vendor JS
 				//*****************************************************************
-				if ( $this->parent->args['dev_mode'] ) {
-					wp_register_script(
-						'fusionredux-vendor',
-						FusionReduxFramework::$_url . 'assets/js/vendor.min.js',
-						array( 'jquery' ),
-						$this->timestamp,
-						true
-					);
+				wp_register_script(
+					'fusionredux-vendor',
+					FusionReduxFramework::$_url . 'assets/js/vendor.min.js',
+					array( 'jquery' ),
+					$this->timestamp,
+					true
+				);
 
-					array_push( $depArray, 'fusionredux-vendor' );
-				}
+				array_push( $depArray, 'fusionredux-vendor' );
 
 				//*****************************************************************
 				// FusionRedux JS
@@ -286,11 +284,12 @@
 					true
 				);
 
+				$google_api = 'googleapis.com';
 				wp_enqueue_script(
 					'webfontloader',
-					'https://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js',
+					'https://ajax.' . $google_api . '/ajax/libs/webfont/1.6.26/webfont.js',
 					array( 'jquery' ),
-					'1.5.0',
+					'1.6.26',
 					true
 				);
 			}
@@ -453,7 +452,7 @@
 				 *
 				 * @param       string        save_pending string
 				 */
-				$save_pending = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/save_pending", __( 'You have changes that are not saved. Would you like to save them now?', 'Avada' ) );
+				$save_pending = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/save_pending", __( 'You have changes that are not saved. Would you like to save them now?', 'fusion-builder' ) );
 
 				/**
 				 * Reset all string
@@ -461,7 +460,7 @@
 				 *
 				 * @param       string        reset all string
 				 */
-				$reset_all = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset", __( 'Are you sure? Resetting will lose all custom values.', 'Avada' ) );
+				$reset_all = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset", __( 'Are you sure? Resetting will lose all custom values.', 'fusion-builder' ) );
 
 				/**
 				 * Reset section string
@@ -469,7 +468,7 @@
 				 *
 				 * @param       string        reset section string
 				 */
-				$reset_section = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset_section", __( 'Are you sure? Resetting will lose all custom values in this section.', 'Avada' ) );
+				$reset_section = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/reset_section", __( 'Are you sure? Resetting will lose all custom values in this section.', 'fusion-builder' ) );
 
 				/**
 				 * Preset confirm string
@@ -477,14 +476,14 @@
 				 *
 				 * @param       string        preset confirm string
 				 */
-				$preset_confirm = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/preset", __( 'Your current options will be replaced with the values of this preset. Would you like to proceed?', 'Avada' ) );
+				$preset_confirm = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize/preset", __( 'Your current options will be replaced with the values of this preset. Would you like to proceed?', 'fusion-builder' ) );
 				global $pagenow;
 				$this->parent->localize_data['args'] = array(
 					'save_pending'          => $save_pending,
 					'reset_confirm'         => $reset_all,
 					'reset_section_confirm' => $reset_section,
 					'preset_confirm'        => $preset_confirm,
-					'please_wait'           => __( 'Please Wait', 'Avada' ),
+					'please_wait'           => __( 'Please Wait', 'fusion-builder' ),
 					'opt_name'              => $this->parent->args['opt_name'],
 					'slug'                  => $this->parent->args['page_slug'],
 					'hints'                 => $this->parent->args['hints'],
@@ -495,8 +494,8 @@
 				);
 
 				$this->parent->localize_data['ajax'] = array(
-					'console' => __( 'There was an error saving. Here is the result of your action:', 'Avada' ),
-					'alert'   => __( 'There was a problem with your action. Please try again or reload the page.', 'Avada' ),
+					'console' => __( 'There was an error saving. Here is the result of your action:', 'fusion-builder' ),
+					'alert'   => __( 'There was a problem with your action. Please try again or reload the page.', 'fusion-builder' ),
 				);
 
 				$this->parent->localize_data = apply_filters( "fusionredux/{$this->parent->args['opt_name']}/localize", $this->parent->localize_data );

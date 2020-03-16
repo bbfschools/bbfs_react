@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -20,25 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="fusion-header-v6-content fusion-header-has-flyout-menu-content">
 			<?php
 			avada_logo();
-			$menu = avada_main_menu( true );
+			$menu = avada_main_menu( true ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 			?>
 
 			<div class="fusion-flyout-menu-icons">
-				<?php if ( class_exists( 'WooCommerce' ) && Avada()->settings->get( 'woocommerce_cart_link_main_nav' ) ) : ?>
-					<?php
-					global $woocommerce;
-
-					$cart_link_text  = '';
-					$cart_link_class = '';
-					if ( Avada()->settings->get( 'woocommerce_cart_counter' ) && $woocommerce->cart->get_cart_contents_count() ) {
-						$cart_link_text  = '<span class="fusion-widget-cart-number">' . $woocommerce->cart->get_cart_contents_count() . '</span>';
-						$cart_link_class = ' fusion-widget-cart-counter';
-					}
-					?>
-					<div class="fusion-flyout-cart-wrapper">
-						<a href="<?php echo esc_attr( get_permalink( get_option( 'woocommerce_cart_page_id' ) ) ); ?>" class="fusion-icon fusion-icon-shopping-cart<?php echo esc_attr( $cart_link_class ); ?>" aria-hidden="true" aria-label="<?php esc_attr_e( 'Toggle Shopping Cart', 'Avada' ); ?>"><?php echo $cart_link_text; // WPCS: XSS ok. ?></a>
-					</div>
-				<?php endif; ?>
+				<?php echo avada_flyout_menu_woo_cart(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
 				<?php if ( 'menu' === Avada()->settings->get( 'slidingbar_toggle_style' ) && Avada()->settings->get( 'slidingbar_widgets' ) ) : ?>
 					<?php $sliding_bar_label = esc_attr__( 'Toggle Sliding Bar', 'Avada' ); ?>
@@ -67,7 +53,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 
 		<div class="fusion-main-menu fusion-flyout-menu" role="navigation" aria-label="Main Menu">
-			<?php echo $menu; // WPCS: XSS ok. ?>
+			<?php echo $menu; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		</div>
 
 		<?php if ( Avada()->settings->get( 'main_nav_search_icon' ) || Avada()->settings->get( 'mobile_menu_search' ) ) : ?>

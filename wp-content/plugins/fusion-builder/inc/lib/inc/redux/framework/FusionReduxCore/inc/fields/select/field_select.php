@@ -80,7 +80,7 @@ if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 					$nameBrackets = "[]";
 				}
 
-				$placeholder = ( isset( $this->field['placeholder'] ) ) ? esc_attr( $this->field['placeholder'] ) : __( 'Select an item', 'Avada' );
+				$placeholder = ( isset( $this->field['placeholder'] ) ) ? esc_attr( $this->field['placeholder'] ) : __( 'Select an item', 'fusion-builder' );
 
 				if ( isset( $this->field['select3'] ) ) { // if there are any let's pass them to js
 					$select3_params = json_encode( $this->field['select3'] );
@@ -108,6 +108,10 @@ if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 
 				$sortable = ( isset( $this->field['sortable'] ) && $this->field['sortable'] ) ? ' select3-sortable"' : "";
 
+				if ( ! empty( $multi ) ) {
+					echo '<input type="hidden" name="' . $this->field['name'] . $this->field['name_suffix'] . '" value="fusion-theme-options-fake-value" />';
+				}
+
 				echo '<select ' . $multi . ' id="' . $this->field['id'] . '-select" data-placeholder="' . $placeholder . '" name="' . $this->field['name'] . $this->field['name_suffix'] . $nameBrackets . '" class="fusionredux-select-item ' . $this->field['class'] . $sortable . '"' . $width . ' rows="6">';
 				echo '<option></option>';
 
@@ -131,7 +135,7 @@ if ( ! class_exists( 'FusionReduxFramework_select' ) ) {
 
 				echo '</select>';
 			} else {
-				echo '<strong>' . __( 'No items of this type were found.', 'Avada' ) . '</strong>';
+				echo '<strong>' . __( 'No items of this type were found.', 'fusion-builder' ) . '</strong>';
 			}
 		} //function
 

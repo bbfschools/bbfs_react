@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      3.8
@@ -27,14 +27,8 @@ class Avada_Blog {
 	 */
 	public function __construct() {
 
-		add_filter( 'excerpt_length', array( $this, 'excerpt_length' ), 999 );
-		add_action( 'pre_get_posts', array( $this, 'alter_search_loop' ), 1 );
-
-		if ( ! is_admin() ) {
-			add_filter( 'pre_get_posts', array( $this, 'search_filter' ) );
-			add_filter( 'pre_get_posts', array( $this, 'empty_search_filter' ) );
-		}
-
+		add_filter( 'excerpt_length', [ $this, 'excerpt_length' ], 999 );
+		add_action( 'pre_get_posts', [ $this, 'alter_search_loop' ], 1 );
 	}
 
 	/**
@@ -65,11 +59,12 @@ class Avada_Blog {
 	 * @return void Content is directly echoed.
 	 */
 	public function render_post_content() {
-		if ( is_search() && ! Avada()->settings->get( 'search_excerpt' ) ) {
-			return;
-		}
 
-		echo fusion_get_post_content(); // WPCS: XSS ok.
+		if ( is_search() ) {
+			echo fusion_get_post_content( '', 'search' ); // phpcs:ignore WordPress.Security.EscapeOutput
+		} else {
+			echo fusion_get_post_content(); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 	}
 
 	/**
@@ -82,47 +77,6 @@ class Avada_Blog {
 		if ( ! is_admin() && $query->is_main_query() && $query->is_search() && Avada()->settings->get( 'search_results_per_page' ) ) {
 			$query->set( 'posts_per_page', Avada()->settings->get( 'search_results_per_page' ) );
 		}
-	}
-
-	/**
-	 * Apply filters to the search query.
-	 * Determines if we only want to display posts/pages and changes the query accordingly.
-	 *
-	 * @param  object $query The WP_Query object.
-	 * @return  object
-	 */
-	public function search_filter( $query ) {
-
-		if ( is_search() && $query->is_search ) {
-
-			// Show only posts in search results.
-			if ( 'Only Posts' === Avada()->settings->get( 'search_content' ) ) {
-				$query->set( 'post_type', 'post' );
-			} elseif ( 'Only Pages' === Avada()->settings->get( 'search_content' ) ) {
-				// Show only pages in search results.
-				$query->set( 'post_type', 'page' );
-			}
-		}
-
-		return $query;
-
-	}
-
-	/**
-	 * Make wordpress respect the search template on an empty search.
-	 *
-	 * @param  object $query The WP_Query object.
-	 * @return  object
-	 */
-	public function empty_search_filter( $query ) {
-
-		if ( isset( $_GET['s'] ) && empty( $_GET['s'] ) && $query->is_main_query() ) {
-			$query->is_search = true;
-			$query->is_home   = false;
-		}
-
-		return $query;
-
 	}
 
 	/**
@@ -144,8 +98,8 @@ class Avada_Blog {
 		$content = implode( ' ', $content );
 		$content = preg_replace( '~(?:\[/?)[^/\]]+/?\]~s', '', $content ); // Strip shortcodes and keep the content.
 		$content = str_replace( ']]>', ']]&gt;', $content );
-		$content = strip_tags( $content );
-		$content = str_replace( array( '"', "'" ), array( '&quot;', '&#39;' ), $content );
+		$content = strip_tags( $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags
+		$content = str_replace( [ '"', "'" ], [ '&quot;', '&#39;' ], $content );
 		$content = trim( $content );
 
 		return $content;
@@ -165,9 +119,9 @@ class Avada_Blog {
 		$content = '';
 
 		// Sanitizing the limit value.
-		$limit = ( ! $limit && 0 != $limit ) ? 285 : intval( $limit );
+		$limit = ( ! $limit && 0 !== $limit && '0' !== $limit ) ? 285 : intval( $limit );
 
-		$test_strip_html = ( 'true' == $strip_html || true == $strip_html ) ? true : false;
+		$test_strip_html = ( 'true' === $strip_html || true === $strip_html );
 
 		$custom_excerpt = false;
 
@@ -180,7 +134,7 @@ class Avada_Blog {
 
 		if ( $test_strip_html ) {
 
-			$more = 0;
+			$more        = 0; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 			$raw_content = wp_strip_all_tags( get_the_content( '{{read_more_placeholder}}' ), '<p>' );
 
 			// Strip out all attributes.
@@ -194,7 +148,7 @@ class Avada_Blog {
 			}
 		} else {
 
-			$more = 0;
+			$more        = 0; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 			$raw_content = get_the_content( $readmore );
 			if ( $post->post_excerpt || false !== $pos ) {
 				$raw_content    = ( ! $pos ) ? rtrim( get_the_excerpt(), '[&hellip;]' ) . $readmore : $raw_content;
@@ -207,10 +161,10 @@ class Avada_Blog {
 			$pattern = get_shortcode_regex();
 			$content = preg_replace_callback( "/$pattern/s", 'fusion_extract_shortcode_contents', $raw_content );
 
-			if ( 'Characters' == Avada()->settings->get( 'excerpt_base' ) ) {
+			if ( 'characters' === fusion_get_option( 'excerpt_base' ) ) {
 
 				$content  = mb_substr( $content, 0, $limit );
-				$content .= ( 0 != $limit && Avada()->settings->get( 'disable_excerpts' ) ) ? $readmore : '';
+				$content .= ( 0 !== $limit && Avada()->settings->get( 'disable_excerpts' ) ) ? $readmore : '';
 
 			} else {
 
@@ -221,7 +175,7 @@ class Avada_Blog {
 					array_pop( $content );
 					$content = implode( ' ', $content );
 					if ( Avada()->settings->get( 'disable_excerpts' ) ) {
-						$content .= ( 0 != $limit ) ? $readmore : '';
+						$content .= ( 0 !== $limit ) ? $readmore : '';
 					}
 				} else {
 
@@ -230,7 +184,7 @@ class Avada_Blog {
 				}
 			}
 
-			if ( 0 != $limit && ! $test_strip_html ) {
+			if ( 0 !== $limit && ! $test_strip_html ) {
 
 				$content = apply_filters( 'the_content', $content );
 				$content = str_replace( ']]>', ']]&gt;', $content );
@@ -240,18 +194,18 @@ class Avada_Blog {
 			}
 
 			$strip_html_class = ( $test_strip_html ) ? 'strip-html' : '';
-			$content = '<div class="excerpt-container ' . $strip_html_class . '">' . do_shortcode( $content ) . '</div>';
+			$content          = '<div class="excerpt-container ' . $strip_html_class . '">' . do_shortcode( $content ) . '</div>';
 
 			return $content;
 
-		} // End if().
+		}
 
-		if ( true == $custom_excerpt ) {
+		if ( $custom_excerpt ) {
 
 			$pattern = get_shortcode_regex();
 			$content = preg_replace_callback( "/$pattern/s", 'fusion_extract_shortcode_contents', $raw_content );
 
-			if ( true == $test_strip_html ) {
+			if ( $test_strip_html ) {
 
 				$content = apply_filters( 'the_content', $content );
 				$content = str_replace( ']]>', ']]&gt;', $content );
@@ -290,10 +244,9 @@ class Avada_Blog {
 			$theme_options_blog_var = 'search_layout';
 		} elseif ( is_archive() || is_author() ) {
 			$theme_options_blog_var = 'blog_archive_layout';
-
 		}
 
-		return str_replace( ' ', '-', strtolower( Avada()->settings->get( $theme_options_blog_var ) ) );
+		return str_replace( ' ', '-', Avada()->settings->get( $theme_options_blog_var ) );
 	}
 }
 

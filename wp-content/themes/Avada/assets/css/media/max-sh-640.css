@@ -1,3 +1,4 @@
+/* stylelint-disable no-descending-specificity */
 .fusion-body .fusion-page-title-bar {
   max-height: none;
 }
@@ -9,14 +10,12 @@
   margin: 0 0 20px;
   width: auto;
   height: auto;
-  -webkit-flex: 0 1 100%;
-      -ms-flex: 0 1 100%;
-          flex: 0 1 100%;
+  -ms-flex: 0 1 100%;
+      flex: 0 1 100%;
 }
 .fusion-body .fusion-blog-layout-medium .fusion-post-content {
-  -webkit-flex: 0 1 100%;
-      -ms-flex: 0 1 100%;
-          flex: 0 1 100%;
+  -ms-flex: 0 1 100%;
+      flex: 0 1 100%;
 }
 .fusion-body .fusion-blog-layout-large-alternate .fusion-post-content {
   margin: 0;
@@ -82,9 +81,6 @@
 }
 .timeline-layout {
   padding-top: 0 !important;
-}
-.social_links_shortcode li {
-  height: 40px !important;
 }
 .portfolio-masonry .portfolio-item {
   width: 100% !important;

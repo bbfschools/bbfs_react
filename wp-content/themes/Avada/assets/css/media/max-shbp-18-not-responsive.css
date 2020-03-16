@@ -2,7 +2,7 @@
 body.admin-bar #wrapper #slidingbar-area.fusion-sliding-bar-position-top {
   top: 46px;
 }
-body.body_blank.admin-bar {
+body.fusion-blank-page.admin-bar {
   top: 45px;
 }
 html #wpadminbar {

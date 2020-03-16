@@ -1,16 +1,18 @@
 <?php
-global $fusion_settings;
-if ( ! $fusion_settings ) {
-	$fusion_settings = Fusion_Settings::get_instance();
-}
+/**
+ * Underscore.js template.
+ *
+ * @package fusion-builder
+ */
 
-$border_size = $fusion_settings->get( 'chart_border_size' );
+$fusion_settings = fusion_get_fusion_settings();
+$border_size     = $fusion_settings->get( 'chart_border_size' );
 ?>
 <script type="text/template" id="fusion-builder-block-module-settings-chart-template">
 
 	<div class="fusion-builder-modal-top-container">
-		<# if ( typeof( fusionAllElements[atts.element_type] ) !== 'undefined' ) { #>
-				<h2>{{ fusionAllElements[atts.element_type].name }}</h2>
+		<# if ( 'undefined' !== typeof fusionAllElements[atts.element_type] ) { #>
+				<h2>{{ fusionAllElements[ atts.element_type ].name }}</h2>
 		<# }; #>
 
 		<div class="fusion-builder-modal-close fusiona-plus2"></div>
@@ -23,7 +25,7 @@ $border_size = $fusion_settings->get( 'chart_border_size' );
 	<div class="fusion-builder-modal-bottom-container">
 		<a href="#" class="fusion-builder-modal-save"><span>
 
-			<# if ( FusionPageBuilderApp.shortcodeGenerator === true && FusionPageBuilderApp.shortcodeGeneratorMultiElementChild !== true ) { #>
+			<# if ( true === FusionPageBuilderApp.shortcodeGenerator && true !== FusionPageBuilderApp.shortcodeGeneratorMultiElementChild ) { #>
 				{{ fusionBuilderText.insert }}
 			<# } else { #>
 				{{ fusionBuilderText.save }}

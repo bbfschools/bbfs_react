@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      4.0.0
@@ -22,322 +22,589 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return array
  */
 function avada_options_section_advanced( $sections ) {
-	$settings = get_option( Avada::get_option_name() );
 
-	// Is the JS compiler enabled?
-	$is_http2 = Fusion_Dynamic_JS::is_http2();
-	if ( $is_http2 ) {
-		$js_compiler_enabled = ( isset( $settings['js_compiler'] ) && ( '1' === $settings['js_compiler'] || 1 === $settings['js_compiler'] || true === $settings['js_compiler'] ) );
-	} else {
-		$js_compiler_enabled = ( ! isset( $settings['js_compiler'] ) || ( '1' === $settings['js_compiler'] || 1 === $settings['js_compiler'] || true === $settings['js_compiler'] ) );
-	}
-
-	$sections['advanced'] = array(
+	$sections['advanced'] = [
 		'label'    => esc_html__( 'Advanced', 'Avada' ),
 		'id'       => 'heading_advanced',
 		'is_panel' => true,
 		'priority' => 25,
 		'icon'     => 'el-icon-puzzle',
-		'fields'   => array(
-			'tracking_head_body_section' => array(
-				'label'       => esc_html__( 'Code Fields (Tracking etc.)', 'Avada' ),
-				'id'          => 'tracking_head_body_section',
-				'icon'        => true,
-				'type'        => 'sub-section',
-				'fields'      => array(
-					'google_analytics' => array(
+		'alt_icon' => 'fusiona-dashboard',
+		'fields'   => [
+			'tracking_head_body_section' => [
+				'label'  => esc_html__( 'Code Fields (Tracking etc.)', 'Avada' ),
+				'id'     => 'tracking_head_body_section',
+				'icon'   => true,
+				'type'   => 'sub-section',
+				'fields' => [
+					'google_analytics' => [
 						'label'       => esc_html__( 'Tracking Code', 'Avada' ),
 						'description' => esc_html__( 'Paste your tracking code here. This will be added into the header template of your theme. Place code inside &lt;script&gt; tags.', 'Avada' ),
 						'id'          => 'google_analytics',
 						'default'     => '',
 						'type'        => 'code',
-						'choices'     => array(
+						'choices'     => [
 							'language' => 'html',
 							'height'   => 300,
 							'theme'    => 'chrome',
-						),
-					),
-					'space_head' => array(
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'space_head'       => [
 						'label'       => esc_html__( 'Space before &lt;/head&gt;', 'Avada' ),
 						'description' => esc_html__( 'Only accepts javascript code wrapped with &lt;script&gt; tags and HTML markup that is valid inside the &lt;/head&gt; tag.', 'Avada' ),
 						'id'          => 'space_head',
 						'default'     => '',
 						'type'        => 'code',
-						'choices'     => array(
+						'choices'     => [
 							'language' => 'html',
 							'height'   => 350,
 							'theme'    => 'chrome',
-						),
-					),
-					'space_body' => array(
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'space_body'       => [
 						'label'       => esc_html__( 'Space before &lt;/body&gt;', 'Avada' ),
 						'description' => esc_html__( 'Only accepts javascript code, wrapped with &lt;script&gt; tags and valid HTML markup inside the &lt;/body&gt; tag.', 'Avada' ),
 						'id'          => 'space_body',
 						'default'     => '',
 						'type'        => 'code',
-						'choices'     => array(
+						'choices'     => [
 							'language' => 'html',
 							'height'   => 350,
 							'theme'    => 'chrome',
-						),
-					),
-				),
-			),
-			'theme_features_section' => array(
-				'label'       => esc_html__( 'Theme Features', 'Avada' ),
-				'id'          => 'theme_features_section',
-				'icon'        => true,
-				'type'        => 'sub-section',
-				'fields'      => array(
-					'dependencies_status' => array(
-						'label'       => esc_attr__( "Avada's Option Network Dependencies", 'Avada' ),
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+				],
+			],
+			'theme_features_section'     => [
+				'label'  => esc_html__( 'Theme Features', 'Avada' ),
+				'id'     => 'theme_features_section',
+				'icon'   => true,
+				'type'   => 'sub-section',
+				'fields' => [
+					'enable_language_updates'            => [
+						'label'       => esc_html__( 'Enable Language Updates', 'Avada' ),
+						'description' => esc_html__( 'If your site is using a language other than English, enabling this option will allow you to get updated language files for your locale as soon as they are available.', 'Avada' ),
+						'id'          => 'enable_language_updates',
+						'default'     => '1',
+						'type'        => 'switch',
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'dependencies_status'                => [
+						'label'       => esc_html__( "Avada's Option Network Dependencies", 'Avada' ),
 						'description' => esc_html__( "Avada's Option Network consists of Fusion Theme Options, Page Options, Builder options and each of them have dependent options ON by default. This means the only options you see are the only ones currently available for your selection. However, if you wish to disable this feature, simply turn this option off, and all dependencies will be disabled (requires save & refresh).", 'Avada' ),
 						'id'          => 'dependencies_status',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'pw_jpeg_quality' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'pw_jpeg_quality'                    => [
 						'label'       => esc_html__( 'WordPress jpeg Quality', 'Avada' ),
 						/* translators: "Regenerate Thumbnails" plugin link. */
 						'description' => sprintf( esc_html__( 'Controls the quality of the generated image sizes for every uploaded image. Ranges between 0 and 100 percent. Higher values lead to better image qualities but also higher file sizes. NOTE: After changing this value, please install and run the %s plugin once.', 'Avada' ), '<a target="_blank" href="' . admin_url( 'plugin-install.php?s=Regenerate+Thumbnails&tab=search&type=term' ) . '" title="' . esc_html__( 'Regenerate Thumbnails', 'Avada' ) . '">' . esc_html__( 'Regenerate Thumbnails', 'Avada' ) . '</a>' ),
 						'id'          => 'pw_jpeg_quality',
 						'default'     => '82',
 						'type'        => 'slider',
-						'choices'     => array(
+						'choices'     => [
 							'min'  => '1',
 							'max'  => '100',
 							'step' => '1',
-						),
-					),
-					'smooth_scrolling' => array(
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'smooth_scrolling'                   => [
 						'label'       => esc_html__( 'Smooth Scrolling', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable smooth scrolling. This will replace default browser scrollbar with a dark scrollbar.', 'Avada' ),
 						'id'          => 'smooth_scrolling',
 						'default'     => '0',
 						'type'        => 'switch',
-					),
-					'disable_code_block_encoding' => array(
+						'output'      => [
+
+							// Change the avadaNiceScrollVars.smooth_scrolling var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'choice'    => 'top',
+										'globalVar' => 'avadaNiceScrollVars',
+										'id'        => 'smooth_scrolling',
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'disable_code_block_encoding'        => [
 						'label'       => esc_html__( 'Code Block Encoding', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable encoding in the Fusion Builder code block and syntax highlighting elements.', 'Avada' ),
 						'id'          => 'disable_code_block_encoding',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'disable_megamenu' => array(
-						'label'       => esc_html__( 'Mega Menu', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable Avada\'s mega menu.', 'Avada' ),
-						'id'          => 'disable_megamenu',
-						'default'     => '1',
-						'type'        => 'switch',
-					),
-					'avada_rev_styles' => array(
-						'label'       => esc_html__( 'Avada Styles For Revolution Slider', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable the Avada styles and use the default Revolution Slider styles.', 'Avada' ),
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'disable_megamenu'                   => [
+						'label'           => esc_html__( 'Mega Menu', 'Avada' ),
+						'description'     => esc_html__( 'Turn on to enable Avada\'s mega menu.', 'Avada' ),
+						'id'              => 'disable_megamenu',
+						'default'         => '1',
+						'type'            => 'switch',
+						'partial_refresh' => [
+							'theme_features_disable_megamenu' => [
+								'selector'              => '.fusion-header-wrapper',
+								'container_inclusive'   => true,
+								'render_callback'       => [ 'Avada_Partial_Refresh_Callbacks', 'header' ],
+								'success_trigger_event' => 'header-rendered',
+							],
+						],
+					],
+					'avada_rev_styles'                   => [
+						'label'       => esc_html__( 'Avada Styles For Slider Revolution', 'Avada' ),
+						'description' => esc_html__( 'Turn on to enable the Avada styles and use the default Slider Revolution styles.', 'Avada' ),
 						'id'          => 'avada_rev_styles',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'avada_styles_dropdowns' => array(
+						'css_vars'    => [
+							[
+								'name'          => '--avada-rev-image-shadow-top',
+								'value_pattern' => 'url("' . Fusion_Sanitize::css_asset_url( Avada::$template_dir_url . '/assets/images/shadow-top.png' ) . '")',
+								'element'       => '.shadow-left',
+							],
+							[
+								'name'          => '--avada-rev-image-shadow-bottom',
+								'value_pattern' => 'url("' . Fusion_Sanitize::css_asset_url( Avada::$template_dir_url . '/assets/images/shadow-bottom.png' ) . '")',
+								'element'       => '.shadow-right',
+							],
+						],
+						'output'      => [
+							[
+								'element'           => 'helperElement',
+								'property'          => 'dummy',
+								'callback'          => [
+									'toggle_class',
+									[
+										'condition' => [ '', 'true' ],
+										'element'   => 'body',
+										'className' => 'avada-has-rev-slider-styles',
+									],
+
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+
+							// Change the avadaRevVars.avada_rev_styles var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'avadaRevVars',
+										'id'        => 'avada_rev_styles',
+										'trigger'   => [ 'DestoryRevStyle', 'AddRevStyles' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'avada_styles_dropdowns'             => [
 						'label'       => esc_html__( 'Avada Dropdown Styles', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable the Avada styles for dropdown/select fields site wide. This should be done if you experience any issues with 3rd party plugin dropdowns.', 'Avada' ),
 						'id'          => 'avada_styles_dropdowns',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'use_animate_css' => array(
-						'label'       => esc_html__( 'CSS Animations', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable CSS animations on elements.', 'Avada' ),
-						'id'          => 'use_animate_css',
-						'default'     => '1',
-						'type'        => 'switch',
-					),
-					'disable_mobile_animate_css' => array(
-						'label'       => esc_html__( 'CSS Animations on Mobiles', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable CSS animations on mobiles.', 'Avada' ),
-						'id'          => 'disable_mobile_animate_css',
-						'default'     => '0',
-						'type'        => 'switch',
-					),
-					'disable_mobile_image_hovers' => array(
+						'output'      => [
+							[
+								'element'           => 'helperElement',
+								'property'          => 'dummy',
+								'callback'          => [
+									'toggle_class',
+									[
+										'condition' => [ '', 'true' ],
+										'element'   => 'body',
+										'className' => 'avada-dropdown-styles',
+									],
+
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+
+							// Change the avadaSelectVars.avada_drop_down var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'avadaSelectVars',
+										'id'        => 'avada_drop_down',
+										'trigger'   => [ 'DestoryAvadaSelect', 'AddAvadaSelect' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'disable_mobile_image_hovers'        => [
 						'label'       => esc_html__( 'CSS Image Hover Animations on Mobiles', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable CSS image hover animations on mobiles.', 'Avada' ),
 						'id'          => 'disable_mobile_image_hovers',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_yt' => array(
+						'output'      => [
+
+							// Change the avadaNiceScrollVars.smooth_scrolling var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'avadaMobileImageVars',
+										'id'        => 'disable_mobile_image_hovers',
+										'trigger'   => [ 'fusionDeactivateMobileImagHovers' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'status_yt'                          => [
 						'label'       => esc_html__( 'Youtube API Scripts', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable Youtube API scripts.', 'Avada' ),
 						'id'          => 'status_yt',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_vimeo' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+						'output'      => [
+							// This is for the fusionVideoBgVars.status_yt var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionVideoBgVars',
+										'id'        => 'status_yt',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionVideoGeneralVars',
+										'id'        => 'status_yt',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionFlexSliderVars',
+										'id'        => 'status_yt',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionBlogVars',
+										'id'        => 'status_yt',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'status_vimeo'                       => [
 						'label'       => esc_html__( 'Vimeo API Scripts', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable Vimeo API scripts.', 'Avada' ),
 						'id'          => 'status_vimeo',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_gmap' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+						'output'      => [
+							// This is for the fusionVideoBgVars.status_vimeo var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionVideoBgVars',
+										'id'        => 'status_vimeo',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionVideoGeneralVars',
+										'id'        => 'status_vimeo',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'fusionFlexSliderVars',
+										'id'        => 'status_vimeo',
+										'trigger'   => [ 'load' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'status_gmap'                        => [
 						'label'       => esc_html__( 'Google Map Scripts', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable google map.', 'Avada' ),
 						'id'          => 'status_gmap',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_totop' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'status_totop'                       => [
 						'label'       => esc_html__( 'ToTop Script', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable the ToTop script which adds the scrolling to top functionality.', 'Avada' ),
 						'id'          => 'status_totop',
-						'default'     => '1',
-						'type'        => 'switch',
-					),
-					'status_totop_mobile' => array(
-						'label'       => esc_html__( 'ToTop Script on mobile', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable the ToTop script on mobile devices.', 'Avada' ),
-						'id'          => 'status_totop_mobile',
-						'default'     => '0',
-						'type'        => 'switch',
-					),
-					'status_fusion_slider' => array(
+						'default'     => 'desktop',
+						'type'        => 'radio-buttonset',
+						'choices'     => [
+							'desktop_and_mobile' => esc_html__( 'Desktop & Mobile', 'Avada' ),
+							'desktop'            => esc_html__( 'Desktop', 'Avada' ),
+							'mobile'             => esc_html__( 'Mobile', 'Avada' ),
+							'off'                => esc_html__( 'Off', 'Avada' ),
+						],
+						'output'      => [
+							[
+								'element'           => 'helperElement',
+								'property'          => 'dummy',
+								'callback'          => [
+									'toggle_class',
+									[
+										'condition' => [ 'desktop', 'does-not-contain' ],
+										'element'   => 'body',
+										'className' => 'no-desktop-totop',
+									],
+
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+
+							// Change the avadaNiceScrollVars.smooth_scrolling var.
+							[
+								'element'           => 'helperElement',
+								'js_callback'       => [
+									'fusionGlobalScriptSet',
+									[
+										'globalVar' => 'avadaToTopVars',
+										'id'        => 'status_totop',
+										'trigger'   => [ 'scroll' ],
+									],
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'status_fusion_slider'               => [
 						'label'       => esc_html__( 'Fusion Slider', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable the fusion slider.', 'Avada' ),
 						'id'          => 'status_fusion_slider',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_eslider' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'status_eslider'                     => [
 						'label'       => esc_html__( 'Elastic Slider', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable the elastic slider.', 'Avada' ),
 						'id'          => 'status_eslider',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'status_fontawesome' => array(
-						'label'       => esc_html__( 'FontAwesome', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable font awesome icons.', 'Avada' ),
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'status_fontawesome'                 => [
+						'label'       => esc_html__( 'Font Awesome', 'Avada' ),
+						'description' => esc_html__( 'Choose which Font Awesome icon subsets you want to load. Note that Light subset can only be used if Font Awesome Pro is enabled.', 'Avada' ),
 						'id'          => 'status_fontawesome',
-						'default'     => '1',
+						'default'     => [ 'fab', 'far', 'fas' ],
+						'type'        => 'select',
+						'multi'       => true,
+						'choices'     => [
+							'fab' => esc_html__( 'Brands', 'Avada' ),
+							'far' => esc_html__( 'Regular', 'Avada' ),
+							'fas' => esc_html__( 'Solid', 'Avada' ),
+							'fal' => esc_html__( 'Light', 'Avada' ),
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'fontawesome_v4_compatibility'       => [
+						'label'       => esc_html__( 'Font Awesome v4 Compatibility', 'Avada' ),
+						'description' => esc_html__( 'Turn on to enable support for Font Awesome 4 icon code format.', 'Avada' ),
+						'id'          => 'fontawesome_v4_compatibility',
+						'default'     => '0',
 						'type'        => 'switch',
-					),
-					'status_opengraph' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'status_fontawesome_pro'             => [
+						'label'       => esc_html__( 'Font Awesome Pro', 'Avada' ),
+						/* translators: %1$s = license text & link. %2$s: whitelist text & link. */
+						'description' => sprintf( esc_html__( 'Font Awesome Pro %1$s is required and you need to %2$s your domain.', 'Avada' ), '<a href="https://fontawesome.com/buy/standard" target="_blank" rel="noopener noreferrer">license</a>', '<a href="https://fontawesome.com/account/cdn" target="_blank" rel="noopener noreferrer">whitelist</a>' ),
+						'id'          => 'status_fontawesome_pro',
+						'default'     => '0',
+						'type'        => 'switch',
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'status_outline'                     => [
+						'label'       => esc_html__( 'CSS Outlines', 'Avada' ),
+						'description' => esc_html__( 'Turn on to enable browser specific CSS element outlines used to improve accessibility.', 'Avada' ),
+						'id'          => 'status_outline',
+						'default'     => '0',
+						'type'        => 'switch',
+						'output'      => [
+							[
+								'element'           => 'helperElement',
+								'property'          => 'dummy',
+								'callback'          => [
+									'toggle_class',
+									[
+										'condition' => [ '', 'true' ],
+										'element'   => 'body',
+										'className' => 'fusion-disable-outline',
+									],
+
+								],
+								'sanitize_callback' => '__return_empty_string',
+							],
+						],
+					],
+					'status_opengraph'                   => [
 						'label'       => esc_html__( 'Open Graph Meta Tags', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable open graph meta tags which is mainly used when sharing pages on social networking sites like Facebook.', 'Avada' ),
+						'description' => __( 'Turn on to enable open graph meta tags which are mainly used when sharing pages on social networking sites like Facebook. <strong>IMPORTANT:</strong> Some optimization plugins, like e.g. Yoast SEO, add their own implementation of this, and if you want to use that, this option should be disabled.', 'Avada' ),
 						'id'          => 'status_opengraph',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'disable_date_rich_snippet_pages' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'disable_date_rich_snippet_pages'    => [
 						'label'       => esc_html__( 'Rich Snippets', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable rich snippets data site wide. If set to "On", you can also control individual items below. If set to "Off" all items will be disabled.', 'Avada' ),
 						'id'          => 'disable_date_rich_snippet_pages',
 						'default'     => '1',
 						'type'        => 'switch',
-					),
-					'disable_rich_snippet_title' => array(
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'disable_rich_snippet_title'         => [
 						'label'       => esc_html__( 'Rich Snippets Title', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable title rich snippet data site wide.', 'Avada' ),
 						'id'          => 'disable_rich_snippet_title',
 						'default'     => '1',
 						'type'        => 'switch',
-						'required'    => array(
-							array(
+						'required'    => [
+							[
 								'setting'  => 'disable_date_rich_snippet_pages',
 								'operator' => '==',
 								'value'    => '1',
-							),
-						),
-					),
-					'disable_rich_snippet_author' => array(
+							],
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'disable_rich_snippet_author'        => [
 						'label'       => esc_html__( 'Rich Snippets Author Info', 'Avada' ),
 						'description' => esc_html__( 'Turn on to enable author rich snippet data site wide.', 'Avada' ),
 						'id'          => 'disable_rich_snippet_author',
 						'default'     => '1',
 						'type'        => 'switch',
-						'required'    => array(
-							array(
+						'required'    => [
+							[
 								'setting'  => 'disable_date_rich_snippet_pages',
 								'operator' => '==',
 								'value'    => '1',
-							),
-						),
-					),
-					'disable_rich_snippet_date' => array(
-						'label'       => esc_html__( 'Rich Snippets Publish Date', 'Avada' ),
-						'description' => esc_html__( 'Turn on to enable date rich snippet data site wide.', 'Avada' ),
+							],
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'disable_rich_snippet_date'          => [
+						'label'       => esc_html__( 'Rich Snippets Last Update Date', 'Avada' ),
+						'description' => esc_html__( 'Turn on to enable udate date rich snippet data site wide.', 'Avada' ),
 						'id'          => 'disable_rich_snippet_date',
 						'default'     => '1',
 						'type'        => 'switch',
-						'required'    => array(
-							array(
+						'required'    => [
+							[
 								'setting'  => 'disable_date_rich_snippet_pages',
 								'operator' => '==',
 								'value'    => '1',
-							),
-						),
-					),
-				),
-			),
-			'dynamic_compiler_section' => array(
-				'label'       => esc_html__( 'Dynamic CSS & JS', 'Avada' ),
-				'id'          => 'dynamic_compiler_section',
-				'icon'        => true,
-				'type'        => 'sub-section',
-				'fields'      => array(
-					'css_cache_method' => array(
-						'label'       => esc_html__( 'CSS Compiling method', 'Avada' ),
-						'description' => esc_html__( 'Select "File" mode to compile the dynamic CSS to files (a separate file will be created for each of your pages & posts inside of the uploads/fusion-styles folder), "Database" mode to cache the CSS in your database, or select "Disabled" to disable.', 'Avada' ),
-						'id'          => 'css_cache_method',
-						'default'     => 'file',
+							],
+						],
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'enable_block_editor_backend_styles' => [
+						'label'       => esc_html__( 'Enable WP Block Editor Backend Styles', 'Avada' ),
+						'description' => esc_html__( 'Turn on to enable Avada\'s backend style support for the WP block editor.', 'Avada' ),
+						'id'          => 'enable_block_editor_backend_styles',
+						'default'     => '1',
+						'type'        => 'switch',
+
+						// No need to refresh the page.
+						'transport'   => 'postMessage',
+					],
+					'load_block_styles'                  => [
+						'label'       => esc_html__( 'Load Frontend Block Styles', 'Avada' ),
+						'description' => esc_html__( 'Select "Auto" to automatically detect if there are blocks present in your page, and load block-styles in the footer.', 'Avada' ),
+						'id'          => 'load_block_styles',
+						'default'     => 'on',
 						'type'        => 'radio-buttonset',
-						'choices'     => array(
-							'file' => esc_attr__( 'File', 'Avada' ),
-							'db'   => esc_attr__( 'Database', 'Avada' ),
-							'off'  => esc_attr__( 'Disabled', 'Avada' ),
-						),
-					),
-					'media_queries_async' => array(
-						'label'       => esc_attr__( 'Load Media-Queries Files Asynchronously', 'Avada' ),
-						'description' => esc_attr__( 'When enabled, the CSS media-queries will be enqueued separately and then loaded asynchronously, improving performance on mobile and desktop.', 'Avada' ),
-						'id'          => 'media_queries_async',
-						'default'     => '0',
-						'type'        => 'switch',
-					),
-					'cache_server_ip' => array(
-						'label'       => esc_html__( 'Cache Server IP', 'Avada' ),
-						'description' => esc_html__( 'For unique cases where you are using cloud flare and a cache server, ex: varnish cache. Enter your cache server IP to clear the theme options dynamic CSS cache. Consult with your server admin for help.', 'Avada' ),
-						'id'          => 'cache_server_ip',
-						'default'     => '',
-						'type'        => 'text',
-					),
-					'js_compiler_note' => ( apply_filters( 'fusion_compiler_js_file_is_readable', ( get_transient( 'fusion_dynamic_js_readable' ) || ! $js_compiler_enabled ) ) ) ? array() : array(
-						'label'       => '',
-						'description' => '<div class="fusion-redux-important-notice">' . __( '<strong>IMPORTANT NOTE:</strong> JS Compiler is disabled. File does not exist or access is restricted.', 'Avada' ) . '</div>',
-						'id'          => 'js_compiler_note',
-						'type'        => 'custom',
-					),
-					'js_compiler' => array(
-						'label'       => esc_html__( 'Enable JS Compiler', 'Avada' ),
-						'description' => ( $is_http2 ) ? esc_html__( 'We have detected that your server supports HTTP/2. We recommend you leave the compiler disabled as that will improve performance of your site by allowing multiple JS files to be downloaded simultaneously.', 'Avada' ) : esc_html__( 'By default all the javascript files are combined. Disabling the JS compiler will load non-combined javascript files. This will have an impact on the performance of your site.', 'Avada' ),
-						'id'          => 'js_compiler',
-						'default'     => ( $is_http2 ) ? '0' : '1',
-						'type'        => 'switch',
-					),
-					'reset_caches_button' => array(
-						'label'       => esc_html__( 'Reset Fusion Caches', 'Avada' ),
-						/* translators: %1$s: <code>uploads/fusion-styles</code>. %2$s: <code>uploads/fusion-scripts</code>. */
-						'description' => ( is_multisite() && is_main_site() ) ? sprintf( esc_html__( 'Resets all Dynamic CSS & Dynamic JS, cleans-up the database and deletes the %1$s and %2$s folders. When resetting the caches on the main site of a multisite installation, caches for all sub-sites will be reset. IMPORTANT NOTE: On large multisite installations with a low PHP timeout setting, bulk-resetting the caches may timeout.', 'Avada' ), '<code>uploads/fusion-styles</code>', '<code>uploads/fusion-scripts</code>' ) : sprintf( esc_html__( 'Resets all Dynamic CSS & Dynamic JS, cleans-up the database and deletes the %1$s and %2$s folders.', 'Avada' ), '<code>uploads/fusion-styles</code>', '<code>uploads/fusion-scripts</code>' ),
-						'id'          => 'reset_caches_button',
-						'default'     => '',
-						'type'        => 'raw',
-						'content'     => '<a class="button button-secondary" href="#" onclick="fusionResetCaches(event);" target="_self" >' . esc_attr__( 'Reset Fusion Caches', 'Avada' ) . '</a><span class="spinner fusion-spinner"></span>',
-						'full_width'  => false,
-					),
-				),
-			),
-		),
-	);
+						'choices'     => [
+							'auto' => esc_html__( 'Auto', 'Avada' ),
+							'on'   => esc_html__( 'On', 'Avada' ),
+							'off'  => esc_html__( 'Off', 'Avada' ),
+						],
+						'transport'   => 'refresh',
+					],
+				],
+			],
+		],
+	];
 
 	return $sections;
 

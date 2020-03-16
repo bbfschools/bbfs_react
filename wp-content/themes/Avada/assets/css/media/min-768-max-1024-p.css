@@ -1,3 +1,5 @@
+/* stylelint-disable no-descending-specificity */
+/* stylelint-disable no-duplicate-selectors */
 .fusion-blog-layout-grid-6 .fusion-post-grid,
 .fusion-grid-6 .fusion-grid-column,
 .fusion-portfolio-six .fusion-portfolio-post {
@@ -64,7 +66,7 @@
 .columns .col {
   float: none;
   width: 100% !important;
-  margin: 0 0 20p;
+  margin: 0;
   box-sizing: border-box;
 }
 .fullwidth-box {
@@ -81,6 +83,9 @@
   display: block;
   text-align: center;
   padding: 0 0 15px;
+}
+.fusion-sharing-box .fusion-social-networks {
+  padding-bottom: 0;
 }
 .fusion-social-networks:after {
   content: "";
@@ -242,13 +247,9 @@ body #small-nav {
 .fusion-google-map {
   width: 100% !important;
 }
-.social_links_shortcode .social li {
-  width: 10% !important;
-}
 .fusion-blog-layout-medium-alternate .fusion-post-content {
-  -webkit-flex: 1 0 100%;
-      -ms-flex: 1 0 100%;
-          flex: 1 0 100%;
+  -ms-flex: 1 0 100%;
+      flex: 1 0 100%;
   width: 100%;
   padding-top: 20px;
 }
@@ -279,7 +280,7 @@ body #small-nav {
   line-height: 38px;
 }
 #toTop:hover {
-  background-color: #333333;
+  background-color: #333;
 }
 .no-mobile-totop .to-top-container {
   display: none;
@@ -455,7 +456,7 @@ body #small-nav {
   clear: both;
 }
 .avada-footer-fx-bg-parallax .fusion-footer-widget-area {
-  background-attachment: static;
+  background-attachment: initial;
   margin: 0;
 }
 .avada-footer-fx-bg-parallax #main {
@@ -499,4 +500,58 @@ body {
 }
 #customer_login_box .lost_password {
   float: left;
+}
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v1 .fusion-main-menu > ul > li,
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v2 .fusion-main-menu > ul > li,
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v3 .fusion-main-menu > ul > li,
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v4 .fusion-main-menu > ul > li,
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v5 .fusion-main-menu > ul > li,
+.avada-responsive.rtl:not(.avada-menu-highlight-style-background) .fusion-header-v7 .fusion-main-menu > ul > li {
+  padding-left: var(--mobile_nav_padding);
+}
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v1 .fusion-main-menu > ul > li,
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v2 .fusion-main-menu > ul > li,
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v3 .fusion-main-menu > ul > li,
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v4 .fusion-main-menu > ul > li,
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v5 .fusion-main-menu > ul > li,
+.avada-responsive:not(.rtl):not(.avada-menu-highlight-style-background) .fusion-header-v7 .fusion-main-menu > ul > li {
+  padding-right: var(--mobile_nav_padding);
+}
+.fusion-body .fusion-page-title-bar:not(.fusion-tb-page-title-bar) {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.fusion-body.avada-has-page-title-mobile-height-auto .fusion-page-title-bar {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  height: auto;
+}
+.fusion-body:not(.avada-has-page-title-mobile-height-auto) .fusion-page-title-bar {
+  min-height: calc(var(--page_title_mobile_height) - 10px);
+}
+.fusion-body:not(.avada-has-page-title-mobile-height-auto) .fusion-page-title-bar {
+  height: auto;
+}
+.fusion-body:not(.avada-has-page-title-mobile-height-auto) .fusion-page-title-row {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+      align-items: center;
+  width: 100%;
+  min-height: calc(var(--page_title_mobile_height) - 10px);
+}
+.fusion-body:not(.avada-has-page-title-mobile-height-auto) .fusion-page-title-bar-center .fusion-page-title-row {
+  width: auto;
+}
+.fusion-body:not(.avada-has-page-title-mobile-height-auto) .fusion-page-title-captions {
+  width: 100%;
+}
+.avada-has-breadcrumb-mobile-hidden.fusion-body .fusion-page-title-bar .fusion-breadcrumbs {
+  display: none;
+}
+.avada-has-slider-fallback-image #sliders-container {
+  display: none;
+}
+.avada-has-slider-fallback-image #fallback-slide {
+  display: block;
 }

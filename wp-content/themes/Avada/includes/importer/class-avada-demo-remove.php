@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Importer
  * @since      5.2
@@ -42,7 +42,7 @@ class Avada_Demo_Remove {
 	public function __construct() {
 
 		// Hook importer into admin init.
-		add_action( 'wp_ajax_fusion_remove_demo_data', array( $this, 'remove_demo_stage' ) );
+		add_action( 'wp_ajax_fusion_remove_demo_data', [ $this, 'remove_demo_stage' ] );
 	}
 
 	/**
@@ -61,9 +61,9 @@ class Avada_Demo_Remove {
 			if ( isset( $_POST['demoType'] ) && '' !== sanitize_text_field( wp_unslash( $_POST['demoType'] ) ) ) {
 				$this->demo_type = sanitize_text_field( wp_unslash( $_POST['demoType'] ) );
 			}
-			$remove_stages = array( '' );
+			$remove_stages = [ '' ];
 			if ( isset( $_POST['removeStages'] ) ) {
-				$remove_stages = wp_unslash( $_POST['removeStages'] ); // WPCS: sanitization ok.
+				$remove_stages = wp_unslash( $_POST['removeStages'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			}
 
 			if ( ! class_exists( 'Avada_Demo_Content_Tracker' ) ) {
@@ -73,7 +73,7 @@ class Avada_Demo_Remove {
 			$this->content_tracker = new Avada_Demo_Content_Tracker( $this->demo_type );
 
 			if ( ! empty( $remove_stages[0] ) && method_exists( $this, 'remove_' . $remove_stages[0] ) ) {
-				call_user_func( array( $this, 'remove_' . $remove_stages[0] ) );
+				call_user_func( [ $this, 'remove_' . $remove_stages[0] ] );
 			}
 
 			// We've just processed last import stage.
@@ -90,14 +90,14 @@ class Avada_Demo_Remove {
 				$this->content_tracker->remove_demo();
 
 				// Reset all caches. Deletes downloaded demo data as well.
-				avada_reset_all_caches();
+				fusion_reset_all_caches();
 
 				echo 'demo removed';
 			} else {
-				echo 'Demo partially removed: ' . $remove_stages[0]; // WPCS: XSS ok.
+				echo 'Demo partially removed: ' . $remove_stages[0]; // phpcs:ignore WordPress.Security.EscapeOutput
 			}
 			exit;
-		} // End if().
+		}
 	}
 
 	/**
@@ -111,20 +111,25 @@ class Avada_Demo_Remove {
 		$this->remove_post_types();
 		$this->remove_terms();
 
-		$content_types = array(
+		$content_types = [
 			'post',
 			'page',
 			'attachment',
 			'avada_portfolio',
 			'avada_faq',
+			'avada_layout',
+			'fusion_icons',
 			'product',
 			'event',
 			'forum',
-		);
+		];
 
 		foreach ( $content_types as $content_type ) {
 			$this->content_tracker->reset_stage( $content_type );
 		}
+
+		// Restore global layout backup, since they are part of 'content' stage need to be handled separately.
+		$this->remove_avada_layout();
 	}
 
 	/**
@@ -135,14 +140,17 @@ class Avada_Demo_Remove {
 	 * @param array  $post_types The post-types.
 	 * @param string $meta_key   The meta-key.
 	 */
-	private function remove_post_types( $post_types = array(), $meta_key = 'fusion_demo_import' ) {
+	private function remove_post_types( $post_types = [], $meta_key = 'fusion_demo_import' ) {
 
 		if ( empty( $post_types ) ) {
-			$post_types = array(
+			$post_types = [
 				'post',
 				'page',
 				'fusion_element',
 				'fusion_template',
+				'fusion_tb_layout',
+				'fusion_tb_section',
+				'fusion_icons',
 				'avada_faq',
 				'avada_portfolio',
 				'attachment',
@@ -157,21 +165,21 @@ class Avada_Demo_Remove {
 				'topic',
 				'reply',
 				'wpcf7_contact_form',
-			);
+			];
 		}
 
-		$args = array(
-			'posts_per_page' => -1,
+		$args = [
+			'posts_per_page' => -1, // phpcs:ignore WPThemeReview.CoreFunctionality.PostsPerPage
 			'post_type'      => $post_types,
 			'post_status'    => 'any',
 			'fields'         => 'ids',
-			'meta_query'     => array(
-				array(
+			'meta_query'     => [
+				[
 					'key'   => $meta_key,
 					'value' => $this->demo_type,
-				),
-			),
-		);
+				],
+			],
+		];
 
 		$query = new WP_Query( $args );
 
@@ -234,10 +242,10 @@ class Avada_Demo_Remove {
 	 */
 	private function remove_fusion_sliders() {
 
-		$this->remove_post_types( array( 'slide' ) );
+		$this->remove_post_types( [ 'slide' ] );
 
 		// This one is needed in case sliders were imported separately.
-		$this->remove_post_types( array( 'attachment' ), 'fusion_slider_demo_import' );
+		$this->remove_post_types( [ 'attachment' ], 'fusion_slider_demo_import' );
 
 		$history_sliders = $this->content_tracker->get( 'fusion_sliders' );
 
@@ -253,16 +261,16 @@ class Avada_Demo_Remove {
 	}
 
 	/**
-	 * Removes Revolution sliders for selected demo.
+	 * Removes Slider Revolution sliders for selected demo.
 	 *
 	 * @access private
 	 * @since 5.2
 	 */
 	private function remove_rev_sliders() {
 
-		if ( class_exists( 'UniteFunctionsRev' ) ) { // If revslider is activated.
+		if ( class_exists( 'RevSliderSlider' ) ) { // If revslider is activated.
 
-			$slider = new RevSlider();
+			$slider = new RevSliderSlider();
 
 			$history_sliders = $this->content_tracker->get( 'rev_sliders' );
 
@@ -332,7 +340,8 @@ class Avada_Demo_Remove {
 		update_option( 'sidebars_widgets', $this->content_tracker->get( 'sidebars_widgets' ) );
 		update_option( 'sbg_sidebars', $this->content_tracker->get( 'sbg_sidebars' ) );
 
-		foreach ( $this->content_tracker->get( 'widgets' ) as $widget ) {
+		$widgets = $this->content_tracker->get( 'widgets' );
+		foreach ( $widgets as $widget ) {
 			update_option( $widget->option_name, maybe_unserialize( $widget->option_value ) );
 		}
 
@@ -356,6 +365,62 @@ class Avada_Demo_Remove {
 		}
 
 		$this->content_tracker->reset_stage( 'theme_options' );
+	}
+
+	/**
+	 * Removes global layout for selected demo and restores backup.
+	 *
+	 * @access private
+	 * @since 6.2
+	 */
+	private function remove_avada_layout() {
+
+		$avada_layout = $this->content_tracker->get( 'fusion_tb_layout_default' );
+		if ( $avada_layout ) {
+			update_option( 'fusion_tb_layout_default', $avada_layout );
+		}
+
+		$this->content_tracker->reset_stage( 'avada_layout' );
+	}
+
+	/**
+	 * Removes Convert Plugin for selected demo and restores backup.
+	 *
+	 * @access private
+	 * @since 6.2
+	 */
+	private function remove_convertplug() {
+
+		if ( defined( 'CP_VERSION' ) ) {
+
+			$history_convertplug = $this->content_tracker->get( 'convertplug_modules' );
+
+			if ( ! empty( $history_convertplug ) ) {
+
+				foreach ( $history_convertplug as $k => $module ) {
+
+					$data = [
+						'style_id'       => $module[0],
+						'option'         => 'smile_' . $module[1] . '_styles',
+						'variant_option' => $module[1] . '_variant_tests',
+						'deleteMethod'   => 'hard',
+
+					];
+
+					// Remove module.
+					fusion_cp_delete_all_modal_action( $data );
+
+					unset( $history_convertplug[ $k ] );
+				}
+
+				// Remove modules' attachments. Needed if only Convert Plugin was imported (and not Content).
+				$this->remove_post_types( 'attachment' );
+
+				$this->content_tracker->set( 'convertplug_modules', $history_convertplug );
+			}
+
+			$this->content_tracker->reset_stage( 'convertplug' );
+		}
 	}
 
 	/**

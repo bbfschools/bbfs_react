@@ -1,4 +1,6 @@
 /* global avadaAdminL10nStrings, ajaxurl, DemoImportNonce, allTags */
+/* jshint -W117 */
+/* eslint no-unused-vars: off */
 this.imagePreview = function() {
 	jQuery( '.theme' ).hover( function() {
 		jQuery( this ).find( '.screenshot-hover' ).css( 'visibility', 'visible' );
@@ -26,7 +28,12 @@ jQuery( document ).ready( function() {
 
 		jQuery( '.avada-system-status table:not(.fusion-system-status-debug) thead, .avada-system-status:not(.fusion-system-status-debug) tbody' ).each( function() {
 
-			var label;
+			var label,
+				theName,
+				theValueElement,
+				theValue,
+				valueArray,
+				tempLine;
 
 			if ( jQuery( this ).is( 'thead' ) ) {
 
@@ -37,13 +44,9 @@ jQuery( document ).ready( function() {
 
 				jQuery( 'tr', jQuery( this ) ).each( function() {
 
-					var label           = jQuery( this ).find( 'td:eq(0)' ).data( 'export-label' ) || jQuery( this ).find( 'td:eq(0)' ).text(),
-						theName         = jQuery.trim( label ).replace( /(<([^>]+)>)/ig, '' ), // Remove HTML.
-						theValueElement = jQuery( this ).find( 'td:eq(2)' ),
-						theValue,
-						valueArray,
-						output,
-						tempLine;
+					label           = jQuery( this ).find( 'td:eq(0)' ).data( 'export-label' ) || jQuery( this ).find( 'td:eq(0)' ).text();
+					theName         = jQuery.trim( label ).replace( /(<([^>]+)>)/ig, '' ); // Remove HTML.
+					theValueElement = jQuery( this ).find( 'td:eq(2)' );
 
 					if ( 1 <= jQuery( theValueElement ).find( 'img' ).length ) {
 						theValue = jQuery.trim( jQuery( theValueElement ).find( 'img' ).attr( 'alt' ) );
@@ -56,7 +59,6 @@ jQuery( document ).ready( function() {
 
 						// If value have a list of plugins ','
 						// Split to add new line.
-						output   = '';
 						tempLine = '';
 						jQuery.each( valueArray, function( key, line ) {
 							tempLine = tempLine + line + '\n';
@@ -75,18 +77,17 @@ jQuery( document ).ready( function() {
 			jQuery( '#debug-report textarea' ).val( report ).focus().select();
 			jQuery( this ).parent().fadeOut();
 			return false;
-		} catch ( e ) {
-		}
+		} catch ( e ) {} // eslint-disable-line no-empty
 
 		return false;
 	} );
 
 	jQuery( '#copy-for-support' ).tipTip( {
-		'attribute': 'data-tip',
-		'activation': 'click',
-		'fadeIn': 50,
-		'fadeOut': 50,
-		'delay': 100,
+		attribute: 'data-tip',
+		activation: 'click',
+		fadeIn: 50,
+		fadeOut: 50,
+		delay: 100,
 		enter: function() {
 			copyDebugReport();
 		}
@@ -112,8 +113,7 @@ jQuery( document ).ready( function() {
 		importDemo,
 		prepareDemoRemove,
 		removeDemo,
-		importReport,
-		findOne;
+		importReport;
 
 	if ( jQuery( 'body' ).hasClass( 'avada_page_avada-demos' ) ) {
 
@@ -121,22 +121,22 @@ jQuery( document ).ready( function() {
 		jQuery( '.button-install-demo' ).on( 'click', function( e ) {
 
 			importNotifications = {
-				'classic': avadaAdminL10nStrings.classic,
-				'caffe': avadaAdminL10nStrings.caffe,
-				'church': avadaAdminL10nStrings.church,
-				'modern_shop': avadaAdminL10nStrings.modern_shop,
-				'classic_shop': avadaAdminL10nStrings.classic_shop,
-				'landing_product': avadaAdminL10nStrings.landing_product,
-				'forum': avadaAdminL10nStrings.forum,
-				'technology': avadaAdminL10nStrings.technology,
-				'creative': avadaAdminL10nStrings.creative,
-				'default': avadaAdminL10nStrings.default
+				classic: avadaAdminL10nStrings.classic,
+				caffe: avadaAdminL10nStrings.caffe,
+				church: avadaAdminL10nStrings.church,
+				modern_shop: avadaAdminL10nStrings.modern_shop,
+				classic_shop: avadaAdminL10nStrings.classic_shop,
+				landing_product: avadaAdminL10nStrings.landing_product,
+				forum: avadaAdminL10nStrings.forum,
+				technology: avadaAdminL10nStrings.technology,
+				creative: avadaAdminL10nStrings.creative,
+				'default': avadaAdminL10nStrings[ 'default' ]
 			};
 
 			if ( importNotifications.hasOwnProperty( demoType ) ) {
 				importerDialog.html( importNotifications[ demoType ] );
 			} else {
-				importerDialog.html( importNotifications.default );
+				importerDialog.html( importNotifications[ 'default' ] );
 			}
 
 			jQuery( '#' + importerDialog.attr( 'id' ) ).dialog( {
@@ -151,7 +151,7 @@ jQuery( document ).ready( function() {
 						importerDialog.html( '' );
 						jQuery( this ).dialog( 'close' );
 					},
-					'OK': function() {
+					OK: function() {
 						prepareDemoImport();
 						importerDialog.html( '' );
 						jQuery( this ).dialog( 'close' );
@@ -165,7 +165,7 @@ jQuery( document ).ready( function() {
 		importReport = function( message, progress ) {
 			jQuery( '#demo-modal-' + demoType  + ' .demo-update-modal-status-bar-label span' ).html( message );
 
-			jQuery( '#demo-modal-' + demoType  + ' .demo-update-modal-status-bar-progress-bar' ).css( 'width', 100 * progress + '%' );
+			jQuery( '#demo-modal-' + demoType  + ' .demo-update-modal-status-bar-progress-bar' ).css( 'width', ( 100 * progress ) + '%' );
 		};
 
 		importDemo = function( data ) {
@@ -177,59 +177,59 @@ jQuery( document ).ready( function() {
 			jQuery.post( ajaxurl, data, function( response ) {
 				var importLabel;
 
-				if ( 'content' === data.importStages[0] ) {
+				if ( 'content' === data.importStages[ 0 ] ) {
 
 					jQuery.each( jQuery( '#import-' + data.demoType + ' input:checkbox[data-type=content]:checked' ), function( ) {
 						jQuery( this ).prop( 'disabled', true );
 						jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + jQuery( this ).val() + ']' ).prop( 'checked', true );
 					} );
 				} else {
-					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.importStages[0] + ']' ).prop( 'disabled', true );
-					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.importStages[0] + ']' ).prop( 'checked', true );
+					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.importStages[ 0 ] + ']' ).prop( 'disabled', true );
+					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.importStages[ 0 ] + ']' ).prop( 'checked', true );
 				}
 
 				data.importStages.shift();
 
-				if ( 0 < response.indexOf( 'partially completed' ) && 0 < data.importStages.length ) {
+				if ( ( 0 < response.indexOf( 'partially completed' ) || 0 <= response.indexOf( '{"status"' ) ) && 0 < data.importStages.length ) {
 
-					if ( 'content' === data.importStages[0] ) {
+					if ( 'content' === data.importStages[ 0 ] ) {
 						if ( 1 === data.contentTypes.length ) {
-							importLabel = jQuery( 'label[for=import-' + data.contentTypes[0] + '-' + demoType + ']' ).html();
+							importLabel = jQuery( 'label[for=import-' + data.contentTypes[ 0 ] + '-' + demoType + ']' ).html();
 						} else {
 							importLabel = avadaAdminL10nStrings.content;
 						}
-					} else if ( 'general_data' === data.importStages[0] ) {
+					} else if ( 'general_data' === data.importStages[ 0 ] ) {
 						importLabel = 'General Data';
+					} else if ( -1 !== data.importStages[ 0 ].indexOf( 'convertplug_' ) ) {
+						importLabel = jQuery( 'label[for=import-convertplug-' + demoType + ']' ).html();
 					} else {
-						importLabel = jQuery( 'label[for=import-' + data.importStages[0] + '-' + demoType + ']' ).html();
+						importLabel = jQuery( 'label[for=import-' + data.importStages[ 0 ] + '-' + demoType + ']' ).html();
 					}
 
 					importReport( avadaAdminL10nStrings.currently_processing.replace( '%s', importLabel ), ( importStagesLength - data.importStages.length ) / importStagesLength );
 
 					importDemo( data );
 
+				} else if ( -1 === response && response.indexOf( 'imported' ) ) { // eslint-disable-line no-empty
+				} else if ( 1 < response.indexOf( avadaAdminL10nStrings.file_does_not_exist ) ) { // eslint-disable-line no-empty
 				} else {
-					if ( -1 === response && response.indexOf( 'imported' ) ) {
-					} else if ( 1 < response.indexOf( avadaAdminL10nStrings.file_does_not_exist ) ) {
-					} else {
-						setTimeout( function() {
-							jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="uninstall"]' ).prop( 'disabled', false );
-							jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="all"]' ).prop( 'disabled', true );
-							jQuery( '#demo-modal-' + demoType ).removeClass( 'demo-import-in-progress' );
+					setTimeout( function() {
+						jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="uninstall"]' ).prop( 'disabled', false );
+						jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="all"]' ).prop( 'disabled', true );
+						jQuery( '#demo-modal-' + demoType ).removeClass( 'demo-import-in-progress' );
 
-							importReport( '', 1 );
-							jQuery( '#demo-modal-' + demoType + ' .button-done-demo' ).css( 'display', 'flex' );
+						importReport( '', 1 );
+						jQuery( '#demo-modal-' + demoType + ' .button-done-demo' ).css( 'display', 'flex' );
 
-							if ( true === data.allImport ) {
-								importedLabel.html( avadaAdminL10nStrings.full_import );
-							} else {
-								importedLabel.html( avadaAdminL10nStrings.partial_import );
-							}
+						if ( true === data.allImport ) {
+							importedLabel.html( avadaAdminL10nStrings.full_import );
+						} else {
+							importedLabel.html( avadaAdminL10nStrings.partial_import );
+						}
 
-							importedLabel.show();
-							jQuery( '#theme-demo-' + demoType + ' .button-install-open-modal' ).html( avadaAdminL10nStrings.modify );
-						}, 4000 );
-					}
+						importedLabel.show();
+						jQuery( '#theme-demo-' + demoType + ' .button-install-open-modal' ).html( avadaAdminL10nStrings.modify );
+					}, 4000 );
 				}
 			} ).fail( function( xhr, textStatus, errorThrown ) {
 				var message;
@@ -250,7 +250,7 @@ jQuery( document ).ready( function() {
 					width: 400,
 					modal: true,
 					buttons: {
-						'OK': function() {
+						OK: function() {
 							importerDialog.html( '' );
 							jQuery( this ).dialog( 'close' );
 							location.reload();
@@ -301,7 +301,7 @@ jQuery( document ).ready( function() {
 				importArray.push( 'general_data' );
 			}
 
-			if ( 0 < importContentArray.length && -1 !== importContentArray.indexOf( 'attachment' ) ) {
+			if ( 0 < importContentArray.length && ( -1 !== importContentArray.indexOf( 'attachment' ) || -1 !== importContentArray.indexOf( 'fusion_icons' ) ) ) {
 				fetchAttachments = true;
 			}
 
@@ -327,10 +327,10 @@ jQuery( document ).ready( function() {
 
 			var removeLabel;
 
-			if ( 'content' === data.removeStages[0] ) {
+			if ( 'content' === data.removeStages[ 0 ] ) {
 				removeLabel = avadaAdminL10nStrings.content;
 			} else {
-				removeLabel = jQuery( 'label[for=remove-' + data.removeStages[0] + '-' + demoType + ']' ).html();
+				removeLabel = jQuery( 'label[for=remove-' + data.removeStages[ 0 ] + '-' + demoType + ']' ).html();
 			}
 
 			if ( data.removeStages.length === removeStagesLength ) {
@@ -339,7 +339,7 @@ jQuery( document ).ready( function() {
 
 			jQuery.post( ajaxurl, data, function( $response ) {
 
-				if ( 'content' === data.removeStages[0] ) {
+				if ( 'content' === data.removeStages[ 0 ] ) {
 
 					jQuery.each( jQuery( '#remove-' + data.demoType + ' input:checkbox[data-type=content]:checked' ), function( ) {
 
@@ -350,10 +350,10 @@ jQuery( document ).ready( function() {
 						jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + jQuery( this ).val() + ']' ).prop( 'disabled', false );
 					} );
 				} else {
-					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.removeStages[0] + ']' ).prop( 'disabled', true );
-					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.removeStages[0] + ']' ).prop( 'checked', false );
-					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.removeStages[0] + ']' ).prop( 'checked', false );
-					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.removeStages[0] + ']' ).prop( 'disabled', false );
+					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.removeStages[ 0 ] + ']' ).prop( 'disabled', true );
+					jQuery( '#remove-' + data.demoType + ' input:checkbox[value=' + data.removeStages[ 0 ] + ']' ).prop( 'checked', false );
+					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.removeStages[ 0 ] + ']' ).prop( 'checked', false );
+					jQuery( '#import-' + data.demoType + ' input:checkbox[value=' + data.removeStages[ 0 ] + ']' ).prop( 'disabled', false );
 				}
 
 				data.removeStages.shift();
@@ -367,7 +367,7 @@ jQuery( document ).ready( function() {
 					importReport( '', 1 );
 					jQuery( '#demo-modal-' + demoType + ' .button-done-demo' ).css( 'display', 'flex' );
 					importedLabel.hide();
-					jQuery( '#theme-demo-' + demoType + ' .button-install-open-modal' ).html( avadaAdminL10nStrings.import );
+					jQuery( '#theme-demo-' + demoType + ' .button-install-open-modal' ).html( avadaAdminL10nStrings[ 'import' ] );
 
 					jQuery( '#import-' + demoType + ' input[type="checkbox"][value="all"]' ).prop( 'checked', false );
 					jQuery( '#import-' + demoType + ' input[type="checkbox"]:not(:checked)' ).prop( 'disabled', false );
@@ -377,8 +377,7 @@ jQuery( document ).ready( function() {
 					jQuery( '#demo-modal-' + demoType ).removeClass( 'demo-import-in-progress' );
 				}
 
-			} ).fail( function() {
-			} );
+			} ).fail( function() {} ); // eslint-disable-line no-empty-function
 
 		};
 
@@ -432,7 +431,7 @@ jQuery( document ).ready( function() {
 						importerDialog.html( '' );
 						jQuery( this ).dialog( 'close' );
 					},
-					'OK': function() {
+					OK: function() {
 						prepareDemoRemove();
 						importerDialog.html( '' );
 						jQuery( this ).dialog( 'close' );
@@ -485,10 +484,13 @@ jQuery( document ).ready( function() {
 			} else {
 
 				// Checkbox is unchecked.
-
 				jQuery( '.button-install-demo[data-demo-id="' + demoType + '"]' ).css( 'display', 'none' );
 
-				jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="uninstall"]' ).prop( 'disabled', false );
+				if ( form.find( 'input[type="checkbox"]:checked' ).is( ':disabled' ) ) {
+
+					// There is something to uninstall
+					jQuery( '#demo-modal-' + demoType + ' input[type="checkbox"][value="uninstall"]' ).prop( 'disabled', false );
+				}
 			}
 
 			// Uncheck 'all' if checkbox was unchecked.
@@ -555,54 +557,54 @@ jQuery( document ).ready( function() {
 			}
 		} );
 
-		if ( 'undefined' !== typeof allTags ) {
+		jQuery( '.avada-importer-tags-selector button' ).on( 'click', function( e ) {
+			var demos = jQuery( '.avada-demo-themes' ).find( '.fusion-admin-box' ),
+				value = this.getAttribute( 'data-tag' );
 
-			// The tag-selector for demos.
-			_.each( allTags, function( tagName, tagSlug ) {
-				var tagButtonSelector = '.avada-importer-tags-selector button[data-tag="' + tagSlug + '"]';
+			e.preventDefault();
 
-				// When we click on a tag button.
-				jQuery( tagButtonSelector ).click( function() {
-
-					// De-select all buttons.
-					jQuery( '.avada-importer-tags-selector button' ).removeClass( 'button-primary' );
-					jQuery( '.avada-importer-tags-selector button' ).addClass( 'button-secondary' );
-
-					// Select the current button.
-					jQuery( this ).addClass( 'button-primary' );
-
-					// Hide all demos except the ones corresponding to the tag we selected.
-					jQuery( '.avada-demo-themes .fusion-admin-box' ).each( function() {
-						var demo     = this,
-							demoTags = jQuery( this ).data( 'tags' ).split( ',' );
-
-						if ( 'all' === tagSlug ) {
-							jQuery( demo ).show();
-						} else {
-							jQuery( demo ).hide();
-							_.each( demoTags, function( demoTag ) {
-								if ( demoTag === tagSlug ) {
-									jQuery( demo ).show();
-								}
-							} );
-						}
-					} );
+			// Show/hide demos.
+			if ( 'all' === value ) {
+				demos.show();
+			} else {
+				demos.hide();
+				demos.each( function() {
+					if ( -1 !== jQuery( this ).data( 'tags' ).indexOf( value ) ) {
+						jQuery( this ).show();
+					}
 				} );
-			} );
-		}
+			}
 
-		/**
-		 * @description determine if an array contains one or more items from another array.
-		 * @param {array} haystack the array to search.
-		 * @param {array} arr the array providing items to check for in the haystack.
-		 * @return {boolean} true|false if haystack contains at least one item from arr.
-		 */
-		findOne = function( haystack, arr ) {
-			return arr.some( function( v ) {
-				return 0 <= haystack.indexOf( v );
-			} );
-		};
+			// Mark current item as active.
+			jQuery( '.avada-importer-tags-selector button' ).removeClass( 'current-filter' );
+			this.classList.add( 'current-filter' );
 
+			// Trigger scroll for lazy-loaded images.
+			window.dispatchEvent( new Event( 'scroll' ) );
+		} );
+
+		jQuery( '#avada-demos-search' ).on( 'change keyup', function( e ) {
+			var demos = jQuery( '.avada-demo-themes' ).find( '.fusion-admin-box' ),
+				value = this.getAttribute( 'data-tag' );
+
+			e.preventDefault();
+
+			// Show/hide demos.
+			demos.hide();
+			demos.each( function() {
+				var demoTitle = jQuery( this ).data( 'title' );
+				if ( demoTitle && -1 !== demoTitle.toLowerCase().indexOf( e.target.value.toLowerCase() ) ) {
+					jQuery( this ).show();
+				}
+			} );
+
+			// Move the category filter to "All".
+			jQuery( '.avada-importer-tags-selector button' ).removeClass( 'current-filter' );
+			document.querySelector( '.avada-importer-tags-selector button[data-tag=all]' ).classList.add( 'current-filter' );
+
+			// Trigger scroll for lazy-loaded images.
+			window.dispatchEvent( new Event( 'scroll' ) );
+		} );
 	}
 
 	if ( jQuery( 'body' ).hasClass( 'avada_page_avada-plugins' ) ) {
@@ -627,7 +629,7 @@ jQuery( document ).ready( function() {
 				width: 400,
 				modal: true,
 				buttons: {
-					'OK': function() {
+					OK: function() {
 						pluginDialog.html( '' );
 						jQuery( this ).dialog( 'close' );
 					}
@@ -701,8 +703,8 @@ jQuery( document ).ready( function() {
 
 		// 'page' arg needed so 'avada_get_required_and_recommened_plugins' sets proper plugin URL.
 
-		data['tgmpa-install'] = 'install-plugin';
-		data['tgmpa-nonce']   =  $this.data( 'tgmpa_nonce' );
+		data[ 'tgmpa-install' ] = 'install-plugin';
+		data[ 'tgmpa-nonce' ]   =  $this.data( 'tgmpa_nonce' );
 
 		// Disable parallel plugin install
 		jQuery( '#demo-modal-' + demoType ).addClass( 'plugin-install-in-progress' );
@@ -729,4 +731,110 @@ jQuery( document ).ready( function() {
 
 		e.preventDefault();
 	} );
+
+	/**
+	 * WIP - Ajax plugin manager.
+	 *
+	 * A prototype, disabled for now.
+	 * To enable the feature just un-comment the line below.
+	 */
+	// avadaPluginsManager();
 } );
+
+function avadaPluginsManager() {
+
+	// Add listeners for plugin buttons.
+	jQuery( '#avada-install-plugins .theme-actions a' ).on( 'click', function( e ) {
+		var box, url, action, data;
+
+		// Build the ajax request data.
+		data = {
+			action: 'avada_ajax_plugin_manager',
+			avada_plugins_nonce: jQuery( this ).data( 'nonce' ),
+			href: e.target.href
+		};
+
+		// Prevent default link action.
+		e.preventDefault();
+
+		// If browser doesn't support URL, fallback to redirection.
+		// Acts as a fallback for really old browsers.
+		if ( 'function' !== typeof URL ) {
+			window.location = e.target.href;
+			return;
+		}
+
+		url = new URL( e.target.href );
+
+		// Get the action we're performing.
+		action = url.searchParams.get( 'tgmpa-install' );
+		action = action || url.searchParams.get( 'tgmpa-update' );
+		action = action || url.searchParams.get( 'avada-activate' );
+		action = action || url.searchParams.get( 'avada-deactivate' );
+
+		// If we're activating/deactivating a plugin,
+		// do the full refresh because admin menus and functionality changes.
+		if ( 'deactivate-plugin' === action || 'activate-plugin' === action ) {
+			window.location = e.target.href;
+			return;
+		}
+
+		// Get the box. We're including extra data there.
+		box = jQuery( e.target ).parents( '.fusion-admin-box' );
+
+		// Add extra data for the ajax request.
+		data.actionToDo = action;
+		data.pluginPath = jQuery( box ).data( 'file_path' );
+		data.plugin     = data.pluginPath;
+		data.slug       = url.searchParams.get( 'plugin' );
+
+		// Show the overlay.
+		jQuery( '#avada-plugins-wrapper-overlay' ).css( 'display', 'flex' );
+		jQuery( '#avada-plugins-manager-overlay-message' ).html( avadaAdminL10nStrings.please_wait );
+
+		// Do the ajax call.
+		jQuery.post( ajaxurl, data, function( response ) {
+			var httpRequest;
+			if ( ! response.success ) {
+
+				// log errors to the console.
+				console.error( response );
+			}
+
+			if ( response.data.install && response.data.activateUrl ) {
+				httpRequest = new XMLHttpRequest();
+				httpRequest.onreadystatechange = function() {
+					if ( 4 === httpRequest.readyState && 200 === httpRequest.status ) {
+
+						// Process was a success. We need to refresh the container.
+						setTimeout( function() {
+							data.actionToDo = 'refresh-container';
+							jQuery.post( ajaxurl, data, function( refreshResponse ) {
+								if ( refreshResponse.success ) {
+									jQuery( '#avada-plugins-wrapper' ).replaceWith( refreshResponse.data );
+
+									// Retrigger the function to add listeners for new elements.
+									avadaPluginsManager();
+								}
+							} );
+						}, 1000 );
+					}
+				};
+				httpRequest.open( 'GET', response.data.activateUrl, true );
+				httpRequest.send();
+			} else {
+
+				// Process was a success. We need to refresh the container.
+				data.actionToDo = 'refresh-container';
+				jQuery.post( ajaxurl, data, function( refreshResponse ) {
+					if ( refreshResponse.success ) {
+						jQuery( '#avada-plugins-wrapper' ).replaceWith( refreshResponse.data );
+
+						// Retrigger the function to add listeners for new elements.
+						avadaPluginsManager();
+					}
+				} );
+			}
+		} );
+	} );
+}

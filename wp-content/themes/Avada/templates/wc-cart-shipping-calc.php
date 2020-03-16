@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.1.0
@@ -21,13 +21,12 @@ if ( get_option( 'woocommerce_enable_shipping_calc' ) === 'no' || ! WC()->cart->
 
 <form class="woocommerce-shipping-calculator" action="<?php echo esc_url( wc_get_cart_url() ); ?>" method="post">
 
-	<h2><span href="#" class="shipping-calculator-button"><?php esc_attr_e( 'Calculate shipping', 'woocommerce' ); ?></span>
-	</h2>
+	<h2><span href="#" class="shipping-calculator-button"><?php esc_attr_e( 'Calculate shipping', 'woocommerce' ); ?></span></h2>
 
 	<div class="avada-shipping-calculator-form">
 
 		<?php if ( apply_filters( 'woocommerce_shipping_calculator_enable_country', true ) ) : ?>
-			<p class="form-row form-row-wide">
+			<p class="form-row form-row-wide" id="calc_shipping_country_field">
 				<select name="calc_shipping_country" id="calc_shipping_country" class="country_to_state" rel="calc_shipping_state">
 					<option value=""><?php esc_html_e( 'Select a country&hellip;', 'woocommerce' ); ?></option>
 					<?php
@@ -92,11 +91,8 @@ if ( get_option( 'woocommerce_enable_shipping_calc' ) === 'no' || ! WC()->cart->
 			<button type="submit" name="calc_shipping" value="1" class="fusion-button button-default fusion-button-default-size button"><?php esc_attr_e( 'Update totals', 'woocommerce' ); ?></button>
 		</p>
 
-		<?php wp_nonce_field( 'woocommerce-cart' ); ?>
+		<?php wp_nonce_field( 'woocommerce-shipping-calculator', 'woocommerce-shipping-calculator-nonce' ); ?>
 	</div>
 </form>
 
-<?php
-do_action( 'woocommerce_after_shipping_calculator' );
-
-/* Omit closing PHP tag to avoid "Headers already sent" issues. */
+<?php do_action( 'woocommerce_after_shipping_calculator' ); ?>

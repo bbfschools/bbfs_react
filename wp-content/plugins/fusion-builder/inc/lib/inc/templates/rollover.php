@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $product, $woocommerce;
 
 // Set defaults for Fusion Builder ( Fusion Page Options ).
-$image_rollover_icons = apply_filters( 'fusion_builder_image_rollover_icons', 'linkzoom', $post_id );
+$image_rollover_icons = apply_filters( 'fusion_builder_image_rollover_icons', fusion_get_option( 'image_rollover_icons', false, $post_id ) );
 
 // Portfolio defaults.
 $link_icon_target = apply_filters( 'fusion_builder_link_icon_target', '', $post_id );
@@ -58,26 +58,12 @@ if ( 'default' === $display_post_title ) {
 }
 
 // Set the link and the link text on the link icon to a custom url if set in page options.
-if ( null != $link_icon_url ) {
-	$icon_permalink = $link_icon_url;
+if ( null != $link_icon_url ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+	$icon_permalink       = $link_icon_url;
 	$icon_permalink_title = esc_url_raw( $link_icon_url );
 } else {
-	$icon_permalink = $post_permalink;
+	$icon_permalink       = $post_permalink;
 	$icon_permalink_title = the_title_attribute( 'echo=0&post=' . $post_id );
-}
-
-if ( '' === $image_rollover_icons || 'default' === $image_rollover_icons ) {
-	if ( fusion_library()->get_option( 'link_image_rollover' ) && fusion_library()->get_option( 'zoom_image_rollover' ) ) { // Link + Zoom.
-		$image_rollover_icons = 'linkzoom';
-	} elseif ( fusion_library()->get_option( 'link_image_rollover' ) && ! fusion_library()->get_option( 'zoom_image_rollover' ) ) { // Link.
-		$image_rollover_icons = 'link';
-	} elseif ( ! fusion_library()->get_option( 'link_image_rollover' ) && fusion_library()->get_option( 'zoom_image_rollover' ) ) { // Zoom.
-		$image_rollover_icons = 'zoom';
-	} elseif ( ! fusion_library()->get_option( 'link_image_rollover' ) && ! fusion_library()->get_option( 'zoom_image_rollover' ) ) { // Link.
-		$image_rollover_icons = 'no';
-	} else {
-		$image_rollover_icons = 'linkzoom';
-	}
 }
 
 // Set the link target to blank if the option is set.
@@ -98,7 +84,7 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 			 */
 			?>
 			<?php if ( 'zoom' !== $image_rollover_icons ) : ?>
-				<a class="fusion-rollover-link" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // WPCS: XSS ok. ?>><?php echo $icon_permalink_title; // WPCS: XSS ok. ?></a>
+				<a class="fusion-rollover-link" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; ?>><?php echo $icon_permalink_title; // phpcs:ignore WordPress.Security.EscapeOutput ?></a>
 			<?php endif; ?>
 
 			<?php
@@ -109,9 +95,9 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 			<?php if ( 'link' !== $image_rollover_icons ) : ?>
 				<?php $full_image = wp_get_attachment_image_src( get_post_thumbnail_id( $post_id ), 'full' ); // Get the image data. ?>
 				<?php
-				$full_image = ( ! is_array( $full_image ) ) ? array(
+				$full_image = ( ! is_array( $full_image ) ) ? [
 					0 => '',
-				) : $full_image;
+				] : $full_image;
 				?>
 
 				<?php
@@ -147,24 +133,27 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 					$data_rel         = ( 'individual' === fusion_library()->get_option( 'lightbox_behavior' ) ) ? 'iLightbox[gallery' . $post_id . ']' : 'iLightbox[gallery' . $gallery_id . ']';
 					?>
 					<a class="fusion-rollover-gallery" href="<?php echo esc_url_raw( $full_image[0] ); ?>" data-id="<?php echo esc_attr( $post_id ); ?>" data-rel="<?php echo esc_attr( $data_rel ); ?>" data-title="<?php echo esc_attr( get_post_field( 'post_title', get_post_thumbnail_id( $post_id ) ) ); ?>" data-caption="<?php echo esc_attr( get_post_field( 'post_excerpt', get_post_thumbnail_id( $post_id ) ) ); ?>">
-						<?php esc_html_e( 'Gallery', 'Avada' ); ?>
+						<?php esc_html_e( 'Gallery', 'fusion-builder' ); ?>
 					</a>
-					<?php echo $lightbox_content; // WPCS: XSS ok. ?>
+					<?php echo $lightbox_content; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				<?php endif; ?>
 			<?php endif; ?>
 		<?php endif; ?>
 
 		<?php $in_cart = false; ?>
 		<?php if ( class_exists( 'WooCommerce' ) && $woocommerce->cart ) : ?>
-			<?php $items_in_cart = array(); ?>
-			<?php if ( $woocommerce->cart->get_cart() && is_array( $woocommerce->cart->get_cart() ) ) : ?>
-				<?php foreach ( $woocommerce->cart->get_cart() as $cart ) : ?>
+			<?php
+			$items_in_cart = [];
+			$wc_cart_items = $woocommerce->cart->get_cart();
+			?>
+			<?php if ( $wc_cart_items && is_array( $wc_cart_items ) ) : ?>
+				<?php foreach ( $wc_cart_items as $cart ) : ?>
 					<?php $items_in_cart[] = $cart['product_id']; ?>
 				<?php endforeach; ?>
 			<?php endif; ?>
 
-			<?php $id      = get_the_ID(); ?>
-			<?php $in_cart = in_array( $id, $items_in_cart ); ?>
+			<?php $id = get_the_ID(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride ?>
+			<?php $in_cart = in_array( $id, $items_in_cart ); // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict ?>
 		<?php endif; ?>
 
 		<?php if ( ! $in_cart ) : ?>
@@ -175,8 +164,8 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 			?>
 			<?php if ( $display_post_title ) : ?>
 				<h4 class="fusion-rollover-title">
-					<a href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // WPCS: XSS ok. ?>>
-						<?php echo get_the_title( $post_id ); ?>
+					<a class="fusion-rollover-title-link" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
+						<?php echo wp_kses_post( get_the_title( $post_id ) ); ?>
 					</a>
 				</h4>
 			<?php endif; ?>
@@ -207,7 +196,7 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 			<div class="cart-loading">
 				<a href="<?php echo esc_url_raw( wc_get_cart_url() ); ?>">
 					<i class="<?php echo esc_attr( $icon_class ); ?>"></i>
-					<div class="view-cart"><?php esc_html_e( 'View Cart', 'Avada' ); ?></div>
+					<div class="view-cart"><?php esc_html_e( 'View Cart', 'fusion-builder' ); ?></div>
 				</a>
 			</div>
 		<?php endif; ?>
@@ -251,6 +240,6 @@ $link_target = ( 'yes' === $link_icon_target || 'yes' === $post_links_target || 
 				</div>
 			<?php endif; ?>
 		<?php endif; ?>
-		<a class="fusion-link-wrapper" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // WPCS: XSS ok. ?> aria-label="<?php the_title_attribute(); ?>"></a>
+		<a class="fusion-link-wrapper" href="<?php echo esc_url_raw( $icon_permalink ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput ?> aria-label="<?php the_title_attribute(); ?>"></a>
 	</div>
 </div>

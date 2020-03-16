@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.0.0
@@ -23,9 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function avada_fusion_core_body_typography( $typography_elements ) {
 
-	$typography_elements['size'][] = '.counter-box-content';
-	$typography_elements['size'][] = '.fusion-alert';
-	$typography_elements['size'][] = '.fusion-progressbar .progress-title';
+	$typography_elements['size'][]   = '.counter-box-content';
+	$typography_elements['size'][]   = '.fusion-alert';
+	$typography_elements['size'][]   = '.fusion-progressbar .progress-title';
 	$typography_elements['family'][] = '.fusion-blog-shortcode .fusion-timeline-date';
 
 	return $typography_elements;
@@ -40,8 +40,8 @@ add_filter( 'avada_body_typography_elements', 'avada_fusion_core_body_typography
  */
 function avada_fusion_core_h3_typography( $typography_elements ) {
 
-	$typography_elements['size'][] = '.fusion-modal .modal-title';
-	$typography_elements['color'][] = '.person-author-wrapper span';
+	$typography_elements['size'][]   = '.fusion-modal .modal-title';
+	$typography_elements['color'][]  = '.person-author-wrapper span';
 	$typography_elements['family'][] = '.fusion-modal .modal-title';
 	$typography_elements['family'][] = '.fusion-pricing-table .title-row';
 	$typography_elements['family'][] = '.fusion-pricing-table .pricing-row';
@@ -58,11 +58,11 @@ add_filter( 'avada_h3_typography_elements', 'avada_fusion_core_h3_typography' );
  */
 function avada_fusion_core_h4_typography( $typography_elements ) {
 
-	$typography_elements['size'][] = '.fusion-person .person-author-wrapper .person-name';
-	$typography_elements['size'][] = '.fusion-person .person-author-wrapper .person-title';
-	$typography_elements['size'][] = '.person-author-wrapper';
-	$typography_elements['size'][] = '.popover .popover-title';
-	$typography_elements['size'][] = '.fusion-flip-boxes .fusion-flip-box .flip-box-heading-back';
+	$typography_elements['size'][]   = '.fusion-person .person-author-wrapper .person-name';
+	$typography_elements['size'][]   = '.fusion-person .person-author-wrapper .person-title';
+	$typography_elements['size'][]   = '.person-author-wrapper';
+	$typography_elements['size'][]   = '.popover .popover-title';
+	$typography_elements['size'][]   = '.fusion-flip-boxes .fusion-flip-box .flip-box-heading-back';
 	$typography_elements['family'][] = '.popover .popover-title';
 	$typography_elements['family'][] = '.fusion-flip-boxes .fusion-flip-box .flip-box-heading-back';
 	$typography_elements['family'][] = '.fusion-tabs .nav-tabs  li .fusion-tab-heading';

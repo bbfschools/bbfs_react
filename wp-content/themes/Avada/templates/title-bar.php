@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -22,17 +22,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php if ( $title ) : ?>
 					<?php // Add entry-title for rich snippets. ?>
 					<?php $entry_title_class = ( Avada()->settings->get( 'disable_date_rich_snippet_pages' ) && Avada()->settings->get( 'disable_rich_snippet_title' ) ) ? 'entry-title' : ''; ?>
-					<h1 class="<?php echo esc_attr( $entry_title_class ); ?>"><?php echo $title; // WPCS: XSS ok. ?></h1>
+					<h1 class="<?php echo esc_attr( $entry_title_class ); ?>"><?php echo $title; // phpcs:ignore WordPress.Security.EscapeOutput ?></h1>
 
 					<?php if ( $subtitle ) : ?>
-						<h3><?php echo $subtitle; // WPCS: XSS ok. ?></h3>
+						<h3><?php echo $subtitle; // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
 					<?php endif; ?>
 				<?php endif; ?>
 
 				<?php if ( 'center' === $alignment ) : // Render secondary content on center layout. ?>
-					<?php if ( 'none' !== fusion_get_option( 'page_title_bar_bs', 'page_title_breadcrumbs_search_bar', $post_id ) ) : ?>
+					<?php if ( 'none' !== fusion_get_option( 'page_title_bar_bs' ) ) : ?>
 						<div class="fusion-page-title-secondary">
-							<?php echo $secondary_content; // WPCS: XSS ok. ?>
+							<?php echo $secondary_content; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						</div>
 					<?php endif; ?>
 				<?php endif; ?>
@@ -40,9 +40,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 
 			<?php if ( 'center' !== $alignment ) : // Render secondary content on left/right layout. ?>
-				<?php if ( 'none' !== fusion_get_option( 'page_title_bar_bs', 'page_title_breadcrumbs_search_bar', $post_id ) ) : ?>
+				<?php if ( 'none' !== fusion_get_option( 'page_title_bar_bs' ) ) : ?>
 					<div class="fusion-page-title-secondary">
-						<?php echo $secondary_content; // WPCS: XSS ok. ?>
+						<?php echo $secondary_content; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 				<?php endif; ?>
 			<?php endif; ?>

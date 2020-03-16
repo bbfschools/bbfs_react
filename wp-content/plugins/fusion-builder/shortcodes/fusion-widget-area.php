@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 
@@ -6,7 +12,6 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_WidgetArea extends Fusion_Element {
@@ -37,9 +42,74 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_filter( 'fusion_attr_widget-shortcode', array( $this, 'attr' ) );
-				add_shortcode( 'fusion_widget_area', array( $this, 'render' ) );
+				add_filter( 'fusion_attr_widget-area-shortcode', [ $this, 'attr' ] );
+				add_shortcode( 'fusion_widget_area', [ $this, 'render' ] );
 
+				// Ajax mechanism for query related part.
+				add_action( 'wp_ajax_get_widget_area', [ $this, 'query' ] );
+			}
+
+			/**
+			 * Get the shortcode markup.
+			 *
+			 * @access public
+			 * @since 2.0
+			 * @return void.
+			 */
+			public function query() {
+
+				$return_data = [];
+				ob_start();
+				$name = '';
+				if ( isset( $_POST['model'] ) && isset( $_POST['model']['params'] ) && isset( $_POST['model']['params']['name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+					$name = sanitize_text_field( wp_unslash( $_POST['model']['params']['name'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+				}
+				if ( '' === $name ) {
+					return;
+				}
+				if ( function_exists( 'dynamic_sidebar' ) ) {
+					dynamic_sidebar( $name );
+				}
+				$return_data[ str_replace( '-', '_', $name ) ] = ob_get_clean();
+				echo wp_json_encode( $return_data );
+				wp_die();
+			}
+
+			/**
+			 * Gets the default values.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function get_element_defaults() {
+				$fusion_settings = fusion_get_fusion_settings();
+				return [
+					'hide_on_mobile'   => fusion_builder_default_visibility( 'string' ),
+					'class'            => '',
+					'id'               => '',
+					'background_color' => '',
+					'name'             => '',
+					'padding'          => '',
+					'title_color'      => $fusion_settings->get( 'widget_area_title_color' ),
+					'title_size'       => $fusion_settings->get( 'widget_area_title_size' ),
+				];
+			}
+
+			/**
+			 * Maps settings to param variables.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function settings_to_params() {
+				return [
+					'widget_area_title_color' => 'title_color',
+					'widget_area_title_size'  => 'title_size',
+				];
 			}
 
 			/**
@@ -52,34 +122,21 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
+				$fusion_settings = fusion_get_fusion_settings();
 
-				global $fusion_settings;
-				if ( ! $fusion_settings ) {
-					$fusion_settings = Fusion_Settings::get_instance();
-				}
-
+				$defaults = self::get_element_defaults();
 				if ( ! isset( $args['padding'] ) ) {
-					$padding_values = array();
+					$padding_values           = [];
 					$padding_values['top']    = ( isset( $args['padding_top'] ) && '' !== $args['padding_top'] ) ? $args['padding_top'] : '0px';
 					$padding_values['right']  = ( isset( $args['padding_right'] ) && '' !== $args['padding_right'] ) ? $args['padding_right'] : '0px';
 					$padding_values['bottom'] = ( isset( $args['padding_bottom'] ) && '' !== $args['padding_bottom'] ) ? $args['padding_bottom'] : '0px';
 					$padding_values['left']   = ( isset( $args['padding_left'] ) && '' !== $args['padding_left'] ) ? $args['padding_left'] : '0px';
 
-					$args['padding'] = implode( ' ', $padding_values );
+					$defaults['padding'] = implode( ' ', $padding_values );
 				}
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'hide_on_mobile'   => fusion_builder_default_visibility( 'string' ),
-						'class'            => '',
-						'id'               => '',
-						'background_color' => '',
-						'name'             => '',
-						'padding'          => '',
-						'title_color'    => $fusion_settings->get( 'widget_area_title_color' ),
-						'title_size'     => $fusion_settings->get( 'widget_area_title_size' ),
-					), $args
-				);
+				$defaults = FusionBuilder::set_shortcode_defaults( $defaults, $args, 'fusion_widget_area' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_widget_area', $args );
 
 				$defaults['padding'] = FusionBuilder::validate_shortcode_attr_value( $defaults['padding'], 'px' );
 
@@ -87,15 +144,13 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 
 				$this->args = $defaults;
 
-				$html = '<div ' . FusionBuilder::attributes( 'widget-shortcode' ) . '>';
+				$html  = '<div ' . FusionBuilder::attributes( 'widget-area-shortcode' ) . '>';
 				$html .= self::get_styles();
 
 				ob_start();
-				// @codingStandardsIgnoreStart
-				if ( function_exists( 'dynamic_sidebar' ) && dynamic_sidebar( $name ) ) {
+				if ( function_exists( 'dynamic_sidebar' ) && dynamic_sidebar( $name ) ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
 					// All is good, dynamic_sidebar() already called the rendering.
 				}
-				// @codingStandardsIgnoreEnd
 				$html .= ob_get_clean();
 
 				$html .= '<div ' . FusionBuilder::attributes( 'fusion-additional-widget-content' ) . '>';
@@ -105,7 +160,7 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 
 				$this->widget_counter++;
 
-				return $html;
+				return apply_filters( 'fusion_element_widget_area_content', $html, $args );
 
 			}
 
@@ -118,17 +173,19 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 			 */
 			public function attr() {
 
-				$attr = fusion_builder_visibility_atts(
-					$this->args['hide_on_mobile'], array(
+				$hide_on_mobile = ( isset( $this->args['hide_on_mobile'] ) ) ? $this->args['hide_on_mobile'] : '';
+				$attr           = fusion_builder_visibility_atts(
+					$hide_on_mobile,
+					[
 						'class' => 'fusion-widget-area fusion-widget-area-' . $this->widget_counter . ' fusion-content-widget-area',
-					)
+					]
 				);
 
-				if ( $this->args['class'] ) {
+				if ( isset( $this->args['class'] ) && $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
 				}
 
-				if ( $this->args['id'] ) {
+				if ( isset( $this->args['id'] ) && $this->args['id'] ) {
 					$attr['id'] = $this->args['id'];
 				}
 
@@ -143,7 +200,6 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 			 * @return string
 			 */
 			public function get_styles() {
-				global $fusion_library;
 				$styles = '';
 
 				if ( $this->args['background_color'] ) {
@@ -155,8 +211,8 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 						$this->args['padding'] = $this->args['padding'] . 'px';
 					}
 
-					$_padding = $fusion_library->sanitize->get_value_with_unit( $this->args['padding'] );
-					$styles .= '.fusion-widget-area-' . $this->widget_counter . ' {padding:' . $_padding . ';}';
+					$_padding = fusion_library()->sanitize->get_value_with_unit( $this->args['padding'] );
+					$styles  .= '.fusion-widget-area-' . $this->widget_counter . ' {padding:' . $_padding . ';}';
 				}
 
 				if ( $this->args['title_color'] ) {
@@ -172,7 +228,7 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 				}
 
 				if ( $styles ) {
-					$styles = '<style type="text/css" scoped="scoped">' . $styles . '</style>';
+					$styles = '<style type="text/css">' . $styles . '</style>';
 				}
 
 				return $styles;
@@ -187,30 +243,33 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
 			 */
 			public function add_options() {
 
-				return array(
-					'widget_area_shortcode_section' => array(
-						'label'       => esc_html__( 'Widget Area Element', 'fusion-builder' ),
+				return [
+					'widget_area_shortcode_section' => [
+						'label'       => esc_html__( 'Widget Area', 'fusion-builder' ),
 						'description' => '',
 						'id'          => 'widget_area_shortcode_section',
 						'type'        => 'accordion',
-						'fields'      => array(
-							'widget_area_title_size' => array(
+						'icon'        => 'fusiona-sidebar',
+						'fields'      => [
+							'widget_area_title_size'  => [
 								'label'       => esc_html__( 'Widget Title Size', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the size of widget titles. In pixels.', 'fusion-builder' ),
 								'id'          => 'widget_area_title_size',
 								'default'     => apply_filters( 'fusion_builder_widget_area_title_size', '' ),
 								'type'        => 'dimension',
-							),
-							'widget_area_title_color' => array(
+								'transport'   => 'postMessage',
+							],
+							'widget_area_title_color' => [
 								'label'       => esc_html__( 'Widget Title Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of widget titles.', 'fusion-builder' ),
 								'id'          => 'widget_area_title_color',
 								'default'     => apply_filters( 'fusion_builder_widget_area_title_color', '' ),
 								'type'        => 'color-alpha',
-							),
-						),
-					),
-				);
+								'transport'   => 'postMessage',
+							],
+						],
+					],
+				];
 			}
 		}
 	}
@@ -225,85 +284,94 @@ if ( fusion_is_element_enabled( 'fusion_widget_area' ) ) {
  * @since 1.0
  */
 function fusion_element_widget_area() {
-
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
+	$fusion_settings = fusion_get_fusion_settings();
+	$sidebars        = FusionBuilder::fusion_get_sidebars();
 
 	fusion_builder_map(
-		array(
-			'name'      => esc_attr__( 'Widget Area', 'fusion-builder' ),
-			'shortcode' => 'fusion_widget_area',
-			'icon'      => 'fusiona-sidebar',
-			'params'    => array(
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Widget Area Name', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the name of the widget area to display.', 'fusion-builder' ),
-					'param_name'  => 'name',
-					'value'       => FusionBuilder::fusion_get_sidebars(),
-					'default'     => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Widget Title Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the size of widget titles. In pixels ex: 18px.', 'fusion-builder' ),
-					'param_name'  => 'title_size',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'widget_area_title_size' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Widget Title Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the color of widget titles.', 'fusion-builder' ),
-					'param_name'  => 'title_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'widget_area_title_color' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Backgound Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose a background color for the widget area.', 'fusion-builder' ),
-					'param_name'  => 'background_color',
-					'value'       => '',
-				),
-				array(
-					'type'             => 'dimension',
-					'remove_from_atts' => true,
-					'heading'          => esc_attr__( 'Padding', 'fusion-builder' ),
-					'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
-					'param_name'       => 'padding',
-					'value'            => array(
-						'padding_top'    => '',
-						'padding_right'  => '',
-						'padding_bottom' => '',
-						'padding_left'   => '',
-					),
-				),
-				array(
-					'type'        => 'checkbox_button_set',
-					'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
-					'param_name'  => 'hide_on_mobile',
-					'value'       => fusion_builder_visibility_options( 'full' ),
-					'default'     => fusion_builder_default_visibility( 'array' ),
-					'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_WidgetArea',
+			[
+				'name'      => esc_attr__( 'Widget Area', 'fusion-builder' ),
+				'shortcode' => 'fusion_widget_area',
+				'icon'      => 'fusiona-sidebar',
+				'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/widget-area-element/',
+				'params'    => [
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Widget Area Name', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the name of the widget area to display.', 'fusion-builder' ),
+						'param_name'  => 'name',
+						'value'       => $sidebars,
+						'default'     => function_exists( 'fusion_get_array_default' ) ? fusion_get_array_default( $sidebars ) : '',
+						'callback'    => [
+							'function' => 'fusion_widget_area',
+							'ajax'     => true,
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Widget Title Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the size of widget titles. In pixels ex: 18px.', 'fusion-builder' ),
+						'param_name'  => 'title_size',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'widget_area_title_size' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Widget Title Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the color of widget titles.', 'fusion-builder' ),
+						'param_name'  => 'title_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'widget_area_title_color' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose a background color for the widget area.', 'fusion-builder' ),
+						'param_name'  => 'background_color',
+						'value'       => '',
+					],
+					[
+						'type'             => 'dimension',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Padding', 'fusion-builder' ),
+						'description'      => esc_attr__( 'In pixels or percentage, ex: 10px or 10%.', 'fusion-builder' ),
+						'param_name'       => 'padding',
+						'value'            => [
+							'padding_top'    => '',
+							'padding_right'  => '',
+							'padding_bottom' => '',
+							'padding_left'   => '',
+						],
+					],
+					[
+						'type'        => 'checkbox_button_set',
+						'heading'     => esc_attr__( 'Element Visibility', 'fusion-builder' ),
+						'param_name'  => 'hide_on_mobile',
+						'value'       => fusion_builder_visibility_options( 'full' ),
+						'default'     => fusion_builder_default_visibility( 'array' ),
+						'description' => esc_attr__( 'Choose to show or hide the element on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+					],
+				],
+				'callback'  => [
+					'function' => 'fusion_widget_area',
+					'ajax'     => true,
+				],
+			]
 		)
 	);
 }

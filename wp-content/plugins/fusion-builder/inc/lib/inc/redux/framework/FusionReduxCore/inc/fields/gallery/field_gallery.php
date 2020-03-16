@@ -64,14 +64,14 @@ if ( ! class_exists( 'FusionReduxFramework_gallery' ) ) {
 				foreach ( $ids as $attachment_id ) {
 					$img = wp_get_attachment_image_src( $attachment_id, 'thumbnail' );
 					echo '<a class="of-uploaded-image" href="' . $img[0] . '">';
-					echo '<img class="fusionredux-option-image" id="image_' . $this->field['id'] . '_' . $attachment_id . '" src="' . $img[0] . '" alt="" target="_blank" rel="external" />';
+					echo '<img class="fusionredux-option-image" id="image_' . $this->field['id'] . '_' . $attachment_id . '" src="' . $img[0] . '" target="_blank" rel="external" />';
 					echo '</a>';
 				}
 			}
 
 			echo '</div>';
-			echo '<a href="#" onclick="return false;" id="edit-gallery" class="gallery-attachments button button-primary">' . __( 'Add/Edit Gallery', 'Avada' ) . '</a> ';
-			echo '<a href="#" onclick="return false;" id="clear-gallery" class="gallery-attachments button">' . __( 'Clear Gallery', 'Avada' ) . '</a>';
+			echo '<a href="#" onclick="return false;" id="edit-gallery" class="gallery-attachments button button-primary">' . __( 'Add/Edit Gallery', 'fusion-builder' ) . '</a> ';
+			echo '<a href="#" onclick="return false;" id="clear-gallery" class="gallery-attachments button">' . __( 'Clear Gallery', 'fusion-builder' ) . '</a>';
 			echo '<input type="hidden" class="gallery_values ' . $this->field['class'] . '" value="' . esc_attr( $this->value ) . '" name="' . $this->field['name'] . $this->field['name_suffix'] . '" />';
 		}
 

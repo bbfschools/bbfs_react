@@ -6,11 +6,6 @@
  * @subpackage Fusion-Patcher
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * The admin screen class for teh patcher.
  *
@@ -26,7 +21,7 @@ class Fusion_Patcher_Admin_Screen {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	protected static $menu_added = array();
+	protected static $menu_added = [];
 
 	/**
 	 * An array of printed forms.
@@ -36,7 +31,7 @@ class Fusion_Patcher_Admin_Screen {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	protected static $printed_forms = array();
+	protected static $printed_forms = [];
 
 	/**
 	 * An instance of the Fusion_Patcher class.
@@ -45,7 +40,7 @@ class Fusion_Patcher_Admin_Screen {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	private $patcher = array();
+	private $patcher = [];
 
 	/**
 	 * The patches.
@@ -54,7 +49,7 @@ class Fusion_Patcher_Admin_Screen {
 	 * @since 1.0.0
 	 * @var array
 	 */
-	protected $patches = array();
+	protected $patches = [];
 
 	/**
 	 * Constructor.
@@ -80,15 +75,15 @@ class Fusion_Patcher_Admin_Screen {
 		}
 
 		// Add menu page.
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 		// Call register settings function.
-		add_action( 'admin_init', array( $this, 'settings' ) );
+		add_action( 'admin_init', [ $this, 'settings' ] );
 
-		add_action( 'admin_init', array( $this, 'init' ), 999 );
+		add_action( 'admin_init', [ $this, 'init' ], 999 );
 
-		add_filter( 'whitelist_options', array( $this, 'whitelist_options' ) );
+		add_filter( 'whitelist_options', [ $this, 'whitelist_options' ] );
 
-		add_filter( 'custom_menu_order', array( $this, 'reorder_submenus' ) );
+		add_filter( 'custom_menu_order', [ $this, 'reorder_submenus' ] );
 
 	}
 
@@ -108,7 +103,7 @@ class Fusion_Patcher_Admin_Screen {
 		// Set the $patches property.
 		$bundles = $this->patcher->get_args( 'bundled' );
 		if ( ! $bundles ) {
-			$bundles = array();
+			$bundles = [];
 		}
 		foreach ( $bundles as $bundle ) {
 			$instance = $this->patcher->get_instance( $bundle );
@@ -122,7 +117,7 @@ class Fusion_Patcher_Admin_Screen {
 			}
 		}
 		// Add the patcher to the support screen.
-		add_action( 'fusion_admin_pages_patcher', array( $this, 'form' ) );
+		add_action( 'fusion_admin_pages_patcher', [ $this, 'form' ] );
 
 	}
 
@@ -139,13 +134,13 @@ class Fusion_Patcher_Admin_Screen {
 			return;
 		}
 
-		add_submenu_page(
+		add_submenu_page( // phpcs:ignore WPThemeReview.PluginTerritory.NoAddAdminPages
 			$this->patcher->get_args( 'parent_slug' ),
 			$this->patcher->get_args( 'page_title' ),
 			$this->patcher->get_args( 'menu_title' ),
 			'manage_options',
 			$this->patcher->get_args( 'context' ) . '-fusion-patcher',
-			array( $this, 'admin_page' )
+			[ $this, 'admin_page' ]
 		);
 		self::$menu_added[ $this->patcher->get_args( 'context' ) ] = true;
 
@@ -161,11 +156,17 @@ class Fusion_Patcher_Admin_Screen {
 		global $submenu;
 
 		if ( isset( $submenu['avada'] ) && isset( $submenu['avada'][8] ) ) {
-			$theme_options_entry = $submenu['avada'][7];
-			$patcher_entry = $submenu['avada'][8];
 
-			$submenu['avada'][7] = $patcher_entry;
-			$submenu['avada'][8] = $theme_options_entry;
+			// Check needed for FWLB.
+			$theme_options_entry = ( isset( $submenu['avada'][7] ) ) ? $submenu['avada'][7] : false;
+			$patcher_entry       = $submenu['avada'][8];
+
+			$submenu['avada'][7] = $patcher_entry; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+			if ( $theme_options_entry ) {
+				$submenu['avada'][8] = $theme_options_entry; // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+			} else {
+				unset( $submenu['avada'][8] );
+			}
 		}
 	}
 
@@ -232,7 +233,7 @@ class Fusion_Patcher_Admin_Screen {
 		}
 
 		// Determine if there are available patches, and build an array of them.
-		$available_patches = array();
+		$available_patches = [];
 		foreach ( $this->patches as $patch_id => $patch_args ) {
 			if ( ! isset( $patch_args['patch'] ) ) {
 				continue;
@@ -242,14 +243,14 @@ class Fusion_Patcher_Admin_Screen {
 				if ( $this->patcher->get_args( 'context' ) === $unique_patch_args['context'] ) {
 					// Make sure the version is right.
 					if ( $this->patcher->get_args( 'version' ) === $unique_patch_args['version'] ) {
-						$available_patches[] = $patch_id;
+						$available_patches[]                              = $patch_id;
 						$context[ $this->patcher->get_args( 'context' ) ] = true;
 					}
 				}
 				// Check for bundled products.
 				$bundles = $this->patcher->get_args( 'bundled' );
 				if ( ! $bundles ) {
-					$bundles = array();
+					$bundles = [];
 				}
 				foreach ( $bundles as $bundle ) {
 					$instance = $this->patcher->get_instance( $bundle );
@@ -258,7 +259,7 @@ class Fusion_Patcher_Admin_Screen {
 						if ( $instance->get_args( 'context' ) === $unique_patch_args['context'] ) {
 							// Make sure the version is right.
 							if ( $instance->get_args( 'version' ) === $unique_patch_args['version'] ) {
-								$available_patches[] = $patch_id;
+								$available_patches[]                         = $patch_id;
 								$context[ $instance->get_args( 'context' ) ] = true;
 							}
 						}
@@ -272,10 +273,10 @@ class Fusion_Patcher_Admin_Screen {
 		sort( $available_patches );
 
 		// Get an array of the already applied patches.
-		$applied_patches = get_site_option( 'fusion_applied_patches', array() );
+		$applied_patches = get_site_option( 'fusion_applied_patches', [] );
 
 		// Get an array of patches that failed to be applied.
-		$failed_patches = get_site_option( 'fusion_failed_patches', array() );
+		$failed_patches = get_site_option( 'fusion_failed_patches', [] );
 
 		// Get the array of messages to display.
 		$messages = Fusion_Patcher_Admin_Notices::get_messages();
@@ -287,41 +288,43 @@ class Fusion_Patcher_Admin_Screen {
 					<p class="description">
 						<?php if ( empty( $available_patches ) ) : ?>
 							<?php /* translators: The product name and its version. */ ?>
-							<?php printf( esc_attr__( 'Fusion Patcher: Currently there are no patches available for %1$s version %2$s', 'Avada' ), esc_attr( $this->patcher->get_args( 'name' ) ), esc_attr( $this->patcher->get_args( 'version' ) ) ); ?>
+							<?php printf( esc_html__( 'Fusion Patcher: Currently there are no patches available for %1$s version %2$s', 'Avada' ), esc_attr( $this->patcher->get_args( 'name' ) ), esc_attr( $this->patcher->get_args( 'version' ) ) ); ?>
 						<?php else : ?>
 							<?php /* translators: The product name and its version. */ ?>
-							<?php printf( esc_attr__( 'Fusion Patcher: The following patches are available for %1$s version %2$s', 'Avada' ), esc_attr( $this->patcher->get_args( 'name' ) ), esc_attr( $this->patcher->get_args( 'version' ) ) ); ?>
+							<?php printf( esc_html__( 'Fusion Patcher: The following patches are available for %1$s version %2$s', 'Avada' ), esc_attr( $this->patcher->get_args( 'name' ) ), esc_attr( $this->patcher->get_args( 'version' ) ) ); ?>
 						<?php endif; ?>
-						<span class="fusion-auto-patcher learn-more"><a href="https://theme-fusion.com/documentation/avada/install-update/avada-patcher/" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Learn More', 'Avada' ); ?></a></span>
+						<span class="fusion-auto-patcher learn-more"><a href="https://theme-fusion.com/documentation/avada/install-update/avada-patcher/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Learn More', 'Avada' ); ?></a></span>
 					</p>
 					<?php if ( ! empty( $available_patches ) ) : ?>
 						<p class="sub-description">
-							<?php esc_attr_e( 'The status column displays if a patch was applied. However, a patch can be reapplied if necessary.', 'Avada' ); ?>
+							<?php esc_html_e( 'The status column displays if a patch was applied. However, a patch can be reapplied if necessary.', 'Avada' ); ?>
 						</p>
 					<?php endif; ?>
 				</div>
 				<?php if ( ! empty( $messages ) ) : ?>
 					<?php foreach ( $messages as $message_id => $message ) : ?>
-						<?php if ( false !== strpos( $message_id, 'write-permissions-' ) ) : ?>
-							<?php continue; ?>
-						<?php endif; ?>
-						<p class="fusion-patcher-error"><?php echo $message; // WPCS: XSS ok. ?></p>
+						<?php
+						if ( false !== strpos( $message_id, 'write-permissions-' ) ) {
+							continue;
+						}
+						?>
+						<p class="fusion-patcher-error"><?php echo $message; // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
 					<?php endforeach; ?>
 				<?php endif; ?>
 				<?php if ( ! empty( $available_patches ) ) : // Only display the table if we have patches to apply. ?>
 					<table class="fusion-patcher-table">
 						<tbody>
 							<tr class="fusion-patcher-headings">
-								<th style="min-width:6em;"><?php esc_attr_e( 'Patch #', 'Avada' ); ?></th>
+								<th style="min-width:6em;"><?php esc_html_e( 'Patch #', 'Avada' ); ?></th>
 								<th>
 									<?php if ( ! empty( $bundles ) ) : ?>
-										<?php esc_attr_e( 'Product', 'Avada' ); ?>
+										<?php esc_html_e( 'Product', 'Avada' ); ?>
 									<?php else : ?>
-										<?php esc_attr_e( 'Issue Date', 'Avada' ); ?>
+										<?php esc_html_e( 'Issue Date', 'Avada' ); ?>
 									<?php endif; ?>
 								</th>
-								<th><?php esc_attr_e( 'Description', 'Avada' ); ?></th>
-								<th><?php esc_attr_e( 'Status', 'Avada' ); ?></th>
+								<th><?php esc_html_e( 'Description', 'Avada' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'Avada' ); ?></th>
 								<th></th>
 							</tr>
 							</tr>
@@ -372,7 +375,7 @@ class Fusion_Patcher_Admin_Screen {
 									<?php if ( ! empty( $bundles ) ) : ?>
 										<?php
 										// Splitting to multiple lines for PHP 5.2 compatibility.
-										$product_name = str_replace( array( '-', '_' ), ' ', $patch_args['patch'][0]['context'] );
+										$product_name = str_replace( [ '-', '_' ], ' ', $patch_args['patch'][0]['context'] );
 										$product_name = ucwords( $product_name );
 										?>
 										<td class="patch-product"><?php echo esc_attr( $product_name ); ?></td>
@@ -382,10 +385,10 @@ class Fusion_Patcher_Admin_Screen {
 									<td class="patch-description">
 										<?php if ( isset( $messages[ 'write-permissions-' . $patch_id ] ) ) : ?>
 											<div class="fusion-patcher-error" style="font-size:.85rem;">
-												<?php echo $messages[ 'write-permissions-' . $patch_id ]; // WPCS: XSS ok. ?>
+												<?php echo $messages[ 'write-permissions-' . $patch_id ]; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 											</div>
 										<?php endif; ?>
-										<?php echo $patch_args['description'][0]; // WPCS: XSS ok. ?>
+										<?php echo $patch_args['description'][0]; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 									</td>
 									<td class="patch-status">
 										<?php if ( $patch_failed ) : ?>
@@ -401,13 +404,13 @@ class Fusion_Patcher_Admin_Screen {
 												<?php do_settings_sections( 'fusion_patcher_' . $patch_id ); ?>
 												<input type="hidden" name="fusion_patch_contents_<?php echo intval( $patch_id ); ?>" value="<?php echo esc_html( $this->format_patch( $patch_args ) ); ?>" />
 												<?php if ( $patch_applied ) : ?>
-													<?php submit_button( esc_attr__( 'Patch Applied', 'Avada' ) ); ?>
+													<?php submit_button( esc_html__( 'Patch Applied', 'Avada' ) ); ?>
 												<?php else : ?>
-													<?php submit_button( esc_attr__( 'Apply Patch', 'Avada' ) ); ?>
+													<?php submit_button( esc_html__( 'Apply Patch', 'Avada' ) ); ?>
 													<?php if ( $patch_failed ) : ?>
 														<?php $dismiss_url = 'admin.php?page=' . $this->patcher->get_args( 'context' ) . '-fusion-patcher&manually-applied-patch=' . $patch_id; ?>
 														<?php $dismiss_url = admin_url( $dismiss_url ); ?>
-														<a class="button" style="margin-top:10px;font-size:11px;color:#b71c1c;display:block;" href="<?php echo esc_url_raw( $dismiss_url ); ?>"><?php esc_attr_e( 'Dismiss Notices', 'Avada' ); ?></a>
+														<a class="button" style="margin-top:10px;font-size:11px;color:#b71c1c;display:block;" href="<?php echo esc_url_raw( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss Notices', 'Avada' ); ?></a>
 													<?php endif; ?>
 												<?php endif; ?>
 											</form>
@@ -415,9 +418,9 @@ class Fusion_Patcher_Admin_Screen {
 											<span class="button disabled button-small">
 												<?php if ( isset( $available_patches[ $key - 1 ] ) ) : ?>
 													<?php /* translators: The patch-ID. */ ?>
-													<?php printf( esc_attr__( 'Please apply patch #%s first.', 'Avada' ), intval( $available_patches[ $key - 1 ] ) ); ?>
+													<?php printf( esc_html__( 'Please apply patch #%s first.', 'Avada' ), intval( $available_patches[ $key - 1 ] ) ); ?>
 												<?php else : ?>
-													<?php esc_attr_e( 'Patch cannot be currently aplied.', 'Avada' ); ?>
+													<?php esc_html_e( 'Patch cannot be currently aplied.', 'Avada' ); ?>
 												<?php endif; ?>
 											</span>
 										<?php endif; ?>
@@ -447,7 +450,7 @@ class Fusion_Patcher_Admin_Screen {
 	 * @return string
 	 */
 	private function format_patch( $patch ) {
-		$patches = array();
+		$patches = [];
 		if ( ! isset( $patch['patch'] ) ) {
 			return;
 		}
@@ -455,7 +458,7 @@ class Fusion_Patcher_Admin_Screen {
 			if ( ! isset( $args['context'] ) || ! isset( $args['path'] ) || ! isset( $args['reference'] ) ) {
 				continue;
 			}
-			$valid_contexts   = array();
+			$valid_contexts   = [];
 			$valid_contexts[] = $this->patcher->get_args( 'context' );
 			$bundled          = $this->patcher->get_args( 'bundled' );
 			if ( ! empty( $bundled ) ) {
@@ -477,7 +480,7 @@ class Fusion_Patcher_Admin_Screen {
 				}
 			}
 		}
-		return base64_encode( wp_json_encode( $patches ) );
+		return fusion_encode_input( wp_json_encode( $patches ) );
 	}
 
 	/**
@@ -489,8 +492,8 @@ class Fusion_Patcher_Admin_Screen {
 	private function manually_applied_patches() {
 
 		$manual_patches_found = '';
-		if ( isset( $_GET['manually-applied-patch'] ) ) {
-			$manual_patches_found = sanitize_text_field( wp_unslash( $_GET['manually-applied-patch'] ) );
+		if ( isset( $_GET['manually-applied-patch'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$manual_patches_found = sanitize_text_field( wp_unslash( $_GET['manually-applied-patch'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		if ( defined( 'FUSION_MANUALLY_APPLIED_PATCHES' ) ) {
@@ -501,8 +504,8 @@ class Fusion_Patcher_Admin_Screen {
 		}
 		$messages_option = get_site_option( Fusion_Patcher_Admin_Notices::$option_name );
 		$manual_patches  = explode( ',', $manual_patches_found );
-		$applied_patches = get_site_option( 'fusion_applied_patches', array() );
-		$failed_patches  = get_site_option( 'fusion_failed_patches', array() );
+		$applied_patches = get_site_option( 'fusion_applied_patches', [] );
+		$failed_patches  = get_site_option( 'fusion_failed_patches', [] );
 
 		foreach ( $manual_patches as $patch ) {
 			$patch = (int) trim( $patch );
@@ -552,12 +555,12 @@ class Fusion_Patcher_Admin_Screen {
 	 */
 	public function whitelist_options( $options ) {
 
-		$added = array();
+		$added = [];
 		// Register settings for the patch contents.
 		foreach ( $this->patches as $key => $value ) {
-			$added[ 'fusion_patcher_' . $key ] = array(
+			$added[ 'fusion_patcher_' . $key ] = [
 				'fusion_patch_contents_' . $key,
-			);
+			];
 		}
 		$options = add_option_whitelist( $added, $options );
 		return $options;

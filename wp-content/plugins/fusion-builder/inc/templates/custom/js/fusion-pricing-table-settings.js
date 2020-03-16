@@ -9,25 +9,22 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			template: FusionPageBuilder.template( $( '#fusion-builder-block-module-settings-table-template' ).html() ),
 
-			events: {
-				'click .fusion-table-builder-add-column': 'addTableColumn',
-				'click .fusion-builder-table-clone-column': 'cloneTableColumn',
-				'click .fusion-table-builder-add-row': 'addTableRow',
-				'click .fusion-builder-table-delete-column': 'removeTableColumn',
-				'click .fusion-builder-table-delete-row': 'removeTableRow',
-				'click .fusion-builder-table-add-button': 'addButton',
-				'click .fusion-form-radio-button-set-button': 'buttonSetClick'
+			events: function() {
+				return _.extend( {}, FusionPageBuilder.ElementSettingsView.prototype.events, {
+					'click .fusion-table-builder-add-column': 'addTableColumn',
+					'click .fusion-builder-table-clone-column': 'cloneTableColumn',
+					'click .fusion-table-builder-add-row': 'addTableRow',
+					'click .fusion-builder-table-delete-column': 'removeTableColumn',
+					'click .fusion-builder-table-delete-row': 'removeTableRow',
+					'click .fusion-builder-table-add-button': 'addButton',
+					'click .fusion-form-radio-button-set-button': 'buttonSetClick'
+				} );
 			},
 
 			removeTableRow: function( event ) {
-				var rowID;
-
 				if ( event ) {
 					event.preventDefault();
-
-					rowID = $( event.currentTarget ).data( 'row-id' );
-
-					$( event.currentTarget ).parents( 'tr' ).remove();
+					jQuery( event.currentTarget ).parents( 'tr' ).remove();
 				}
 
 			},
@@ -110,7 +107,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				$theadTr.attr( 'class', 'th-' +  newColumnID );
 				$theadTr.find( '.fusion-builder-table-clone-column' ).attr( 'data-column-id', newColumnID );
 				$theadTr.find( 'input' ).each( function() {
-						jQuery( this ).attr( 'value', jQuery( this ).val() );
+					jQuery( this ).attr( 'value', jQuery( this ).val() );
 				} );
 				$( event.currentTarget ).parents( 'th' ).after( $theadTr.outerHTML() );
 
@@ -149,10 +146,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					return;
 				}
 
-				// Count columns
-				this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr th' ).each( function() {
-					columns = columns + 1;
-				} );
+				columns = this.$el.find( '.fusion-table-builder .fusion-builder-table thead tr th' ).length;
 
 				for ( i = 1; i <= columns; i++ ) {
 					td += '<td class="td-' + i + '" data-td-id="' + i + '" ><input type="text" placeholder="' + fusionBuilderText.enter_text + '" value="" /><span class="fa fusiona-trash-o fusion-builder-table-delete-row" title="' + fusionBuilderText.delete_row + '" data-row-id="' + newRowID + '" /></td>';
@@ -195,29 +189,31 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				FusionPageBuilderApp.shortcodeGeneratorEditorID = 'button_' + elementID;
 
 				// Get default options
-				defaultParams = fusionAllElements[elementType].params;
+				defaultParams = fusionAllElements[ elementType ].params;
 				params = {};
 
 				// Process default parameters from shortcode
 				_.each( defaultParams, function( param )  {
 					if ( _.isObject( param.value ) ) {
-						value = param.default;
+						value = param[ 'default' ];
 					} else {
 						value = param.value;
 					}
-					params[param.param_name] = value;
+					params[ param.param_name ] = value;
 				} );
 
-				this.collection.add( [ {
-					type: 'generated_element',
-					added: 'manually',
-					element_type: elementType,
-					params: params
-				} ] );
+				this.collection.add( [
+					{
+						type: 'generated_element',
+						added: 'manually',
+						element_type: elementType,
+						params: params
+					}
+				] );
 			}
 
 		} );
 
 	} );
 
-} ( jQuery ) );
+}( jQuery ) );

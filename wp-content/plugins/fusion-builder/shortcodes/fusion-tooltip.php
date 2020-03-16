@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 
@@ -6,7 +12,6 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_Tooltip extends Fusion_Element {
@@ -28,9 +33,32 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_filter( 'fusion_attr_tooltip-shortcode', array( $this, 'attr' ) );
-				add_shortcode( 'fusion_tooltip', array( $this, 'render' ) );
+				add_filter( 'fusion_attr_tooltip-shortcode', [ $this, 'attr' ] );
+				add_shortcode( 'fusion_tooltip', [ $this, 'render' ] );
 
+			}
+
+			/**
+			 * Gets the default values.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function get_element_defaults() {
+
+				global $fusion_settings;
+
+				return [
+					'class'     => '',
+					'id'        => '',
+					'animation' => false,
+					'delay'     => 0,
+					'placement' => 'top',
+					'title'     => 'none',
+					'trigger'   => 'hover',
+				];
 			}
 
 			/**
@@ -44,25 +72,14 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 			 */
 			public function render( $args, $content = '' ) {
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'class'     => '',
-						'id'        => '',
-						'animation' => false,
-						'delay'     => 0,
-						'placement' => 'top',
-						'title'     => 'none',
-						'trigger'   => 'hover',
-					), $args
-				);
-
-				extract( $defaults );
+				$defaults = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_tooltip' );
+				$content  = apply_filters( 'fusion_shortcode_content', $content, 'fusion_tooltip', $args );
 
 				$this->args = $defaults;
 
 				$html = sprintf( '<span %s>%s</span>', FusionBuilder::attributes( 'tooltip-shortcode' ), do_shortcode( $content ) );
 
-				return $html;
+				return apply_filters( 'fusion_element_tooltip_content', $html, $args );
 
 			}
 
@@ -75,9 +92,9 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 			 */
 			public function attr() {
 
-				$attr = array(
+				$attr = [
 					'class' => 'fusion-tooltip tooltip-shortcode',
-				);
+				];
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -91,28 +108,11 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
 				$attr['data-delay']     = $this->args['delay'];
 				$attr['data-placement'] = $this->args['placement'];
 				$attr['data-title']     = $this->args['title'];
+				$attr['title']          = $this->args['title'];
 				$attr['data-toggle']    = 'tooltip';
 				$attr['data-trigger']   = $this->args['trigger'];
 
 				return $attr;
-
-			}
-
-			/**
-			 * Builds the dynamic styling.
-			 *
-			 * @access public
-			 * @since 1.1
-			 * @return array
-			 */
-			public function add_styling() {
-
-				global $fusion_library, $fusion_settings, $dynamic_css_helpers;
-
-				$elements = apply_filters( 'fusion_builder_element_classes', array( '.tooltip-shortcode' ), '.tooltip-shortcode' );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'primary_color' ) );
-
-				return $css;
 
 			}
 
@@ -140,67 +140,71 @@ if ( fusion_is_element_enabled( 'fusion_tooltip' ) ) {
  */
 function fusion_element_tooltip() {
 	fusion_builder_map(
-		array(
-			'name'           => esc_attr__( 'Tooltip', 'fusion-builder' ),
-			'shortcode'      => 'fusion_tooltip',
-			'icon'           => 'fusiona-exclamation-sign',
-			'generator_only' => true,
-			'params'         => array(
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Title', 'fusion-builder' ),
-					'description' => esc_attr__( 'Insert the text that displays in the tooltip.', 'fusion-builder' ),
-					'param_name'  => 'title',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'textarea',
-					'heading'     => esc_attr__( 'Content', 'fusion-builder' ),
-					'description' => esc_attr__( 'Insert the text that will activate the tooltip hover.', 'fusion-builder' ),
-					'param_name'  => 'element_content',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Tooltip Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the display position.' ),
-					'param_name'  => 'placement',
-					'value'       => array(
-						'top'    => esc_attr__( 'Top', 'fusion-builder' ),
-						'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-					),
-					'default'     => 'top',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Tooltip Trigger', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose action to trigger the tooltip.', 'fusion-builder' ),
-					'param_name'  => 'trigger',
-					'value'       => array(
-						'hover' => esc_attr__( 'Hover', 'fusion-builder' ),
-						'click' => esc_attr__( 'Click', 'fusion-builder' ),
-					),
-					'default'     => 'hover',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_Tooltip',
+			[
+				'name'           => esc_attr__( 'Tooltip', 'fusion-builder' ),
+				'shortcode'      => 'fusion_tooltip',
+				'icon'           => 'fusiona-exclamation-sign',
+				'generator_only' => true,
+				'help_url'       => 'https://theme-fusion.com/documentation/fusion-builder/elements/tooltip-element/',
+				'params'         => [
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Tooltip Title', 'fusion-builder' ),
+						'description' => esc_attr__( 'Insert the text that displays in the tooltip.', 'fusion-builder' ),
+						'param_name'  => 'title',
+						'value'       => '',
+					],
+					[
+						'type'        => 'textarea',
+						'heading'     => esc_attr__( 'Triggering Content', 'fusion-builder' ),
+						'description' => esc_attr__( 'Insert the text that will activate the tooltip when hovered or clicked.', 'fusion-builder' ),
+						'param_name'  => 'element_content',
+						'value'       => '',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Tooltip Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the display position.' ),
+						'param_name'  => 'placement',
+						'value'       => [
+							'top'    => esc_attr__( 'Top', 'fusion-builder' ),
+							'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+						],
+						'default'     => 'top',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Tooltip Trigger Action', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose action to trigger the tooltip.', 'fusion-builder' ),
+						'param_name'  => 'trigger',
+						'value'       => [
+							'hover' => esc_attr__( 'Hover', 'fusion-builder' ),
+							'click' => esc_attr__( 'Click', 'fusion-builder' ),
+						],
+						'default'     => 'hover',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+					],
+				],
+			]
 		)
 	);
 }

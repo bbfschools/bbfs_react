@@ -1,5 +1,5 @@
 /*global fusionredux_change, fusionredux*/
-
+/* jshint -W109, -W098, -W116, -W117 */
 /**
  * Typography
  * Dependencies:        google.com, jquery, select3
@@ -12,6 +12,90 @@
 
 (function( $ ) {
     "use strict";
+
+    function fusionReduxGetFontProperties( font ) {
+        var foundFont = false;
+        jQuery.each( fusionredux.fonts.google.items, function( k, item ) {
+            if ( font === item.family ) {
+                foundFont = item;
+            }
+        });
+        return foundFont;
+    }
+    function fusionReduxIsCustomFont( font ) {
+        var foundFont = false;
+        if ( fusionredux.customfonts && fusionredux.customfonts.children ) {
+            jQuery.each( fusionredux.customfonts.children, function( k, item ) {
+                if ( font === item.id ) {
+                    foundFont = true;
+                }
+            });
+        }
+        return foundFont;
+    }
+    function fusionReduxGetVariantName( variant ) {
+        switch ( variant ) {
+            case '100':
+            case 100:
+                return 'Ultra-Light 100';
+            case '200':
+            case 200:
+                return 'Light 200';
+            case '300':
+            case 300:
+                return 'Book 300';
+            case '400':
+            case 400:
+            case 'regular':
+                return 'Normal 400';
+            case '500':
+            case 500:
+                return 'Medium 500';
+            case '600':
+            case 600:
+                return 'Semi-Bold 600';
+            case '700':
+            case 700:
+                return 'Bold 700';
+            case '800':
+            case 800:
+                return 'Extra-Bold 800';
+            case '900':
+            case 900:
+                return 'Ultra-Bold 900';
+            case '100i':
+            case '100italic':
+                return 'Ultra-Light 100 Italic';
+            case '200i':
+            case '200italic':
+                return 'Light 200 Italic';
+            case '300i':
+            case '300italic':
+                return 'Book 300 Italic';
+            case '400i':
+            case '400italic':
+            case 'italic':
+            case 'i':
+                return 'Normal 400 Italic';
+            case '500i':
+            case '500italic':
+                return 'Medium 500 Italic';
+            case '600i':
+            case '600italic':
+                return 'Semi-Bold 600 Italic';
+            case '700i':
+            case '700italic':
+                return 'Bold 700 Italic';
+            case '800i':
+            case '800italic':
+                return 'Extra-Bold 800 Italic';
+            case '900i':
+            case '900italic':
+                return 'Ultra-Bold 900 Italic';
+            default:
+                return variant;
+        }
+    }
 
     fusionredux.field_objects = fusionredux.field_objects || {};
     fusionredux.field_objects.typography = fusionredux.field_objects.typography || {};
@@ -131,7 +215,7 @@
                                     var data = {id: element.val(), text: element.val()};
                                     callback( data );
                                 },
-                                allowClear: fontClear,
+                                allowClear: fontClear
                                 // when one clicks on the font-family select box
                             }
                         ).on(
@@ -370,12 +454,9 @@
         //var output = family;
 
         // Is selected font a google font?
-        var google;
+        var google = ( fusionReduxGetFontProperties( family ) ) ? true : false;
         if ( isSelecting === true ) {
-            google = fusionredux.field_objects.typography.makeBool( selVals.object['data-google'] );
             $( '#' + mainID + ' .fusionredux-typography-google-font' ).val( google );
-        } else {
-            google = fusionredux.field_objects.typography.makeBool( $( '#' + mainID + ' .fusionredux-typography-google-font' ).val() ); // Check if font is a google font
         }
 
         // Page load. Speeds things up memory wise to offload to client
@@ -387,7 +468,7 @@
                 style = String( style );
             }
 
-            if ( typeof (script) !== undefined ) {
+            if ( 'undefined' !== typeof script ) {
                 script = String( script );
             }
         }
@@ -399,8 +480,8 @@
 
         // Get font details
         var details = '';
-        if ( google === true && ( family in fusionredux.fonts.google) ) {
-            details = fusionredux.fonts.google[family];
+        if ( google === true ) {
+            details = fusionReduxGetFontProperties( family );
         } else {
             details = {
                 '400': 'Normal 400',
@@ -422,19 +503,18 @@
             if ( google === true ) {
 
                 // STYLES
-                var selected = "";
+                var selected = '';
                 $.each(
                     details.variants, function( index, variant ) {
-                        if ( variant.id === style || fusionredux.field_objects.typography.size( details.variants ) === 1 ) {
+                        variant = 'italic' === variant ? '400italic' : variant;
+
+                        selected = '';
+                        if ( variant === style || fusionredux.field_objects.typography.size( details.variants ) === 1 ) {
                             selected = ' selected="selected"';
-                            style = variant.id;
-                        } else {
-                            selected = "";
+                            style = variant;
                         }
 
-                        html += '<option value="' + variant.id + '"' + selected + '>' + variant.name.replace(
-                            /\+/g, " "
-                        ) + '</option>';
+                        html += '<option value="' + variant + '"' + selected + '>' + fusionReduxGetVariantName( variant ) + '</option>';
                     }
                 );
 
@@ -449,21 +529,18 @@
 
 
                 // SUBSETS
-                selected = "";
+                selected = '';
                 html = '<option value=""></option>';
 
                 $.each(
                     details.subsets, function( index, subset ) {
-                        if ( subset.id === script || fusionredux.field_objects.typography.size( details.subsets ) === 1 ) {
+                        selected = '';
+                        if ( subset === script || fusionredux.field_objects.typography.size( details.subsets ) === 1 ) {
                             selected = ' selected="selected"';
-                            script = subset.id;
+                            script = subset;
                             $( '#' + mainID + ' input.typography-subsets' ).val( script );
-                        } else {
-                            selected = "";
                         }
-                        html += '<option value="' + subset.id + '"' + selected + '>' + subset.name.replace(
-                            /\+/g, " "
-                        ) + '</option>';
+                        html += '<option value="' + subset + '"' + selected + '>' + subset.replace( /\+/g, ' ' ) + '</option>';
                     }
                 );
 
@@ -483,6 +560,21 @@
                 $( '#' + mainID + ' .fusionredux-typography-subsets' ).parent().fadeIn( 'fast' );
                 $( '#' + mainID + ' .typography-family-backup' ).fadeIn( 'fast' );
             } else {
+				/**
+				 * This part is commented out for https://github.com/Theme-Fusion/Avada/issues/8208
+				 *
+                if ( fusionReduxIsCustomFont( family ) ) {
+                    details = {
+                        '400': fusionReduxGetVariantName( '400' )
+                    };
+
+                    if ( '400' !== style || 400 !== style ) {
+                        style = '400';
+                        $( '#' + mainID + ' .fusionredux-typography-style' ).val( '400' );
+                        $( '#' + mainID + ' .fusionredux-typography-style' ).trigger( 'change' );
+                    }
+				}
+				*/
                 if ( details ) {
                     $.each(
                         details, function( index, value ) {

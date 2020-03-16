@@ -14,7 +14,7 @@
 				legendTextColors = [];
 
 			// Table head (X axis labels).
-			table.find( 'thead tr:first-child th' ).each( function( i, v ) {
+			table.find( 'thead tr:first-child th' ).each( function( i ) {
 				var val = $( this ).find( 'input' ).val();
 
 				if ( 3 < i ) {
@@ -25,7 +25,7 @@
 			attributes.params.x_axis_labels = labels.join( '|' );
 
 			// Table head (label text colors).
-			table.find( 'thead tr:nth-child(2) th' ).each( function( i, v ) {
+			table.find( 'thead tr:nth-child(2) th' ).each( function( i ) {
 				var val = $( this ).find( 'input' ).val();
 
 				if ( 3 < i ) {
@@ -36,7 +36,7 @@
 			attributes.params.legend_text_colors = legendTextColors.join( '|' );
 
 			// Table head (bg colors).
-			table.find( 'thead tr:nth-child(3) th' ).each( function( i, v ) {
+			table.find( 'thead tr:nth-child(3) th' ).each( function( i ) {
 				var val = $( this ).find( 'input' ).val();
 
 				if ( 3 < i ) {
@@ -47,7 +47,7 @@
 			attributes.params.bg_colors = bgColors.join( '|' );
 
 			// Table head (border colors).
-			table.find( 'thead tr:nth-child(4) th' ).each( function( i, v ) {
+			table.find( 'thead tr:nth-child(4) th' ).each( function( i ) {
 				var val = $( this ).find( 'input' ).val();
 
 				if ( 3 < i ) {
@@ -58,7 +58,7 @@
 			attributes.params.border_colors = borderColors.join( '|' );
 
 			// Border size.
-			attributes.params.chart_border_size = '' !== table.find( '#chart_border_size' ).val() ? parseInt( table.find( '#chart_border_size' ).val() ) : '';
+			attributes.params.chart_border_size = '' !== table.find( '#chart_border_size' ).val() ? parseInt( table.find( '#chart_border_size' ).val(), 10 ) : '';
 
 			// Chart background color.
 			attributes.params.chart_bg_color = table.find( '#chart_bg_color' ).val();
@@ -78,26 +78,26 @@
 			// Table body (each row is data set).
 			table.find( 'tbody tr' ).each( function() {
 				var $thisTr = $( this ),
-						values  = [];
+					values  = [];
 
 				shortcode += '[fusion_chart_dataset';
 
 				// Table rows (data set title, colors, values).
-				$thisTr.find( 'td' ).each( function( i, v ) {
+				$thisTr.find( 'td' ).each( function( i ) {
 					var $thisRow = $( this ),
 						val  = $thisRow.find( 'input' ).val();
 
-						if ( 0 === i ) {
-							shortcode += ' title="' + val + '"';
-						} else if ( 1 === i ) {
-							shortcode += ' legend_text_color="' + val + '"';
-						} else if ( 2 === i ) {
-							shortcode += ' background_color="' + val + '"';
-						} else if ( 3 === i ) {
-							shortcode += ' border_color="' + val + '"';
-						} else {
-							values.push( val );
-						}
+					if ( 0 === i ) {
+						shortcode += ' title="' + val + '"';
+					} else if ( 1 === i ) {
+						shortcode += ' legend_text_color="' + val + '"';
+					} else if ( 2 === i ) {
+						shortcode += ' background_color="' + val + '"';
+					} else if ( 3 === i ) {
+						shortcode += ' border_color="' + val + '"';
+					} else {
+						values.push( val );
+					}
 				} );
 
 				shortcode += ' values="' + values.join( '|' ) + '"]';

@@ -3,8 +3,8 @@ Contributors: machothemes,silkalns,cdillon27
 Tags: testimonials, testimonial slider, testimonial form, star ratings
 Requires at least: 4.6
 Requires PHP: 5.6
-Tested up to: 5.3
-Stable tag: 2.40.0
+Tested up to: 5.2
+Stable tag: 2.40.1
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -38,7 +38,7 @@ https://www.youtube.com/watch?v=3nyvRvoxMxY
 > * Priority email support
 > * Support and updates for 12 months.
 >
->**[Learn more about Strong Testimonials - Paid version .](https://strongtestimonials.com/pricing?utm_source=wordpress.org&utm_medium=web&utm_campaign=lite)**
+>**[Learn more about Strong Testimonials - Paid version .](https://wp-modula.com/pricing?utm_source=wordpress.org&utm_medium=web&utm_campaign=lite)**
 
 ### Style
 

@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -82,7 +82,7 @@ class Avada_Upgrade {
 	 * @access private
 	 * @var array
 	 */
-	private static $upgraded_options = array();
+	private static $upgraded_options = [];
 
 	/**
 	 * Constructor.
@@ -91,7 +91,7 @@ class Avada_Upgrade {
 	 */
 	protected function __construct() {
 
-		$this->previous_theme_versions = get_option( 'avada_previous_version', array() );
+		$this->previous_theme_versions = get_option( 'avada_previous_version', [] );
 		// Previous version only really needed, because through the upgrade loop, the database_theme_version will be altered.
 		$this->previous_theme_version = $this->get_previous_theme_version();
 		$this->database_theme_version = get_option( 'avada_version', false );
@@ -114,31 +114,48 @@ class Avada_Upgrade {
 		}
 
 		// Each version is defined as an array( 'Version', 'Force-Instantiation' ).
-		$versions = array(
-			'385' => array( '3.8.5', false ),
-			'387' => array( '3.8.7', false ),
-			'390' => array( '3.9.0', false ),
-			'392' => array( '3.9.2', false ),
-			'400' => array( '4.0.0', true ),
-			'402' => array( '4.0.2', false ),
-			'403' => array( '4.0.3', false ),
-			'500' => array( '5.0.0', true ),
-			'503' => array( '5.0.3', false ),
-			'510' => array( '5.1.0', false ),
-			'516' => array( '5.1.6', false ),
-			'520' => array( '5.2.0', false ),
-			'521' => array( '5.2.1', false ),
-			'530' => array( '5.3.0', false ),
-			'540' => array( '5.4.0', false ),
-			'541' => array( '5.4.1', false ),
-			'542' => array( '5.4.2', false ),
-			'550' => array( '5.5.0', false ),
-			'551' => array( '5.5.1', false ),
-			'552' => array( '5.5.2', false ),
-			'560' => array( '5.6.0', false ),
-			'561' => array( '5.6.1', false ),
-			'562' => array( '5.6.2', false ),
-		);
+		$versions = [
+			'385' => [ '3.8.5', false ],
+			'387' => [ '3.8.7', false ],
+			'390' => [ '3.9.0', false ],
+			'392' => [ '3.9.2', false ],
+			'400' => [ '4.0.0', true ],
+			'402' => [ '4.0.2', false ],
+			'403' => [ '4.0.3', false ],
+			'500' => [ '5.0.0', true ],
+			'503' => [ '5.0.3', false ],
+			'510' => [ '5.1.0', false ],
+			'516' => [ '5.1.6', false ],
+			'520' => [ '5.2.0', false ],
+			'521' => [ '5.2.1', false ],
+			'530' => [ '5.3.0', false ],
+			'540' => [ '5.4.0', false ],
+			'541' => [ '5.4.1', false ],
+			'542' => [ '5.4.2', false ],
+			'550' => [ '5.5.0', false ],
+			'551' => [ '5.5.1', false ],
+			'552' => [ '5.5.2', false ],
+			'560' => [ '5.6.0', false ],
+			'561' => [ '5.6.1', false ],
+			'562' => [ '5.6.2', false ],
+			'570' => [ '5.7.0', false ],
+			'571' => [ '5.7.1', false ],
+			'572' => [ '5.7.2', false ],
+			'580' => [ '5.8.0', false ],
+			'581' => [ '5.8.1', false ],
+			'582' => [ '5.8.2', false ],
+			'590' => [ '5.9.0', false ],
+			'591' => [ '5.9.1', false ],
+			'592' => [ '5.9.2', false ],
+			'600' => [ '6.0.0', false ],
+			'601' => [ '6.0.1', false ],
+			'602' => [ '6.0.2', false ],
+			'603' => [ '6.0.3', false ],
+			'610' => [ '6.1.0', false ],
+			'611' => [ '6.1.1', false ],
+			'612' => [ '6.1.2', false ],
+			'620' => [ '6.2.0', false ],
+		];
 
 		$upgraded = false;
 		foreach ( $versions as $key => $version ) {
@@ -156,6 +173,15 @@ class Avada_Upgrade {
 				if ( class_exists( $classname ) ) {
 					new $classname( true );
 				}
+			}
+		}
+
+		// Manual migration rerun.
+		if ( is_admin() && current_user_can( 'switch_themes' ) && isset( $_GET['migrate'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$classname = 'Avada_Upgrade_' . str_replace( '.', '', sanitize_text_field( wp_unslash( $_GET['migrate'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+
+			if ( class_exists( $classname ) ) {
+				new $classname( true );
 			}
 		}
 
@@ -177,7 +203,7 @@ class Avada_Upgrade {
 			return;
 		}
 
-		add_action( 'init', array( $this, 'update_installation' ) );
+		add_action( 'init', [ $this, 'update_installation' ] );
 
 	}
 
@@ -256,12 +282,12 @@ class Avada_Upgrade {
 
 		// Hook the dismiss notice functionality.
 		if ( ! $skip400 ) {
-			add_action( 'admin_init', array( $this, 'notices_action' ) );
+			add_action( 'admin_init', [ $this, 'notices_action' ] );
 		}
 
 		// Show upgrade notices.
 		if ( version_compare( $this->current_theme_version, '5.1.0', '<=' ) ) {
-			add_action( 'admin_notices', array( $this, 'upgrade_notice' ) );
+			add_action( 'admin_notices', [ $this, 'upgrade_notice' ] );
 		}
 	}
 
@@ -279,14 +305,14 @@ class Avada_Upgrade {
 					$versions_array   = $this->previous_theme_versions;
 					$versions_array[] = $this->database_theme_version;
 				} else {
-					$versions_array = array(
+					$versions_array = [
 						$this->previous_theme_versions,
-					);
+					];
 				}
 			} else {
-				$versions_array = array(
+				$versions_array = [
 					$this->database_theme_version,
-				);
+				];
 			}
 
 			update_option( 'avada_previous_version', $versions_array );
@@ -363,7 +389,7 @@ class Avada_Upgrade {
 	 */
 	public function notices_action() {
 		// Set update notice dismissal, so that the notice is no longer shown.
-		if ( isset( $_GET['avada_update_notice'] ) && sanitize_key( wp_unslash( $_GET['avada_update_notice'] ) ) ) {
+		if ( isset( $_GET['avada_update_notice'] ) && sanitize_key( wp_unslash( $_GET['avada_update_notice'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			add_user_meta( $this->current_user->ID, 'avada_update_notice', '1', true );
 		}
 	}
@@ -376,11 +402,11 @@ class Avada_Upgrade {
 	 * @param  string $new_value The new value.
 	 */
 	private static function upgraded_options_row( $setting = '', $old_value = '', $new_value = '' ) {
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && $old_value !== $new_value && '' != $setting ) {
-			self::$upgraded_options[ $setting ] = array(
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && $old_value !== $new_value && '' != $setting ) { // phpcs:ignore WordPress.PHP.StrictComparisons
+			self::$upgraded_options[ $setting ] = [
 				'old' => $old_value,
 				'new' => $new_value,
-			);
+			];
 		}
 	}
 
@@ -393,7 +419,7 @@ class Avada_Upgrade {
 	 */
 	protected static function clear_twitter_widget_transients() {
 		global $wpdb;
-		$tweet_transients = $wpdb->get_results( "SELECT option_name AS name, option_value AS value FROM $wpdb->options WHERE option_name LIKE '_transient_list_tweets_%'" );
+		$tweet_transients = $wpdb->get_results( "SELECT option_name AS name, option_value AS value FROM $wpdb->options WHERE option_name LIKE '_transient_list_tweets_%'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		foreach ( $tweet_transients as $tweet_transient ) {
 			delete_transient( str_replace( '_transient_', '', $tweet_transient->name ) );
@@ -415,10 +441,10 @@ class Avada_Upgrade {
 			delete_option( 'avada_previous_version' );
 			delete_option( Avada::get_option_name() );
 
-			var_dump( 'Current Version: ' . Avada::$version );
-			var_dump( 'DB Version: ' . get_option( 'avada_version', false ) );
-			var_dump( 'Previous Version: ' . get_option( 'avada_previous_version', array() ) );
-			var_dump( 'Update Notice: ' . get_user_meta( $current_user->ID, 'avada_update_notice', true ) );
+			var_dump( 'Current Version: ' . Avada::$version ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump
+			var_dump( 'DB Version: ' . get_option( 'avada_version', false ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump
+			var_dump( 'Previous Version: ' . get_option( 'avada_previous_version', [] ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump
+			var_dump( 'Update Notice: ' . get_user_meta( $current_user->ID, 'avada_update_notice', true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_dump
 		}
 	}
 }

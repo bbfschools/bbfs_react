@@ -1,4 +1,10 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 
@@ -6,7 +12,6 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_Popover extends Fusion_Element {
@@ -37,9 +42,51 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_filter( 'fusion_attr_popover-shortcode', array( $this, 'attr' ) );
-				add_shortcode( 'fusion_popover', array( $this, 'render' ) );
+				add_filter( 'fusion_attr_popover-shortcode', [ $this, 'attr' ] );
+				add_shortcode( 'fusion_popover', [ $this, 'render' ] );
 
+			}
+
+			/**
+			 * Gets the default values.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function get_element_defaults() {
+
+				global $fusion_settings;
+
+				return [
+					'class'            => '',
+					'id'               => '',
+					'animation'        => true,
+					'content'          => '',
+					'content_bg_color' => '',
+					'delay'            => '50',
+					'placement'        => strtolower( $fusion_settings->get( 'popover_placement' ) ),
+					'title'            => '',
+					'title_bg_color'   => '',
+					'bordercolor'      => '',
+					'textcolor'        => '',
+					'trigger'          => 'click',
+				];
+			}
+
+			/**
+			 * Maps settings to param variables.
+			 *
+			 * @static
+			 * @access public
+			 * @since 2.0.0
+			 * @return array
+			 */
+			public static function settings_to_params() {
+				return [
+					'popover_placement' => 'placement',
+				];
 			}
 
 			/**
@@ -55,22 +102,8 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 
 				global $fusion_settings;
 
-				$defaults = FusionBuilder::set_shortcode_defaults(
-					array(
-						'class'            => '',
-						'id'               => '',
-						'animation'        => true,
-						'content'          => '',
-						'content_bg_color' => $fusion_settings->get( 'popover_content_bg_color' ),
-						'delay'            => '50',
-						'placement'        => strtolower( $fusion_settings->get( 'popover_placement' ) ),
-						'title'            => '',
-						'title_bg_color'   => $fusion_settings->get( 'popover_heading_bg_color' ),
-						'bordercolor'      => $fusion_settings->get( 'popover_border_color' ),
-						'textcolor'        => $fusion_settings->get( 'popover_text_color' ),
-						'trigger'          => 'click',
-					), $args
-				);
+				$defaults   = FusionBuilder::set_shortcode_defaults( self::get_element_defaults(), $args, 'fusion_popover' );
+				$sc_content = apply_filters( 'fusion_shortcode_content', $sc_content, 'fusion_popover', $args );
 
 				if ( 'default' === $defaults['placement'] ) {
 					$defaults['placement'] = strtolower( $fusion_settings->get( 'popover_placement' ) );
@@ -85,19 +118,46 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 					$arrow_color = $title_bg_color;
 				}
 
-				$styles  = '<style type="text/css">';
-				$styles .= '.popover-' . $this->popover_counter . '.' . $placement . ' .arrow{border-' . $placement . '-color:' . $bordercolor . ';}';
-				$styles .= '.popover-' . $this->popover_counter . '{border-color:' . $bordercolor . ';}';
-				$styles .= '.popover-' . $this->popover_counter . ' .popover-title{background-color:' . $title_bg_color . ';color:' . $textcolor . ';border-color:' . $bordercolor . ';}';
-				$styles .= '.popover-' . $this->popover_counter . ' .popover-content{background-color:' . $content_bg_color . ';color:' . $textcolor . ';}';
-				$styles .= '.popover-' . $this->popover_counter . '.' . $placement . ' .arrow:after{border-' . $placement . '-color:' . $arrow_color . ';}';
+				$styles = '<style type="text/css">';
+				if ( '' !== $bordercolor ) {
+					$styles .= '.popover-' . $this->popover_counter . '{border-color:' . $bordercolor . ';}';
+				}
+
+				$styles .= '.popover-' . $this->popover_counter . ' .popover-title{';
+
+				if ( '' !== $title_bg_color ) {
+					$styles .= 'background-color:' . $title_bg_color . ';';
+				}
+				if ( '' !== $textcolor ) {
+					$styles .= 'color:' . $textcolor . ';';
+				}
+				if ( '' !== $bordercolor ) {
+					$styles .= 'border-color:' . $bordercolor . ';';
+				}
+				$styles .= '}';
+
+				$styles .= '.popover-' . $this->popover_counter . ' .popover-content{';
+				if ( '' !== $content_bg_color ) {
+					$styles .= 'background-color:' . $content_bg_color . ';';
+				}
+				if ( '' !== $textcolor ) {
+					$styles .= 'color:' . $textcolor . ';';
+				}
+				$styles .= '}';
+
+				if ( '' !== $bordercolor ) {
+					$styles .= '.popover-' . $this->popover_counter . '.' . $placement . ' .arrow{border-' . $placement . '-color:' . $bordercolor . ';}';
+				}
+				if ( '' !== $arrow_color ) {
+					$styles .= '.popover-' . $this->popover_counter . '.' . $placement . ' .arrow:after{border-' . $placement . '-color:' . $arrow_color . ';}';
+				}
 				$styles .= '</style>';
 
 				$html = '<span ' . FusionBuilder::attributes( 'popover-shortcode' ) . '>' . $styles . do_shortcode( $sc_content ) . '</span>';
 
 				$this->popover_counter++;
 
-				return $html;
+				return apply_filters( 'fusion_element_popover_content', $html, $args );
 
 			}
 
@@ -110,9 +170,9 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 			 */
 			public function attr() {
 
-				$attr = array(
+				$attr = [
 					'class' => 'fusion-popover popover-' . $this->popover_counter,
-				);
+				];
 
 				if ( $this->args['class'] ) {
 					$attr['class'] .= ' ' . $this->args['class'];
@@ -122,35 +182,25 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 					$attr['id'] = $this->args['id'];
 				}
 
-				$attr['data-animation'] = $this->args['animation'];
-				$attr['data-class']     = 'popover-' . $this->popover_counter;
-				$attr['data-container'] = 'popover-' . $this->popover_counter;
-				$attr['data-content']   = $this->args['content'];
-				$attr['data-delay']     = $this->args['delay'];
-				$attr['data-placement'] = strtolower( $this->args['placement'] );
-				$attr['data-title']     = $this->args['title'];
-				$attr['data-toggle']    = 'popover';
-				$attr['data-trigger']   = $this->args['trigger'];
+				// Check if content contains characters which need escaped.
+				$content           = fusion_decode_if_needed( $this->args['content'] );
+				$escaped_content   = esc_attr( $content );
+				$content_attribute = 'data-content';
+				if ( $content !== $escaped_content ) {
+					$content_attribute = 'data-html-content';
+				}
+
+				$attr['data-animation']     = $this->args['animation'];
+				$attr['data-class']         = 'popover-' . $this->popover_counter;
+				$attr['data-container']     = 'popover-' . $this->popover_counter;
+				$attr[ $content_attribute ] = $escaped_content;
+				$attr['data-delay']         = $this->args['delay'];
+				$attr['data-placement']     = strtolower( $this->args['placement'] );
+				$attr['data-title']         = $this->args['title'];
+				$attr['data-toggle']        = 'popover';
+				$attr['data-trigger']       = $this->args['trigger'];
 
 				return $attr;
-
-			}
-
-			/**
-			 * Builds the dynamic styling.
-			 *
-			 * @access public
-			 * @since 1.1
-			 * @return array
-			 */
-			public function add_styling() {
-
-				global $fusion_library, $fusion_settings, $dynamic_css_helpers;
-
-				$elements = apply_filters( 'fusion_builder_element_classes', array( '.fusion-popover' ), '.fusion-popover' );
-				$css['global'][ $dynamic_css_helpers->implode( $elements ) ]['color'] = $fusion_library->sanitize->color( $fusion_settings->get( 'primary_color' ) );
-
-				return $css;
 
 			}
 
@@ -163,57 +213,86 @@ if ( fusion_is_element_enabled( 'fusion_popover' ) ) {
 			 */
 			public function add_options() {
 
-				return array(
-					'popover_shortcode_section' => array(
-						'label'       => esc_html__( 'Popover Element', 'fusion-builder' ),
+				return [
+					'popover_shortcode_section' => [
+						'label'       => esc_html__( 'Popover', 'fusion-builder' ),
 						'description' => '',
 						'id'          => 'popover_shortcode_section',
 						'type'        => 'accordion',
-						'fields'      => array(
-							'popover_heading_bg_color' => array(
+						'icon'        => 'fusiona-uniF61C',
+						'fields'      => [
+							'popover_heading_bg_color' => [
 								'label'       => esc_html__( 'Popover Heading Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the popover heading background.', 'fusion-builder' ),
 								'id'          => 'popover_heading_bg_color',
-								'default'     => '#f6f6f6',
+								'default'     => '#f9f9fb',
 								'type'        => 'color-alpha',
-							),
-							'popover_content_bg_color' => array(
+								'css_vars'    => [
+									[
+										'name'     => '--popover_heading_bg_color',
+										'element'  => '.popover',
+										'callback' => [ 'sanitize_color' ],
+									],
+								],
+							],
+							'popover_content_bg_color' => [
 								'label'       => esc_html__( 'Popover Content Background Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of popover content background.', 'fusion-builder' ),
 								'id'          => 'popover_content_bg_color',
 								'default'     => '#ffffff',
 								'type'        => 'color-alpha',
-							),
-							'popover_border_color' => array(
+								'css_vars'    => [
+									[
+										'name'     => '--popover_content_bg_color',
+										'element'  => '.popover',
+										'callback' => [ 'sanitize_color' ],
+									],
+								],
+							],
+							'popover_border_color'     => [
 								'label'       => esc_html__( 'Popover Border Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the border color of popover box.', 'fusion-builder' ),
 								'id'          => 'popover_border_color',
-								'default'     => '#ebebeb',
+								'default'     => '#e2e2e2',
 								'type'        => 'color-alpha',
-							),
-							'popover_text_color' => array(
+								'css_vars'    => [
+									[
+										'name'     => '--popover_border_color',
+										'element'  => '.popover',
+										'callback' => [ 'sanitize_color' ],
+									],
+								],
+							],
+							'popover_text_color'       => [
 								'label'       => esc_html__( 'Popover Text Color', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the color of the popover text.', 'fusion-builder' ),
 								'id'          => 'popover_text_color',
-								'default'     => '#747474',
+								'default'     => '#4a4e57',
 								'type'        => 'color-alpha',
-							),
-							'popover_placement' => array(
+								'css_vars'    => [
+									[
+										'name'     => '--popover_text_color',
+										'element'  => '.popover',
+										'callback' => [ 'sanitize_color' ],
+									],
+								],
+							],
+							'popover_placement'        => [
 								'label'       => esc_html__( 'Popover Position', 'fusion-builder' ),
 								'description' => esc_html__( 'Controls the position of the popover in reference to the triggering element.', 'fusion-builder' ),
 								'id'          => 'popover_placement',
 								'default'     => 'Top',
 								'type'        => 'radio-buttonset',
-								'choices'     => array(
+								'choices'     => [
 									'Top'    => esc_html__( 'Top', 'fusion-builder' ),
 									'Right'  => esc_html__( 'Right', 'fusion-builder' ),
 									'Bottom' => esc_html__( 'Bottom', 'fusion-builder' ),
 									'Left'   => esc_html__( 'Left', 'fusion-builder' ),
-								),
-							),
-						),
-					),
-				);
+								],
+							],
+						],
+					],
+				];
 			}
 
 			/**
@@ -243,109 +322,115 @@ function fusion_element_popover() {
 	global $fusion_settings;
 
 	fusion_builder_map(
-		array(
-			'name'           => esc_attr__( 'Popover', 'fusion-builder' ),
-			'shortcode'      => 'fusion_popover',
-			'generator_only' => true,
-			'icon'           => 'fusiona-uniF61C',
-			'params'         => array(
-				array(
-					'type'        => 'tinymce',
-					'heading'     => esc_attr__( 'Triggering Content', 'fusion-builder' ),
-					'param_name'  => 'element_content',
-					'value'       => '',
-					'description' => esc_attr__( 'Content that will trigger the popover.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Popover Heading', 'fusion-builder' ),
-					'description' => esc_attr__( 'Heading text of the popover.', 'fusion-builder' ),
-					'param_name'  => 'title',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Popover Heading Background Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the background color of the popover heading. ', 'fusion-builder' ),
-					'param_name'  => 'title_bg_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'popover_heading_bg_color' ),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textarea',
-					'heading'     => esc_attr__( 'Contents Inside Popover', 'fusion-builder' ),
-					'description' => esc_attr__( 'Text to be displayed inside the popover.', 'fusion-builder' ),
-					'param_name'  => 'content',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Popover Content Background Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the background color of the popover content area. ', 'fusion-builder' ),
-					'param_name'  => 'content_bg_color',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'popover_content_bg_color' ),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Popover Border Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the border color of the of the popover box. ', 'fusion-builder' ),
-					'param_name'  => 'bordercolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'popover_border_color' ),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Popover Text Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls all the text color inside the popover box. Leave blank for theme option selection.', 'fusion-builder' ),
-					'param_name'  => 'textcolor',
-					'value'       => '',
-					'default'     => $fusion_settings->get( 'popover_text_color' ),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Popover Trigger Method', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose mouse action to trigger popover.' ),
-					'param_name'  => 'trigger',
-					'value'       => array(
-						'hover' => esc_attr__( 'Hover', 'fusion-builder' ),
-						'click' => esc_attr__( 'Click', 'fusion-builder' ),
-					),
-					'default'     => 'click',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Popover Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the display position of the popover. Choose default for theme option selection.' ),
-					'param_name'  => 'placement',
-					'value'       => array(
-						'default' => esc_attr__( 'Default', 'fusion-builder' ),
-						'top'     => esc_attr__( 'Top', 'fusion-builder' ),
-						'bottom'  => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'    => esc_attr__( 'Left', 'fusion-builder' ),
-						'right'   => esc_attr__( 'Right', 'fusion-builder' ),
-					),
-					'default'     => 'default',
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_Popover',
+			[
+				'name'      => esc_attr__( 'Popover', 'fusion-builder' ),
+				'shortcode' => 'fusion_popover',
+				'icon'      => 'fusiona-uniF61C',
+				'help_url'  => 'https://theme-fusion.com/documentation/fusion-builder/elements/popover-element/',
+				'params'    => [
+					[
+						'type'         => 'tinymce',
+						'heading'      => esc_attr__( 'Triggering Content', 'fusion-builder' ),
+						'param_name'   => 'element_content',
+						'value'        => '',
+						'description'  => esc_attr__( 'Content that will trigger the popover.', 'fusion-builder' ),
+						'dynamic_data' => true,
+					],
+					[
+						'type'         => 'textfield',
+						'heading'      => esc_attr__( 'Popover Heading', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Heading text of the popover.', 'fusion-builder' ),
+						'param_name'   => 'title',
+						'value'        => '',
+						'dynamic_data' => true,
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Popover Heading Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color of the popover heading. ', 'fusion-builder' ),
+						'param_name'  => 'title_bg_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'popover_heading_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'         => 'raw_textarea',
+						'heading'      => esc_attr__( 'Contents Inside Popover', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Text to be displayed inside the popover.', 'fusion-builder' ),
+						'param_name'   => 'content',
+						'value'        => '',
+						'dynamic_data' => true,
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Popover Content Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color of the popover content area. ', 'fusion-builder' ),
+						'param_name'  => 'content_bg_color',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'popover_content_bg_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Popover Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color of the of the popover box. ', 'fusion-builder' ),
+						'param_name'  => 'bordercolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'popover_border_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Popover Text Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls all the text color inside the popover box.', 'fusion-builder' ),
+						'param_name'  => 'textcolor',
+						'value'       => '',
+						'default'     => $fusion_settings->get( 'popover_text_color' ),
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Popover Trigger Method', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose mouse action to trigger popover.' ),
+						'param_name'  => 'trigger',
+						'value'       => [
+							'hover' => esc_attr__( 'Hover', 'fusion-builder' ),
+							'click' => esc_attr__( 'Click', 'fusion-builder' ),
+						],
+						'default'     => 'click',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Popover Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the display position of the popover. Choose default for theme option selection.' ),
+						'param_name'  => 'placement',
+						'value'       => [
+							'default' => esc_attr__( 'Default', 'fusion-builder' ),
+							'top'     => esc_attr__( 'Top', 'fusion-builder' ),
+							'bottom'  => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'    => esc_attr__( 'Left', 'fusion-builder' ),
+							'right'   => esc_attr__( 'Right', 'fusion-builder' ),
+						],
+						'default'     => 'default',
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+					],
+				],
+			]
 		)
 	);
 }

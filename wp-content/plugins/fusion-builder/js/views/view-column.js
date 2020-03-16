@@ -1,4 +1,6 @@
-/* global FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderEvents, alert, fusionBuilderConfig, FusionPageBuilderElements, FusionPageBuilderViewManager */
+/* global FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderEvents, fusionBuilderConfig, FusionPageBuilderElements, FusionPageBuilderViewManager */
+/* eslint no-shadow: 0 */
+/* eslint no-alert: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -142,8 +144,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.model.set( 'params', params );
 				}
 
-				$.each( jQuery( 'ul.fusion-page-layouts.fusion-layout-columns li' ), function( index, value ) { // jshint ignore:line
-					var templateName = jQuery( this ).find( 'h4.fusion-page-layout-title' ).html().split( '<div ' )[0];
+				$.each( jQuery( 'ul.fusion-page-layouts.fusion-layout-columns li' ), function() {
+					var templateName = jQuery( this ).find( 'h4.fusion-page-layout-title' ).html().split( '<div ' )[ 0 ];
+					templateName     = templateName.replace( /\u2013|\u2014/g, '-' );
 					if ( elementName.toLowerCase().trim() === templateName.toLowerCase().trim() ) {
 						alert( fusionBuilderText.duplicate_element_name_error );
 						isDuplicate = true;
@@ -193,6 +196,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					} );
 
 				} else {
+					FusionPageBuilderApp.layoutIsSaving = false;
 					alert( fusionBuilderText.please_enter_element_name );
 				}
 			},
@@ -205,10 +209,26 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					ColumnAttributesCheck;
 
 				_.each( module.get( 'params' ), function( value, name ) {
-					if ( 'undefined' === value ) {
+					if ( 'undefined' === value || 'undefined' === typeof value ) {
 						columnParams[ name ] = '';
 					} else {
 						columnParams[ name ] = value;
+					}
+
+					if ( 'padding' === name && '' === columnParams[ name ] ) {
+						columnParams.padding_top    = '';
+						columnParams.padding_right  = '';
+						columnParams.padding_bottom = '';
+						columnParams.padding_left   = '';
+
+						delete columnParams[ name ];
+					}
+
+					if ( 'dimension_margin' === name && '' === columnParams[ name ] ) {
+						columnParams.margin_top    = '';
+						columnParams.margin_bottom = '';
+
+						delete columnParams[ name ];
 					}
 
 				} );
@@ -272,7 +292,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 							_.each( module.get( 'params' ), function( value, name ) {
 
-								if ( 'undefined' === value ) {
+								if ( 'undefined' === value || 'undefined' === typeof value ) {
 									innerColumnParams[ name ] = '';
 								} else {
 									innerColumnParams[ name ] = value;
@@ -300,18 +320,18 @@ var FusionPageBuilder = FusionPageBuilder || {};
 							// Build nested column shortcode
 							shortcode += '[fusion_builder_column_inner type="' + module.get( 'layout' ) + '"';
 
-								_.each( innerColumnParams, function( value, name ) {
+							_.each( innerColumnParams, function( value, name ) {
 
-									shortcode += ' ' + name + '="' + value + '"';
+								shortcode += ' ' + name + '="' + value + '"';
 
-								} );
+							} );
 
-								shortcode += ']';
+							shortcode += ']';
 
-								// Find elements within nested columns
-								$thisColumnInner.find( '.fusion_module_block' ).each( function() {
-									shortcode += FusionPageBuilderApp.generateElementShortcode( $( this ), false );
-								} );
+							// Find elements within nested columns
+							$thisColumnInner.find( '.fusion_module_block' ).each( function() {
+								shortcode += FusionPageBuilderApp.generateElementShortcode( $( this ), false );
+							} );
 
 							shortcode += '[/fusion_builder_column_inner]';
 
@@ -511,9 +531,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					// Fraction size
 					fractionSize = '';
 
-					if ( event ) {
-						event.preventDefault();
-					}
+				if ( event ) {
+					event.preventDefault();
+				}
 
 				if ( 'undefined' !== typeof newSize ) {
 
@@ -543,4 +563,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 	} );
 
-} ( jQuery ) );
+}( jQuery ) );

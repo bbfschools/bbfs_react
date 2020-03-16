@@ -3,7 +3,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      2.0.0
@@ -24,28 +24,28 @@
 		fusionMegamenu.megamenuFullwidthUpdate();
 
 		// Setup automatic thumbnail handling.
-		jQuery( '#post-body' ).on( 'click', '.avada-remove-button', function( event ) {
+		jQuery( '#post-body' ).on( 'click', '.avada-remove-button', function() {
 			jQuery( this ).parents( '.fusion-upload-image' ).removeClass( 'fusion-image-set' );
 			jQuery( this ).parents( '.fusion-upload-image' ).find( 'img' ).attr( 'src', '' );
 			jQuery( this ).parents( '.fusion-upload-image' ).find( '.fusion-builder-upload-field' ).val( '' );
-		});
+		} );
 
 		jQuery( '.fusion-megamenu-thumbnail-image' ).css( 'display', 'block' );
 		jQuery( '.fusion-megamenu-thumbnail-image[src=""]' ).css( 'display', 'none' );
 
 		// Setup new media uploader frame.
 		fusionMediaFrameSetup();
-	});
+	} );
 
 	// "Extending" wpNavMenu.
 	fusionMegamenu = {
 
 		menuItemMouseup: function() {
-			jQuery( document ).on( 'mouseup', '.menu-item-bar', function( event, ui ) {
+			jQuery( document ).on( 'mouseup', '.menu-item-bar', function( event ) {
 				if ( ! jQuery( event.target ).is( 'a' ) ) {
 					setTimeout( fusionMegamenu.updateMegamenuFields, 300 );
 				}
-			});
+			} );
 		},
 
 		megamenuStatusUpdate: function() {
@@ -60,7 +60,7 @@
 				}
 
 				fusionMegamenu.updateMegamenuFields();
-			});
+			} );
 		},
 
 		megamenuFullwidthUpdate: function() {
@@ -74,7 +74,7 @@
 				}
 
 				fusionMegamenu.updateMegamenuFields();
-			});
+			} );
 		},
 
 		updateMegamenuFields: function() {
@@ -113,7 +113,7 @@
 						jQuery( this ).addClass( 'fusion-megamenu-fullwidth' );
 					}
 				}
-			});
+			} );
 		}
 
 	};
@@ -133,27 +133,29 @@
 				return;
 			}
 
-			fusionMediaFrame = wp.media.frames.fusionMediaFrame = wp.media({
-
+			fusionMediaFrame = wp.media( {
 				className: 'media-frame fusion-media-frame',
 				frame: 'select',
 				multiple: false,
 				library: {
 					type: 'image'
 				}
-			});
+			} );
+
+			wp.media.frames.fusionMediaFrame = fusionMediaFrame;
 
 			fusionMediaFrame.on( 'select', function() {
 
 				var mediaAttachment = fusionMediaFrame.state().get( 'selection' ).first().toJSON();
 
 				jQuery( '#edit-menu-item-megamenu-' + itemId ).val( mediaAttachment.url );
+				jQuery( '#edit-menu-item-megamenu-' + itemId.replace( '-', '-id-' ) ).val( mediaAttachment.id );
 				jQuery( '#fusion-media-img-' + itemId ).attr( 'src', mediaAttachment.url ).css( 'display', 'block' );
 				jQuery( '#fusion-media-img-' + itemId ).parents( '.fusion-upload-image' ).addClass( 'fusion-image-set' );
 
-			});
+			} );
 
 			fusionMediaFrame.open();
-		});
+		} );
 	}
-})( jQuery );
+}( jQuery ) );

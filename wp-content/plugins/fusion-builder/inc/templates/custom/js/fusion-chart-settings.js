@@ -1,4 +1,7 @@
-/* global fusionBuilderText, FusionPageBuilderApp, fusionAllElements */
+/* eslint-disable no-mixed-operators */
+/* global fusionBuilderText */
+/* eslint no-unused-vars: 0 */
+/* eslint no-useless-concat: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -11,21 +14,25 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			columnOffset: 5,
 
-			events: {
-				'click .fusion-table-builder-add-column': 'addTableColumn',
-				'click .fusion-table-builder-add-row': 'addTableRow',
-				'click .fusion-builder-table-delete-column': 'removeTableColumn',
-				'click .fusion-builder-table-delete-row': 'removeTableRow',
-				'change #chart_type': 'toggleAppearance',
-				'click [href="#table"]': 'initColors'
+			events: function() {
+				return _.extend( {}, FusionPageBuilder.ElementSettingsView.prototype.events, {
+					'click .fusion-table-builder-add-column': 'addTableColumn',
+					'click .fusion-table-builder-add-row': 'addTableRow',
+					'click .fusion-builder-table-delete-column': 'removeTableColumn',
+					'click .fusion-builder-table-delete-row': 'removeTableRow',
+					'change #chart_type': 'toggleAppearance',
+					'click [href="#table"]': 'initColors',
+					'click .fusion-tabs-menu': 'initColors'
+				} );
 			},
 
 			toggleAppearance: function() {
-				var chartType   = this.$el.find( '#chart_type' ).val(),
-						rows        = this.$el.find( '.fusion-builder-table .fusion-table-row' ).length,
-						datasetWrap = this.$el.find( '.fusion-table-builder-chart' );
+				var chartType        = this.$el.find( '#chart_type' ).val(),
+					rows             = this.$el.find( '.fusion-builder-table .fusion-table-row' ).length,
+					datasetWrap      = this.$el.find( '.fusion-table-builder-chart' ),
+					chartTypeChanged = ! jQuery( datasetWrap ).hasClass( 'fusion-chart-' + chartType );
 
-				if ( ( 'pie' === chartType || 'doughnut' === chartType || 'polarArea' === chartType ) || ( ( 'bar' === chartType || 'horizontalBar' === chartType ) && 1 === rows ) ) {
+				if ( ( 'pie' === chartType || 'doughnut' === chartType || 'polarArea' === chartType ) && chartTypeChanged || ( ( 'bar' === chartType || 'horizontalBar' === chartType ) && 1 === rows ) ) {
 
 					// Update colors from 'Y' color pickers.
 					this.$el.find( '.fusion-builder-table thead tr:nth-child(2) .th-5 input[type="text"]' ).val( this.$el.find( '.fusion-builder-table .fusion-table-row.tr-1 .td-2 input[type="text"]' ).val() ).trigger( 'change' );
@@ -33,7 +40,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					this.$el.find( '.fusion-builder-table thead tr:nth-child(4) .th-5 input[type="text"]' ).val( this.$el.find( '.fusion-builder-table .fusion-table-row.tr-1 .td-4 input[type="text"]' ).val() ).trigger( 'change' );
 
 					this.$el.find( '.fusion-builder-table' ).addClass( 'showX' ).removeClass( 'showY' );
-				} else {
+				} else if ( chartTypeChanged ) {
 
 					// Update colors from 'X' color pickers.
 					this.$el.find( '.fusion-builder-table .fusion-table-row.tr-1 .td-2 input[type="text"]' ).val( this.$el.find( '.fusion-builder-table thead tr:nth-child(2) .th-5 input[type="text"]' ).val() ).trigger( 'change' );
@@ -44,7 +51,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				}
 
 				// Chart type is changed.
-				if ( ! jQuery( datasetWrap ).hasClass( 'fusion-chart-' + chartType ) ) {
+				if ( chartTypeChanged ) {
 					jQuery.each( this.$el.find( '#chart_type option' ), function( index, elem ) {
 						jQuery( datasetWrap ).removeClass( 'fusion-chart-' + jQuery( elem ).val() );
 					} );
@@ -69,17 +76,17 @@ var FusionPageBuilder = FusionPageBuilder || {};
 						palettes: [ '#000000', '#ffffff', '#f44336', '#E91E63', '#03A9F4', '#00BCD4', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#607D8B' ],
 						change: function( event, ui ) {
 
-								$( colorPreviewElem ).css( 'background-color', ui.color.toString() ).html( ui.color.toString() );
+							$( colorPreviewElem ).css( 'background-color', ui.color.toString() ).html( ui.color.toString() );
 
-								if ( ( 0.15 > ui.color._alpha || 15777215 < ui.color.toInt() ) && ! $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
-									$( colorPreviewElem ).addClass( 'fusion-dark-text' );
-								} else if ( ( 0.15 <= ui.color._alpha && 15777215 >= ui.color.toInt() ) && $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
-									$( colorPreviewElem ).removeClass( 'fusion-dark-text' );
-								}
+							if ( ( 0.15 > ui.color._alpha || 15777215 < ui.color.toInt() ) && ! $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
+								$( colorPreviewElem ).addClass( 'fusion-dark-text' );
+							} else if ( ( 0.15 <= ui.color._alpha && 15777215 >= ui.color.toInt() ) && $( colorPreviewElem ).hasClass( 'fusion-dark-text' ) ) {
+								$( colorPreviewElem ).removeClass( 'fusion-dark-text' );
+							}
 
-								if ( 0 === ui.color._alpha || '' === ui.color.toString() ) {
-									$( colorPreviewElem ).html( 'transparent' ).addClass( 'fusion-dark-text' );
-								}
+							if ( 0 === ui.color._alpha || '' === ui.color.toString() ) {
+								$( colorPreviewElem ).html( 'transparent' ).addClass( 'fusion-dark-text' );
+							}
 						},
 						clear: function( e ) {
 							$( colorPreviewElem ).css( 'background-color', 'transparent' ).html( 'transparent' ).addClass( 'fusion-dark-text' );
@@ -148,7 +155,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Add td
 				this.$el.find( '.fusion-table-builder .fusion-builder-table tbody tr' ).each( function() {
 
-					$( this ).append( '<td class="td-' + columnID + '" data-td-id="' + columnID + '" ><input type="text" placeholder="' + 'Enter value' + '" value="" /></td>' );
+					$( this ).append( '<td class="td-' + columnID + '" data-td-id="' + columnID + '" ><input type="text" placeholder="' + fusionBuilderText.enter_value + '" value="" /></td>' );
 				} );
 
 				this.initColors();

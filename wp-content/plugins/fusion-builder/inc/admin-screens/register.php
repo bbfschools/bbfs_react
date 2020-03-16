@@ -1,7 +1,12 @@
 <?php
+/**
+ * Admin Screen markup (Register page).
+ *
+ * @package fusion-builder
+ */
 
 // If fusion-builder is bundled in another plugin/theme, registration isn't available, so exit early to avoid fatal errors.
-if ( null == FusionBuilder()->registration ) {
+if ( null === FusionBuilder()->registration ) {
 	return;
 }
 

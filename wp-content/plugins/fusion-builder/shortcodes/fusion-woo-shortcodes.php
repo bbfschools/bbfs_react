@@ -1,12 +1,17 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
-if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) ) {
+if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) && class_exists( 'WooCommerce' ) ) {
 
 	if ( ! class_exists( 'FusionSC_FusionWooShortcodes' ) ) {
 		/**
 		 * Shortcode class.
 		 *
-		 * @package fusion-builder
 		 * @since 1.0
 		 */
 		class FusionSC_FusionWooShortcodes extends Fusion_Element {
@@ -28,7 +33,7 @@ if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) ) {
 			 */
 			public function __construct() {
 				parent::__construct();
-				add_shortcode( 'fusion_woo_shortcodes', array( $this, 'render' ) );
+				add_shortcode( 'fusion_woo_shortcodes', [ $this, 'render' ] );
 
 				add_filter( 'fusion_woo_shortcodes_content', 'shortcode_unautop' );
 				add_filter( 'fusion_woo_shortcodes_content', 'do_shortcode' );
@@ -44,10 +49,9 @@ if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) ) {
 			 * @return string          HTML output.
 			 */
 			public function render( $args, $content = '' ) {
-				return apply_filters(
-					'fusion_woo_shortcodes_content',
-					fusion_builder_fix_shortcodes( $content )
-				);
+				$html = apply_filters( 'fusion_woo_shortcodes_content', fusion_builder_fix_shortcodes( $content ) );
+
+				return apply_filters( 'fusion_element_woo_shortcodes_content', $html, $args );
 			}
 		}
 	}
@@ -64,18 +68,21 @@ if ( fusion_is_element_enabled( 'fusion_woo_shortcodes' ) ) {
 function fusion_element_woo_shortcodes() {
 	if ( class_exists( 'WooCommerce' ) ) {
 		fusion_builder_map(
-			array(
-				'name'              => esc_attr__( 'Woo Shortcodes', 'fusion-builder' ),
-				'shortcode'         => 'fusion_woo_shortcodes',
-				'icon'              => 'fusiona-tag',
-				'admin_enqueue_js'  => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-woo-shortcodes.js',
-				'params'            => array(
-					array(
-						'type'        => 'select',
-						'heading'     => esc_attr__( 'Shortocode', 'fusion-builder' ),
-						'description' => esc_attr__( 'Choose woocommerce shortcode.', 'fusion-builder' ),
-						'param_name'  => 'fusion_woo_shortcode',
-						'value'       => array(
+			[
+				'name'                              => esc_attr__( 'Woo Shortcodes', 'fusion-builder' ),
+				'shortcode'                         => 'fusion_woo_shortcodes',
+				'icon'                              => 'fusiona-tag',
+				'admin_enqueue_js'                  => FUSION_BUILDER_PLUGIN_URL . 'shortcodes/js/fusion-woo-shortcodes.js',
+				'front_end_custom_settings_view_js' => FUSION_BUILDER_PLUGIN_URL . 'inc/templates/custom/front-end/js/fusion-woo-shortcodes-settings.js',
+				'help_url'                          => 'https://theme-fusion.com/documentation/fusion-builder/elements/woocommerce-shortcodes-element/',
+				'params'                            => [
+					[
+						'type'             => 'select',
+						'heading'          => esc_attr__( 'Shortcode', 'fusion-builder' ),
+						'description'      => esc_attr__( 'Choose woocommerce shortcode.', 'fusion-builder' ),
+						'skip_debounce'    => true,
+						'param_name'       => 'fusion_woo_shortcode',
+						'value'            => [
 							'1' => esc_attr__( 'Order tracking', 'fusion-builder' ),
 							'2' => esc_attr__( 'Product price/cart button', 'fusion-builder' ),
 							'3' => esc_attr__( 'Product by SKU/ID', 'fusion-builder' ),
@@ -85,19 +92,19 @@ function fusion_element_woo_shortcodes() {
 							'7' => esc_attr__( 'Recent products', 'fusion-builder' ),
 							'8' => esc_attr__( 'Featured products', 'fusion-builder' ),
 							'9' => esc_attr__( 'Shop Message', 'fusion-builder' ),
-						),
+						],
 						'default'          => '',
 						'remove_from_atts' => true,
-					),
-					array(
+					],
+					[
 						'type'        => 'textarea',
 						'heading'     => esc_attr__( 'Shortcode content', 'fusion-builder' ),
 						'description' => esc_attr__( 'Shortcode will appear here.', 'fusion-builder' ),
 						'param_name'  => 'element_content',
 						'value'       => '[woocommerce_order_tracking]',
-					),
-				),
-			)
+					],
+				],
+			]
 		);
 	}
 }

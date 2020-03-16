@@ -1,4 +1,6 @@
 /* global fusionHistoryManager, fusionBuilderText, FusionPageBuilderEvents, FusionPageBuilderApp, FusionPageBuilderViewManager */
+/* eslint no-shadow: 0 */
+
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -14,9 +16,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			events: {
 				'click .fusion-builder-insert-column': 'displayColumnsOptions'
-			},
-
-			initialize: function() {
 			},
 
 			render: function() {
@@ -91,7 +90,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 			},
 
-			removeRow: function( event, force ) { // jshint ignore:line
+			removeRow: function( event ) {
 
 				var columns;
 
@@ -118,4 +117,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

@@ -115,6 +115,9 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 				'margin-bottom'   => '',
 			);
 			$this->value = wp_parse_args( $this->value, $defaults );
+			if ( ! $this->value['font-weight'] || 400 === $this->value['font-weight'] || '400' === $this->value['font-weight'] ) {
+				$this->value['font-weight'] = '400';
+			}
 
 			// Get the google array
 			$this->getGoogleArray();
@@ -615,7 +618,7 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 			}
 
 
-			return '//fonts.googleapis.com/css?family=' . str_replace( '|', '%7C', $link );
+			return 'https://fonts.googleapis.com/css?family=' . str_replace( '|', '%7C', $link );
 		}
 
 		/**
@@ -826,7 +829,7 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 						$family = $font['font-family'];
 
 						// Don't add the font if it's a custom font.
-						$custom_fonts = ( class_exists( 'Avada' ) ) ? Avada()->settings->get( 'custom_fonts' ) : array();
+						$custom_fonts = fusion_library()->get_option( 'custom_fonts' );
 						if ( ! empty( $custom_fonts ) && isset( $custom_fonts['name'] ) ) {
 							foreach ( $custom_fonts['name'] as $key => $name ) {
 								if ( $name == $font['font-family'] ) {
@@ -931,20 +934,7 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 				return;
 			}
 
-			$gFile = dirname( __FILE__ ) . '/googlefonts.php';
-
-			// Weekly update
-			if ( isset( $this->parent->args['google_update_weekly'] ) && $this->parent->args['google_update_weekly'] && ! empty( $this->parent->args['google_api_key'] ) ) {
-
-				if ( file_exists( $gFile ) ) {
-					// Keep the fonts updated weekly
-					$weekback     = strtotime( date( 'jS F Y', time() + ( 60 * 60 * 24 * - 7 ) ) );
-					$last_updated = filemtime( $gFile );
-					if ( $last_updated < $weekback ) {
-						unlink( $gFile );
-					}
-				}
-			}
+			$gFile = FUSION_LIBRARY_PATH . '/inc/googlefonts-array.php';
 
 			if ( ! file_exists( $gFile ) ) {
 
@@ -992,12 +982,18 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 					);
 
 					// options
-					foreach ( $this->parent->fonts['google'] as $font => $extra ) {
-						$this->parent->font_groups['google']['children'][] = array(
-							'id'          => $font,
-							'text'        => $font,
-							'data-google' => 'true'
-						);
+					foreach ( $this->parent->fonts['google'] as $extra ) {
+						if ( is_array( $extra ) ) {
+							foreach ( $extra as $extra_item ) {
+								if ( is_array( $extra_item ) && isset( $extra_item['family'] ) ) {
+									$this->parent->font_groups['google']['children'][] = array(
+										'id'          => $extra_item['family'],
+										'text'        => $extra_item['family'],
+										'data-google' => 'true'
+									);			
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1014,6 +1010,11 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 
 			foreach ( $var as $v ) {
 				if ( strpos( $v, "-ext" ) ) {
+					$name = sprintf(
+						/* Translators: language subset. */
+						esc_html__( '%s Extended', 'Avada' ),
+						ucfirst( str_replace( '-ext', '', $v ) )
+					);
 					$name = ucfirst( str_replace( "-ext", " Extended", $v ) );
 				} else {
 					$name = ucfirst( $v );
@@ -1026,7 +1027,7 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 			}
 
 			return array_filter( $result );
-		}  //function
+		}
 
 		/**
 		 * getVariants Function.
@@ -1041,31 +1042,35 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 			foreach ( $var as $v ) {
 				$name = "";
 				if ( $v[0] == 1 ) {
-					$name = 'Ultra-Light 100';
+					$name = esc_html( 'Ultra-Light 100', 'Avada' );
 				} else if ( $v[0] == 2 ) {
-					$name = 'Light 200';
+					$name = esc_html( 'Light 200', 'Avada' );
 				} else if ( $v[0] == 3 ) {
-					$name = 'Book 300';
+					$name = esc_html( 'Book 300', 'Avada' );
 				} else if ( $v[0] == 4 || $v[0] == "r" || $v[0] == "i" ) {
-					$name = 'Normal 400';
+					$name = esc_html( 'Normal 400', 'Avada' );
 				} else if ( $v[0] == 5 ) {
-					$name = 'Medium 500';
+					$name = esc_html( 'Medium 500', 'Avada' );
 				} else if ( $v[0] == 6 ) {
-					$name = 'Semi-Bold 600';
+					$name = esc_html( 'Semi-Bold 600', 'Avada' );
 				} else if ( $v[0] == 7 ) {
-					$name = 'Bold 700';
+					$name = esc_html( 'Bold 700', 'Avada' );
 				} else if ( $v[0] == 8 ) {
-					$name = 'Extra-Bold 800';
+					$name = esc_html( 'Extra-Bold 800', 'Avada' );
 				} else if ( $v[0] == 9 ) {
-					$name = 'Ultra-Bold 900';
+					$name = esc_html( 'Ultra-Bold 900', 'Avada' );
 				}
 
-				if ( $v == "regular" ) {
-					$v = "400";
+				if ( $v == 'regular' ) {
+					$v = '400';
 				}
 
 				if ( strpos( $v, "italic" ) || $v == "italic" ) {
-					$name .= " Italic";
+					$name = sprintf(
+						/* Translators: font-weight. */
+						esc_html__( '%s Italic', 'Avada' ),
+						$name
+					);
 					$name = trim( $name );
 					if ( $v == "italic" ) {
 						$v = "400italic";
@@ -1087,6 +1092,6 @@ if ( ! class_exists( 'FusionReduxFramework_typography' ) ) {
 			}
 
 			return array_filter( $result );
-		}   //function
-	}       //class
-}           //class exists
+		}
+	}
+}

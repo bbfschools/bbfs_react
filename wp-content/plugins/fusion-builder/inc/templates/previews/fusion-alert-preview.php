@@ -1,10 +1,18 @@
+<?php
+/**
+ * Underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-block-module-alert-preview-template">
 
 	<#
 	var icon_type       = '',
-	    content         = params.element_content,
-	    text_block      = jQuery.parseHTML( content ),
-	    element_content = jQuery(text_block).text();
+		content         = params.element_content,
+		text_block      = jQuery.parseHTML( content ),
+		element_content = jQuery(text_block).text();
 
 	if ( params.type == 'general' ) {
 		icon_type = 'fa-info-circle';

@@ -6,11 +6,6 @@
  * @since 1.0.0
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * Handle images.
  * Includes responsive-images tweaks.
@@ -65,6 +60,15 @@ class Fusion_Images {
 	public static $masonry_width_double;
 
 	/**
+	 * Whether lazy load is active or not.
+	 *
+	 * @static
+	 * @access public
+	 * @var int
+	 */
+	public static $lazy_load;
+
+	/**
 	 * Constructor.
 	 *
 	 * @access  public
@@ -76,43 +80,56 @@ class Fusion_Images {
 			$fusion_settings = Fusion_Settings::get_instance();
 		}
 
-		self::$grid_image_meta        = array();
-		self::$grid_accepted_widths   = array( '200', '400', '600', '800', '1200' );
-		self::$supported_grid_layouts = array( 'masonry', 'grid', 'timeline', 'large', 'portfolio_full', 'related-posts' );
+		self::$grid_image_meta        = [];
+		self::$grid_accepted_widths   = [ '200', '400', '600', '800', '1200' ];
+		self::$supported_grid_layouts = [ 'masonry', 'grid', 'timeline', 'large', 'portfolio_full', 'related-posts' ];
 		self::$masonry_grid_ratio     = $fusion_settings->get( 'masonry_grid_ratio' );
 		self::$masonry_width_double   = $fusion_settings->get( 'masonry_width_double' );
+		self::$lazy_load              = $fusion_settings->get( 'lazy_load' );
 
-		add_filter( 'max_srcset_image_width', array( $this, 'set_max_srcset_image_width' ) );
-		add_filter( 'wp_calculate_image_srcset', array( $this, 'set_largest_image_size' ), '10', '5' );
-		add_filter( 'wp_calculate_image_srcset', array( $this, 'edit_grid_image_srcset' ), '15', '5' );
-		add_filter( 'wp_calculate_image_sizes', array( $this, 'edit_grid_image_sizes' ), '10', '5' );
-		add_filter( 'post_thumbnail_html', array( $this, 'edit_grid_image_src' ), '10', '5' );
-		add_action( 'delete_attachment', array( $this, 'delete_resized_images' ) );
-		add_filter( 'wpseo_sitemap_urlimages', array( $this, 'extract_img_src_for_yoast' ), '10', '2' );
-		add_filter( 'fusion_library_image_base_size_width', array( $this, 'fb_adjust_grid_image_base_size' ), 20, 4 );
-		add_filter( 'fusion_masonry_element_class', array( $this, 'adjust_masonry_element_class' ), 10, 2 );
-		add_filter( 'attachment_fields_to_edit', array( $this, 'add_image_meta_fields' ), 10, 2 );
-		add_filter( 'attachment_fields_to_save', array( $this, 'save_image_meta_fields' ), 10, 2 );
-		add_action( 'admin_head', array( $this, 'style_image_meta_fields' ) );
-		add_filter( 'wp_update_attachment_metadata', array( $this, 'remove_dynamically_generated_images' ), 10, 2 );
+		add_filter( 'max_srcset_image_width', [ $this, 'set_max_srcset_image_width' ] );
+		add_filter( 'wp_calculate_image_srcset', [ $this, 'set_largest_image_size' ], 10, 5 );
+		add_filter( 'wp_calculate_image_srcset', [ $this, 'edit_grid_image_srcset' ], 15, 5 );
+		add_filter( 'wp_calculate_image_sizes', [ $this, 'edit_grid_image_sizes' ], 10, 5 );
+		add_filter( 'post_thumbnail_html', [ $this, 'edit_grid_image_src' ], 10, 5 );
+		add_action( 'delete_attachment', [ $this, 'delete_resized_images' ] );
+		add_filter( 'wpseo_sitemap_urlimages', [ $this, 'extract_img_src_for_yoast' ], '10', '2' );
+		add_filter( 'fusion_library_image_base_size_width', [ $this, 'fb_adjust_grid_image_base_size' ], 20, 4 );
+		add_filter( 'fusion_masonry_element_class', [ $this, 'adjust_masonry_element_class' ], 10, 2 );
+		add_filter( 'attachment_fields_to_edit', [ $this, 'add_image_meta_fields' ], 10, 2 );
+		add_filter( 'attachment_fields_to_save', [ $this, 'save_image_meta_fields' ], 10, 2 );
+		add_action( 'admin_head', [ $this, 'style_image_meta_fields' ] );
+		add_filter( 'wp_update_attachment_metadata', [ $this, 'remove_dynamically_generated_images' ], 10, 2 );
+		add_action( 'wp', [ $this, 'enqueue_image_scripts' ] );
+		add_filter( 'post_thumbnail_html', [ $this, 'apply_lazy_loading' ], 99, 5 );
+		add_filter( 'wp_get_attachment_image_attributes', [ $this, 'lazy_load_attributes' ], 10, 2 );
+		add_action( 'the_content', [ $this, 'apply_bulk_lazy_loading' ], 999 );
+		add_filter( 'revslider_layer_content', [ $this, 'prevent_rev_lazy_loading' ], 10, 5 );
+		add_filter( 'layerslider_slider_markup', [ $this, 'prevent_ls_lazy_loading' ], 10, 3 );
+		add_filter( 'wp_get_attachment_metadata', [ $this, 'map_old_image_size_names' ], 10, 2 );
 	}
 
 	/**
 	 * Adds lightbox attributes to links.
 	 *
-	 * @param  string $content The content.
+	 * @param string $link          The link.
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $size          Size of the image. Image size or array of width and height values (in that order).
+	 *                              Default 'thumbnail'.
+	 * @return string               The updated attachment link.
 	 */
-	public function prepare_lightbox_links( $content ) {
+	public function prepare_lightbox_links( $link, $attachment_id, $size ) {
+		if ( ! is_string( $size ) ) {
+			$size = 'full';
+		}
 
-		preg_match_all( '/<a[^>]+href=([\'"])(.+?)\1[^>]*>/i', $content, $matches );
-		$attachment_id = self::get_attachment_id_from_url( $matches[2][0] );
-		$attachment_id = apply_filters( 'wpml_object_id', $attachment_id, 'attachment' );
-		$title = get_post_field( 'post_title', $attachment_id );
-		$caption = get_post_field( 'post_excerpt', $attachment_id );
+		$attachment_data = $this->get_attachment_data( $attachment_id, $size );
 
-		$content = preg_replace( '/<a/', '<a data-rel="iLightbox[postimages]" data-title="' . $title . '" data-caption="' . $caption . '"', $content, 1 );
+		$title   = $attachment_data['title_attribute'];
+		$caption = $attachment_data['caption_attribute'];
+		$link    = preg_replace( '/<a/', '<a data-rel="iLightbox[postimages]" data-title="' . $title . '" data-caption="' . $caption . '"', $link, 1 );
 
-		return $content;
+		return $link;
 	}
 
 	/**
@@ -161,11 +178,11 @@ class Fusion_Images {
 		if ( ! $cropped_image ) {
 			$full_image_src = wp_get_attachment_image_src( $attachment_id, 'full' );
 
-			$full_size = array(
+			$full_size = [
 				'url'        => $full_image_src[0],
 				'descriptor' => 'w',
 				'value'      => $image_meta['width'],
-			);
+			];
 
 			$sources[ $image_meta['width'] ] = $full_size;
 		}
@@ -205,7 +222,7 @@ class Fusion_Images {
 				// Make sure the original image isn't deleted.
 				preg_match( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', $source['url'], $matches );
 
-				if ( ! in_array( $width, self::$grid_accepted_widths ) && isset( $matches[0] ) ) {
+				if ( ! in_array( $width, self::$grid_accepted_widths ) && isset( $matches[0] ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 					unset( $sources[ $width ] );
 				}
 			}
@@ -241,7 +258,7 @@ class Fusion_Images {
 			}
 
 			// Grid.
-			if ( in_array( self::$grid_image_meta['layout'], array( 'masonry', 'grid', 'portfolio_full', 'related-posts' ), true ) ) {
+			if ( in_array( self::$grid_image_meta['layout'], [ 'masonry', 'grid', 'portfolio_full', 'related-posts' ], true ) ) {
 
 				$main_break_point = (int) apply_filters( 'fusion_library_grid_main_break_point', 800 );
 				if ( 640 < $main_break_point ) {
@@ -253,15 +270,16 @@ class Fusion_Images {
 				$breakpoint_interval = $breakpoint_range / 5;
 
 				$main_image_break_point = apply_filters( 'fusion_library_main_image_breakpoint', $main_break_point );
-				$break_points = apply_filters(
-					'fusion_library_image_breakpoints', array(
+				$break_points           = apply_filters(
+					'fusion_library_image_breakpoints',
+					[
 						6 => $main_image_break_point,
 						5 => $main_image_break_point - $breakpoint_interval,
 						4 => $main_image_break_point - 2 * $breakpoint_interval,
 						3 => $main_image_break_point - 3 * $breakpoint_interval,
 						2 => $main_image_break_point - 4 * $breakpoint_interval,
 						1 => $main_image_break_point - 5 * $breakpoint_interval,
-					)
+					]
 				);
 
 				$sizes = apply_filters( 'fusion_library_image_grid_initial_sizes', '', $main_break_point, (int) self::$grid_image_meta['columns'] );
@@ -299,8 +317,8 @@ class Fusion_Images {
 				}
 
 				$sizes = '(max-width: ' . $content_break_point . 'px) 100vw, ' . $content_width . 'px';
-			}// End if().
-		}// End if().
+			}
+		}
 
 		return $sizes;
 	}
@@ -319,15 +337,14 @@ class Fusion_Images {
 	 * @return string The html markup of the image.
 	 */
 	public function edit_grid_image_src( $html, $post_id = null, $post_thumbnail_id = null, $size = null, $attr = null ) {
-		if ( isset( self::$grid_image_meta['layout'] ) && in_array( self::$grid_image_meta['layout'], self::$supported_grid_layouts ) && 'full' === $size ) {
+		if ( ! $this->is_lazy_load_enabled() && isset( self::$grid_image_meta['layout'] ) && in_array( self::$grid_image_meta['layout'], self::$supported_grid_layouts ) && 'full' === $size ) { // phpcs:ignore WordPress.PHP.StrictInArray
 			$image_size = $this->get_grid_image_base_size( $post_thumbnail_id, self::$grid_image_meta['layout'], self::$grid_image_meta['columns'] );
 
 			$full_image_src = wp_get_attachment_image_src( $post_thumbnail_id, $image_size );
-
-			$html = preg_replace( '@src="([^"]+)"@', 'src="' . $full_image_src[0] . '"', $html );
-
+			if ( $full_image_src ) {
+				$html = preg_replace( '@src="([^"]+)"@', 'src="' . $full_image_src[0] . '"', $html );
+			}
 		}
-
 		return $html;
 	}
 
@@ -344,13 +361,13 @@ class Fusion_Images {
 	 */
 	public function get_grid_image_base_size( $post_thumbnail_id = null, $layout = null, $columns = null, $match_basis = 'get_closest' ) {
 		global $is_IE;
-		$sizes = array();
+		$sizes = [];
 
 		// Get image metadata.
 		$image_meta = wp_get_attachment_metadata( $post_thumbnail_id );
 
 		if ( $image_meta ) {
-			$image_sizes = array();
+			$image_sizes = [];
 			if ( isset( $image_meta['sizes'] ) && ! empty( $image_meta['sizes'] ) ) {
 				$image_sizes = $image_meta['sizes'];
 			}
@@ -358,10 +375,11 @@ class Fusion_Images {
 			if ( $image_sizes && is_array( $image_sizes ) ) {
 
 				foreach ( $image_sizes as $name => $image ) {
-					if ( in_array( strval( $name ), self::$grid_accepted_widths, true ) ) {
+					$size_name = str_replace( 'fusion-', '', $name );
+					if ( in_array( $size_name, self::$grid_accepted_widths, true ) ) {
 						// Create accepted sizes array.
 						if ( $image['width'] ) {
-							$sizes[ $image['width'] ] = $name;
+							$sizes[ $image['width'] ] = intval( $size_name );
 						}
 					}
 				}
@@ -369,12 +387,12 @@ class Fusion_Images {
 			$sizes[ $image_meta['width'] ] = 'full';
 		}
 		$gutter = isset( self::$grid_image_meta['gutter_width'] ) ? self::$grid_image_meta['gutter_width'] : '';
-		$width = apply_filters( 'fusion_library_image_base_size_width', 1000, $layout, $columns, $gutter );
+		$width  = apply_filters( 'fusion_library_image_base_size_width', 1000, $layout, $columns, $gutter );
 
 		ksort( $sizes );
 
 		$image_size = null;
-		$size_name = null;
+		$size_name  = null;
 
 		// Find the best match.
 		foreach ( $sizes as $size => $name ) {
@@ -389,12 +407,12 @@ class Fusion_Images {
 
 			if ( $match_condition ) {
 				$image_size = $size;
-				$size_name = $name;
+				$size_name  = $name;
 			}
 		}
 
 		// Fallback to 'full' image size if no match was found or Internet Explorer is used.
-		if ( null == $size_name || '' == $size_name || $is_IE ) {
+		if ( ! $size_name || empty( $size_name ) || $is_IE ) {
 			$size_name = 'full';
 		}
 
@@ -418,8 +436,56 @@ class Fusion_Images {
 		global $fusion_col_type;
 
 		if ( ! empty( $fusion_col_type['type'] ) ) {
+
+			// Do some advanced column size calcs respecting margins for better column width estimation.
+			if ( ! empty( $fusion_col_type['spacings'] ) ) {
+				$width = $this->calc_width_respecting_spacing( $width, $fusion_col_type['spacings'] );
+			}
+
+			// Calc the column width.
 			$coeff = explode( '_', $fusion_col_type['type'] );
 			$width = absint( $width * $coeff[0] / $coeff[1] );
+
+			// Do some advanced column size calcs respecting in column paddings for better column width estimation.
+			if ( isset( $fusion_col_type['padding'] ) ) {
+				$padding = explode( ' ', $fusion_col_type['padding'] );
+
+				if ( isset( $padding[1] ) && isset( $padding[3] ) ) {
+					$padding = [ $padding[1], $padding[3] ];
+
+					$width = $this->calc_width_respecting_spacing( $width, $padding );
+				}
+			}
+		}
+
+		return $width;
+	}
+
+	/**
+	 * Reduces a given width by the amount of spacing set.
+	 *
+	 * @since 1.8.0
+	 * @param int   $width         The width to be reduced.
+	 * @param array $spacing_array The array of spacings that need subtracted.
+	 * @return int The reduced width.
+	 */
+	public function calc_width_respecting_spacing( $width, $spacing_array ) {
+		global $fusion_settings;
+
+		if ( ! $fusion_settings ) {
+			$fusion_settings = Fusion_Settings::get_instance();
+		}
+
+		$base_font_size = $fusion_settings->get( 'body_typography', 'font-size' );
+
+		foreach ( $spacing_array as $spacing ) {
+			if ( false !== strpos( $spacing, 'px' ) ) {
+				$width -= (int) $spacing;
+			} elseif ( false !== strpos( $base_font_size, 'px' ) && false !== strpos( $spacing, 'em' ) ) {
+				$width -= (int) $base_font_size * (int) $spacing;
+			} elseif ( false !== strpos( $spacing, '%' ) ) {
+				$width -= $width * (int) $spacing / 100;
+			}
 		}
 
 		return $width;
@@ -429,9 +495,7 @@ class Fusion_Images {
 	 * Setter function for the $grid_image_meta variable.
 	 *
 	 * @since 1.0.0
-	 *
 	 * @param array $grid_image_meta    Array containing layout and number of columns.
-	 *
 	 * @return void
 	 */
 	public function set_grid_image_meta( $grid_image_meta ) {
@@ -439,8 +503,43 @@ class Fusion_Images {
 	}
 
 	/**
+	 * Gets the ID of the "translated" attachment.
+	 *
+	 * @static
+	 * @since 1.2.1
+	 * @param int $attachment_id The base attachment ID.
+	 * @return int The ID of the "translated" attachment.
+	 */
+	public static function get_translated_attachment_id( $attachment_id ) {
+
+		$wpml_object_id = apply_filters( 'wpml_object_id', $attachment_id, 'attachment' );
+		$attachment_id  = $wpml_object_id ? $wpml_object_id : $attachment_id;
+
+		return $attachment_id;
+	}
+
+	/**
+	 * Gets the base URL for an attachment.
+	 *
+	 * @static
+	 * @since 1.2.1
+	 * @param string $attachment_url The url of the used attachment.
+	 * @return string The base URL of the attachment.
+	 */
+	public static function get_attachment_base_url( $attachment_url = '' ) {
+
+		$attachment_url      = set_url_scheme( $attachment_url );
+		$attachment_base_url = preg_replace( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', '', $attachment_url );
+		$attachment_base_url = apply_filters( 'fusion_get_attachment_base_url', $attachment_base_url );
+
+		return $attachment_base_url;
+	}
+
+	/**
 	 * Gets the attachment ID from the URL.
 	 *
+	 * @static
+	 * @since 1.0
 	 * @param string $attachment_url The URL of the attachment.
 	 * @return string The attachment ID
 	 */
@@ -452,22 +551,21 @@ class Fusion_Images {
 			return '';
 		}
 
-		$upload_dir_paths = wp_upload_dir();
+		$upload_dir_paths         = wp_upload_dir();
 		$upload_dir_paths_baseurl = set_url_scheme( $upload_dir_paths['baseurl'] );
 
 		// Make sure the upload path base directory exists in the attachment URL, to verify that we're working with a media library image.
 		if ( false !== strpos( $attachment_url, $upload_dir_paths_baseurl ) ) {
 
 			// If this is the URL of an auto-generated thumbnail, get the URL of the original image.
-			$attachment_url = preg_replace( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', '', $attachment_url );
+			$attachment_url = self::get_attachment_base_url( $attachment_url );
 
 			// Remove the upload path base directory from the attachment URL.
 			$attachment_url = str_replace( $upload_dir_paths_baseurl . '/', '', $attachment_url );
 
 			// Get the actual attachment ID.
 			$attachment_id = attachment_url_to_postid( $attachment_url );
-			$wpml_object_id = apply_filters( 'wpml_object_id', $attachment_id, 'attachment' );
-			$attachment_id = $wpml_object_id ? $wpml_object_id : $attachment_id;
+			$attachment_id = self::get_translated_attachment_id( $attachment_id );
 		}
 
 		return $attachment_id;
@@ -486,24 +584,13 @@ class Fusion_Images {
 			return false;
 		}
 
-		$attachment_url = set_url_scheme( $attachment_url );
-		$attachment_base_url = preg_replace( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', '', $attachment_url );
-		$attachment_base_url = apply_filters( 'fusion_get_attachment_data_from_url_attachment_base_url', $attachment_base_url );
-
-		$attachment_data['id'] = self::get_attachment_id_from_url( $attachment_base_url );
+		$attachment_data['id'] = self::get_attachment_id_from_url( $attachment_url );
 
 		if ( ! $attachment_data['id'] ) {
 			return false;
 		}
 
-		$attachment_data = $this->get_attachment_data( $attachment_data['id'] );
-
-		if ( $attachment_base_url !== $attachment_url ) {
-			preg_match( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', $attachment_url, $matches );
-			$dimensions = explode( 'x', $matches[0] );
-			$attachment_data['width'] = absint( $dimensions[0] );
-			$attachment_data['height'] = absint( $dimensions[1] );
-		}
+		$attachment_data = $this->get_attachment_data( $attachment_data['id'], 'full', $attachment_url );
 
 		return $attachment_data;
 	}
@@ -513,24 +600,74 @@ class Fusion_Images {
 	 *
 	 * @since 1.2
 	 * @access public
-	 * @param int    $attachment_id The ID of the used attachment.
-	 * @param string $size          The image size to be returned.
-	 * @return array/bool           The attachment data of the image,
-	 *                              false if the url is empty or attachment not found.
+	 * @param int    $attachment_id  The ID of the used attachment.
+	 * @param string $size           The image size to be returned.
+	 * @param string $attachment_url The URL of the attachment.
+	 * @return array/bool            The attachment data of the image,
+	 *                               false if the url is empty or attachment not found.
 	 */
-	public function get_attachment_data( $attachment_id = 0, $size = 'full' ) {
+	public function get_attachment_data( $attachment_id = 0, $size = 'full', $attachment_url = '' ) {
+		$attachment_data = [
+			'id'                => 0,
+			'url'               => '',
+			'width'             => '',
+			'height'            => '',
+			'alt'               => '',
+			'caption'           => '',
+			'caption_attribute' => '',
+			'title'             => '',
+			'title_attribute'   => '',
+		];
+		$attachment_src  = false;
+
+		if ( ! $attachment_id && ! $attachment_url ) {
+			return $attachment_data;
+		}
 
 		if ( ! $attachment_id ) {
-			return false;
+			$attachment_id = self::get_attachment_id_from_url( $attachment_url );
+		} else {
+			$attachment_id = self::get_translated_attachment_id( $attachment_id );
+
+			$test_size      = ( 'none' === $size ) ? 'full' : $size;
+			$attachment_src = wp_get_attachment_image_src( $attachment_id, $size );
+
+			if ( ! $attachment_src ) {
+				$attachment_id = self::get_attachment_id_from_url( $attachment_url );
+			}
+		}
+
+		if ( ! $attachment_id ) {
+			$attachment_data['url'] = $attachment_url;
+
+			return $attachment_data;
 		}
 
 		$attachment_data['id'] = $attachment_id;
 
 		if ( 'none' !== $size ) {
-			$attachment_src = wp_get_attachment_image_src( $attachment_id, $size );
-			$attachment_data['url'] = esc_url( $attachment_src[0] );
-			$attachment_data['width'] = esc_attr( $attachment_src[1] );
-			$attachment_data['height'] = esc_attr( $attachment_src[2] );
+			$attachment_src = ( $attachment_src ) ? $attachment_src : wp_get_attachment_image_src( $attachment_id, $size );
+			if ( $attachment_src ) {
+				$attachment_data['url'] = esc_url( $attachment_src[0] );
+
+				if ( $attachment_url && $attachment_data['url'] !== $attachment_url ) {
+					$attachment_data['url'] = $attachment_url;
+					preg_match( '/-\d+x\d+(?=\.(jpg|jpeg|png|gif|tiff|svg)$)/i', $attachment_url, $matches );
+					if ( $matches ) {
+						$dimensions = explode( 'x', $matches[0] );
+						if ( 2 <= count( $dimensions ) ) {
+							$attachment_data['width']  = absint( $dimensions[0] );
+							$attachment_data['height'] = absint( $dimensions[1] );
+						}
+					} else {
+						$attachment_data['width']  = absint( $attachment_src[1] );
+						$attachment_data['height'] = absint( $attachment_src[2] );
+					}
+				} else {
+					$attachment_data['width']  = absint( $attachment_src[1] );
+					$attachment_data['height'] = absint( $attachment_src[2] );
+				}
+			}
 		}
 
 		$attachment_data['alt'] = esc_attr( get_post_field( '_wp_attachment_image_alt', $attachment_id ) );
@@ -543,15 +680,49 @@ class Fusion_Images {
 
 			$attachment_data['caption'] = ( $post ) ? $post->post_excerpt : '';
 		}
-		$attachment_data['caption_attribute'] = esc_attr( strip_tags( $attachment_data['caption'] ) );
+		$attachment_data['caption_attribute'] = esc_attr( strip_tags( $attachment_data['caption'] ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 		$attachment_data['title']             = get_the_title( $attachment_id );
-		$attachment_data['title_attribute']   = esc_attr( strip_tags( $attachment_data['title'] ) );
+		$attachment_data['title_attribute']   = esc_attr( strip_tags( $attachment_data['title'] ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 
 		return $attachment_data;
 	}
 
 	/**
-	 * Deletes the resized images when the original image is deleted from the Wordpress Media Library.
+	 * Gets the most important attachment data.
+	 *
+	 * @since 1.2.1
+	 * @access public
+	 * @param string $attachment_id_size The ID and size of the used attachmen in a string separated by |.
+	 * @param string $attachment_url     The URL of the attachment.
+	 * @return array/bool                The attachment data of the image,
+	 *                                   false if the url is empty or attachment not found.
+	 */
+	public function get_attachment_data_by_helper( $attachment_id_size = 0, $attachment_url = '' ) {
+		$attachment_data = false;
+
+		// Image ID is set, so we can get the image data directly.
+		if ( $attachment_id_size ) {
+			$attachment_id_size = explode( '|', $attachment_id_size );
+
+			// Both image ID and image size are available.
+			if ( 2 === count( $attachment_id_size ) ) {
+				$attachment_data = $this->get_attachment_data( $attachment_id_size[0], $attachment_id_size[1], $attachment_url );
+			} else {
+
+				// Only image ID is available.
+				$attachment_data = $this->get_attachment_data( $attachment_id_size[0], 'full', $attachment_url );
+			}
+		} elseif ( $attachment_url ) {
+
+			// Fallback, if we don't have the image ID, we have to get the data through the image URL.
+			$attachment_data = $this->get_attachment_data( 0, 'full', $attachment_url );
+		}
+
+		return $attachment_data;
+	}
+
+	/**
+	 * Deletes the resized images when the original image is deleted from the WordPress Media Library.
 	 * This is necessary in order to handle custom image sizes created from the Fusion_Image_Resizer class.
 	 *
 	 * @access public
@@ -559,18 +730,20 @@ class Fusion_Images {
 	 * @param array $delete_image_sizes Array of images sizes to be deleted. All are deleted if empty.
 	 * @return void
 	 */
-	public function delete_resized_images( $post_id, $delete_image_sizes = array() ) {
+	public function delete_resized_images( $post_id, $delete_image_sizes = [] ) {
 		// Get attachment image metadata.
 		$metadata = wp_get_attachment_metadata( $post_id );
 		if ( ! $metadata ) {
 			return;
 		}
+		$wp_filesystem = Fusion_Helper::init_filesystem();
+
 		// Do some bailing if we cannot continue.
 		if ( ! isset( $metadata['file'] ) || ! isset( $metadata['image_meta']['resized_images'] ) ) {
 			return;
 		}
-		$pathinfo = pathinfo( $metadata['file'] );
-		$resized_images = isset( $metadata['image_meta']['resized_images'] ) ? $metadata['image_meta']['resized_images'] : array();
+		$pathinfo       = pathinfo( $metadata['file'] );
+		$resized_images = isset( $metadata['image_meta']['resized_images'] ) ? $metadata['image_meta']['resized_images'] : [];
 		// Get WordPress uploads directory (and bail if it doesn't exist).
 		$wp_upload_dir = wp_upload_dir();
 		$upload_dir    = $wp_upload_dir['basedir'];
@@ -579,19 +752,19 @@ class Fusion_Images {
 		}
 		// Delete the resized images.
 		foreach ( $resized_images as $handle => $dims ) {
-			if ( ! empty( $delete_image_sizes ) && ! in_array( $handle, $delete_image_sizes ) ) {
+			if ( ! empty( $delete_image_sizes ) && ! in_array( $handle, $delete_image_sizes ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 				continue;
 			}
 
 			// Get the resized images filename.
 			$file = $upload_dir . '/' . $pathinfo['dirname'] . '/' . $pathinfo['filename'] . '-' . $dims . '.' . $pathinfo['extension'];
 			// Delete the resized image.
-			@unlink( $file );
+			$wp_filesystem->delete( $file, false, 'f' );
 
 			// Get the retina resized images filename.
 			$retina_file = $upload_dir . '/' . $pathinfo['dirname'] . '/' . $pathinfo['filename'] . '-' . $dims . '@2x.' . $pathinfo['extension'];
 			// Delete the resized retina image.
-			@unlink( $retina_file );
+			$wp_filesystem->delete( $retina_file, false, 'f' );
 		}
 	}
 
@@ -616,7 +789,7 @@ class Fusion_Images {
 				if ( false === strpos( $image_frame, '<img' ) && $image_frame ) {
 
 					$pattern = get_shortcode_regex();
-					$matches = array();
+					$matches = [];
 					preg_match( "/$pattern/s", $image_frame, $matches );
 					$src = $matches[5];
 				} else {
@@ -627,24 +800,40 @@ class Fusion_Images {
 					}
 				}
 
-				if ( ! in_array( $src, $images ) ) {
-					$images[] = array(
+				if ( ! in_array( $src, $images, true ) ) {
+					$images[] = [
 						'src' => $src,
-					);
+					];
 				}
 			}
 		}
 
-		// For images from fusion_gallery shortcode.
+		// For images from newer structure of gallery element.
+		if ( preg_match_all( '/\[fusion_gallery_image(.+?)?\](?:(.+?)?\[\/fusion_gallery_image\])?/', $content, $matches ) ) {
+			foreach ( $matches[0] as $item ) {
+				$atts = shortcode_parse_atts( $item );
+				if ( isset( $atts['image'] ) && ! empty( $atts['image'] ) ) {
+					$images[] = [
+						'src' => $atts['image'],
+					];
+				} elseif ( isset( $atts['image_id'] ) && ! empty( $atts['image_id'] ) ) {
+					$images[] = [
+						'src' => wp_get_attachment_url( $atts['image_id'] ),
+					];
+				}
+			}
+		}
+
+		// For images from older structure fusion_gallery shortcode.
 		if ( preg_match_all( '/\[fusion_gallery(.+?)?\](?:(.+?)?\[\/fusion_gallery\])?/', $content, $matches ) ) {
 			foreach ( $matches[0] as $image_gallery ) {
 				$atts = shortcode_parse_atts( $image_gallery );
 				if ( isset( $atts['image_ids'] ) && ! empty( $atts['image_ids'] ) ) {
 					$image_ids = explode( ',', $atts['image_ids'] );
 					foreach ( $image_ids as $image_id ) {
-						$images[] = array(
+						$images[] = [
 							'src' => wp_get_attachment_url( $image_id ),
-						);
+						];
 					}
 				}
 			}
@@ -655,14 +844,14 @@ class Fusion_Images {
 			foreach ( $matches[0] as $item ) {
 				$atts = shortcode_parse_atts( $item );
 				if ( isset( $atts['before_image'] ) && ! empty( $atts['before_image'] ) ) {
-					$images[] = array(
+					$images[] = [
 						'src' => $atts['before_image'],
-					);
+					];
 				}
 				if ( isset( $atts['after_image'] ) && ! empty( $atts['after_image'] ) ) {
-					$images[] = array(
+					$images[] = [
 						'src' => $atts['after_image'],
-					);
+					];
 				}
 			}
 		}
@@ -680,7 +869,7 @@ class Fusion_Images {
 	 * @param int   $width_double  Width above which 2x2 content should be displayed.
 	 * @return string              Orientation class.
 	 */
-	public function get_element_orientation_class( $attachment_id = '', $attachment = array(), $ratio = false, $width_double = false ) {
+	public function get_element_orientation_class( $attachment_id = '', $attachment = [], $ratio = false, $width_double = false ) {
 		$element_class = 'fusion-element-grid';
 		$ratio         = $ratio ? $ratio : self::$masonry_grid_ratio;
 		$width_double  = $width_double ? $width_double : self::$masonry_width_double;
@@ -694,8 +883,8 @@ class Fusion_Images {
 			// Fallback to legacy calcs of Avada 5.4.2 or earlier.
 			if ( '1.0' === $ratio ) {
 				$fallback_ratio = 0.8;
-				$lower_limit = ( $fallback_ratio / 2 ) + ( $fallback_ratio / 4 );
-				$upper_limit = ( $fallback_ratio * 2 ) - ( $fallback_ratio / 2 );
+				$lower_limit    = ( $fallback_ratio / 2 ) + ( $fallback_ratio / 4 );
+				$upper_limit    = ( $fallback_ratio * 2 ) - ( $fallback_ratio / 2 );
 
 				if ( $lower_limit > $attachment[2] / $attachment[1] ) {
 					// Landscape image.
@@ -735,11 +924,11 @@ class Fusion_Images {
 	public function get_element_base_padding( $element_orientation_class = '' ) {
 		$fusion_element_grid_padding = 0.8;
 
-		$masonry_element_padding = array(
+		$masonry_element_padding = [
 			'fusion-element-grid'      => $fusion_element_grid_padding,
 			'fusion-element-landscape' => $fusion_element_grid_padding / 2,
 			'fusion-element-portrait'  => $fusion_element_grid_padding * 2,
-		);
+		];
 
 		if ( isset( $masonry_element_padding[ $element_orientation_class ] ) ) {
 			$fusion_element_grid_padding = $masonry_element_padding[ $element_orientation_class ];
@@ -758,8 +947,11 @@ class Fusion_Images {
 	 */
 	public function adjust_masonry_element_class( $element_class, $attachment_id = '' ) {
 
-		if ( '' !== $attachment_id && '' !== get_post_meta( $attachment_id, 'fusion_masonry_element_layout', true ) ) {
-			$element_class = get_post_meta( $attachment_id, 'fusion_masonry_element_layout', true );
+		if ( '' !== $attachment_id ) {
+			$image_meta_layout = get_post_meta( $attachment_id, 'fusion_masonry_element_layout', true );
+			if ( $image_meta_layout && '' !== $image_meta_layout ) {
+				$element_class = $image_meta_layout;
+			}
 		}
 
 		return $element_class;
@@ -777,7 +969,7 @@ class Fusion_Images {
 		if ( wp_attachment_is_image( $post->ID ) ) {
 			$image_layout = '' !== get_post_meta( $post->ID, 'fusion_masonry_element_layout', true ) ? sanitize_text_field( get_post_meta( $post->ID, 'fusion_masonry_element_layout', true ) ) : '';
 
-			$form_fields['fusion_masonry_element_layout'] = array(
+			$form_fields['fusion_masonry_element_layout'] = [
 				'label' => __( 'Masonry Image Layout', 'Avada' ),
 				'input' => 'html',
 				'html'  => '<select name="attachments[' . $post->ID . '][fusion_masonry_element_layout]" id="attachments[' . $post->ID . '][fusion_masonry_element_layout]"">
@@ -788,7 +980,7 @@ class Fusion_Images {
 						<option value="fusion-element-landscape fusion-element-portrait" ' . selected( 'fusion-element-landscape fusion-element-portrait', $image_layout, false ) . '>' . esc_html__( '2x2', 'Avada' ) . '</option>
 					</select>',
 				'helps' => __( 'Set layout which will be used when image is displayed in masonry.', 'Avada' ),
-			);
+			];
 		}
 
 		return $form_fields;
@@ -841,12 +1033,328 @@ class Fusion_Images {
 	public function remove_dynamically_generated_images( $data, $attachment_id ) {
 
 		if ( ! isset( $data['image_meta']['resized_images']['fusion-500'] ) ) {
-			$this->delete_resized_images( $attachment_id, array( 'fusion-500' ) );
+			$this->delete_resized_images( $attachment_id, [ 'fusion-500' ] );
 		}
 
 		return $data;
 	}
 
+	/**
+	 * Return placeholder image for given dimensions
+	 *
+	 * @static
+	 * @access public
+	 * @since 1.8.0
+	 * @param int $width  Width of real image.
+	 * @param int $height Height of real image.
+	 *
+	 * @return string     Placeholder html string.
+	 */
+	public static function get_lazy_placeholder( $width = 0, $height = 0 ) {
+		$placeholder = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+		if ( isset( $width ) && isset( $height ) && $width && $height ) {
+			$width  = (int) $width;
+			$height = (int) $height;
+
+			return 'data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27' . $width . '%27%20height%3D%27' . $height . '%27%20viewBox%3D%270%200%20' . $width . '%20' . $height . '%27%3E%3Crect%20width%3D%27' . $width . '%27%20height%3D%273' . $height . '%27%20fill-opacity%3D%220%22%2F%3E%3C%2Fsvg%3E';
+		}
+		return apply_filters( 'fusion_library_lazy_placeholder', $placeholder, $width, $height );
+	}
+
+	/**
+	 * Filter attributes for the current gallery image tag to add a 'data-full'
+	 * data attribute.
+	 *
+	 * @access public
+	 * @param array $atts       Gallery image tag attributes.
+	 * @param mixed $attachment WP_Post object for the attachment or attachment ID.
+	 * @return array (maybe) filtered gallery image tag attributes.
+	 * @since 1.8.0
+	 */
+	public function lazy_load_attributes( $atts, $attachment ) {
+		if ( $this->is_lazy_load_enabled() ) {
+
+			$replaced_atts = $atts;
+
+			if ( ! isset( $atts['class'] ) ) {
+				$replaced_atts['class'] = 'lazyload';
+			} elseif ( false !== strpos( $atts['class'], 'lazyload' ) || false !== strpos( $atts['class'], 'rev-slidebg' ) || false !== strpos( $atts['class'], 'ls-' ) || false !== strpos( $atts['class'], 'attachment-portfolio' ) ) {
+				return $atts;
+			} else {
+				$replaced_atts['class'] .= ' lazyload';
+			}
+
+			if ( isset( $atts['data-ls'] ) ) {
+				return $atts;
+			}
+
+			// Get image dimensions.
+			$image_id  = is_object( $attachment ) ? $attachment->ID : $attachment;
+			$meta_data = wp_get_attachment_metadata( $image_id );
+			$width     = isset( $meta_data['width'] ) ? $meta_data['width'] : 0;
+			$height    = isset( $meta_data['height'] ) ? $meta_data['height'] : 0;
+
+			// No meta data, but we do have width and height set on tag.
+			$width  = ! $width && isset( $atts['width'] ) ? $atts['width'] : $width;
+			$height = ! $height && isset( $atts['height'] ) ? $atts['height'] : $height;
+
+			$replaced_atts['data-orig-src'] = $atts['src'];
+
+			if ( isset( $atts['srcset'] ) ) {
+				$replaced_atts['srcset']      = self::get_lazy_placeholder( $width, $height );
+				$replaced_atts['data-srcset'] = $atts['srcset'];
+				$replaced_atts['data-sizes']  = 'auto';
+			} else {
+				$replaced_atts['src'] = self::get_lazy_placeholder( $width, $height );
+			}
+
+			unset( $replaced_atts['sizes'] );
+			return $replaced_atts;
+		}
+
+		return $atts;
+	}
+
+	/**
+	 * Filter markup for lazy loading.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string       $html              The post thumbnail HTML.
+	 * @param int          $post_id           The post ID.
+	 * @param string       $post_thumbnail_id The post thumbnail ID.
+	 * @param string|array $size              The post thumbnail size. Image size or array of width and height
+	 *                                        values (in that order). Default 'post-thumbnail'.
+	 * @param string       $attr              Query string of attributes.
+	 * @return string The html markup of the image.
+	 */
+	public function apply_lazy_loading( $html, $post_id = null, $post_thumbnail_id = null, $size = null, $attr = null ) {
+		if ( $this->is_lazy_load_enabled() && false === strpos( $html, 'lazyload' ) && false === strpos( $html, 'rev-slidebg' ) && false === strpos( $html, 'fusion-gallery-image-size-fixed' ) ) {
+
+			$src    = '';
+			$width  = 0;
+			$height = 0;
+
+			// Get the image data from src.
+			if ( $post_thumbnail_id && 'full' === $size ) {
+				$full_image_src = wp_get_attachment_image_src( $post_thumbnail_id, 'full' );
+
+				// If image found, use the dimensions and src of image.
+				if ( is_array( $full_image_src ) ) {
+					$src    = isset( $full_image_src[0] ) ? $full_image_src[0] : $src;
+					$width  = isset( $full_image_src[1] ) ? $full_image_src[1] : $width;
+					$height = isset( $full_image_src[2] ) ? $full_image_src[2] : $height;
+				}
+			} else {
+
+				// Get src from markup.
+				preg_match( '@src="([^"]+)"@', $html, $src );
+				if ( array_key_exists( 1, $src ) ) {
+					$src = $src[1];
+				} else {
+					$src = '';
+				}
+
+				// Get dimensions from markup.
+				preg_match( '/width="(.*?)"/', $html, $width );
+				if ( array_key_exists( 1, $width ) ) {
+					preg_match( '/height="(.*?)"/', $html, $height );
+					if ( array_key_exists( 1, $height ) ) {
+						$width  = $width[1];
+						$height = $height[1];
+					}
+				} elseif ( $src && '' !== $src ) {
+
+					// No dimensions on tag, try to get from image url.
+					$full_image_src = $this->get_attachment_data_from_url( $src );
+					if ( is_array( $full_image_src ) ) {
+						$width  = isset( $full_image_src['width'] ) ? $full_image_src['width'] : $width;
+						$height = isset( $full_image_src['height'] ) ? $full_image_src['height'] : $height;
+					}
+				}
+			}
+
+			// If src is a data image, just skip.
+			if ( false !== strpos( $src, 'data:image' ) ) {
+				return $html;
+			}
+
+			// Srcset replacement.
+			if ( strpos( $html, 'srcset' ) ) {
+				$html = str_replace(
+					[
+						' src=',
+						' srcset=',
+						' sizes=',
+					],
+					[
+						' src="' . $src . '" data-orig-src=',
+						' srcset="' . self::get_lazy_placeholder( $width, $height ) . '" data-srcset=',
+						' data-sizes="auto" data-orig-sizes=',
+					],
+					$html
+				);
+			} else {
+
+				// Simplified non srcset replacement.
+				$html = str_replace( ' src=', ' src="' . self::get_lazy_placeholder( $width, $height ) . '" data-orig-src=', $html );
+			}
+
+			if ( strpos( $html, ' class=' ) ) {
+				$html = str_replace( ' class="', ' class="lazyload ', $html );
+			} else {
+				$html = str_replace( '<img ', '<img class="lazyload" ', $html );
+			}
+		}
+		return $html;
+	}
+
+	/**
+	 * Filter markup for lazy loading.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $content Full html string.
+	 * @return string The html markup of the image.
+	 */
+	public function apply_bulk_lazy_loading( $content ) {
+		if ( $this->is_lazy_load_enabled() ) {
+			preg_match_all( '/<img\s+[^>]*src="([^"]*)"[^>]*>/isU', $content, $images );
+			if ( array_key_exists( 1, $images ) ) {
+				foreach ( $images[0] as $key => $image ) {
+
+					$orig  = $image;
+					$image = $this->apply_lazy_loading( $image );
+
+					// Replace image.
+					$content = str_replace( $orig, $image, $content );
+				}
+			}
+		}
+		return $content;
+	}
+
+	/**
+	 * Disable lazy loading for slider revolution images.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param string $html Full html string.
+	 * @param string $content Non stripped original content.
+	 * @param object $slider Slider.
+	 * @param object $slide Individual slide.
+	 * @param string $layer Individual layer.
+	 * @return string Altered html markup.
+	 */
+	public function prevent_rev_lazy_loading( $html, $content, $slider, $slide, $layer ) {
+		if ( $this->is_lazy_load_enabled() ) {
+			preg_match_all( '/<img\s+[^>]*src="([^"]*)"[^>]*>/isU', $html, $images );
+			if ( array_key_exists( 1, $images ) ) {
+				foreach ( $images[0] as $key => $image ) {
+
+					$orig  = $image;
+					$image = $this->prevent_lazy_loading( $image );
+
+					// Replace image.
+					$html = str_replace( $orig, $image, $html );
+				}
+			}
+		}
+		return $html;
+	}
+
+	/**
+	 * Prevent layerslider lazy loading.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param string $html The HTML code that contains the slider markup.
+	 * @param array  $slider The slider database record as an associative array.
+	 * @param string $id  The ID attribute of the slider element.
+	 * @return string Altered html markup.
+	 */
+	public function prevent_ls_lazy_loading( $html, $slider = false, $id = false ) {
+		if ( $this->is_lazy_load_enabled() ) {
+			preg_match_all( '/<img\s+[^>]*src="([^"]*)"[^>]*>/isU', $html, $images );
+			if ( array_key_exists( 1, $images ) ) {
+				foreach ( $images[0] as $key => $image ) {
+
+					$orig  = $image;
+					$image = $this->prevent_lazy_loading( $image );
+
+					// Replace image.
+					$html = str_replace( $orig, $image, $html );
+				}
+			}
+		}
+		return $html;
+	}
+
+	/**
+	 * Filter markup to prevent lazyloading.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $html The post thumbnail HTML.
+	 * @return string The html markup of the image.
+	 */
+	public function prevent_lazy_loading( $html ) {
+		if ( $this->is_lazy_load_enabled() && ! strpos( $html, 'disable-lazyload' ) ) {
+
+			if ( strpos( $html, ' class=' ) ) {
+				$html = str_replace( ' class="', ' class="disable-lazyload ', $html );
+			} else {
+				$html = str_replace( '<img ', '<img class="disable-lazyload" ', $html );
+			}
+		}
+		return $html;
+	}
+
+	/**
+	 * Enqueues image scripts.
+	 *
+	 * @access public
+	 * @since 1.8.0
+	 * @return void
+	 */
+	public function enqueue_image_scripts() {
+		if ( $this->is_lazy_load_enabled() ) {
+			Fusion_Dynamic_JS::enqueue_script( 'lazysizes' );
+		}
+	}
+
+	/**
+	 * Determine if we want to lazy-load images or not.
+	 *
+	 * @access public
+	 * @since 1.8.1
+	 * @return bool
+	 */
+	public function is_lazy_load_enabled() {
+		return ( self::$lazy_load && ! Fusion_AMP::is_amp_endpoint() && ! is_admin() );
+	}
+
+	/**
+	 * Maps the old image size names to the new ones.
+	 *
+	 * @access public
+	 * @since 2.2
+	 * @param array $data    An array of the image-sizes data.
+	 * @param int   $post_id The post-ID.
+	 * @return array
+	 */
+	public function map_old_image_size_names( $data, $post_id ) {
+		$old_sizes = [ 200, 400, 600, 800, 1200 ];
+
+		foreach ( $old_sizes as $size ) {
+			if ( isset( $data['sizes'][ $size ] ) ) {
+				$data['sizes'][ 'fusion-' . $size ] = $data['sizes'][ $size ];
+				unset( $data['sizes'][ $size ] );
+			}
+		}
+
+		return $data;
+	}
 }
 
 /* Omit closing PHP tag to avoid "Headers already sent" issues. */

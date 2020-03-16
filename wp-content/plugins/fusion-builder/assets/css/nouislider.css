@@ -42,7 +42,6 @@
 }
 .noUi-state-tap .noUi-origin {
   -webkit-transition: left 0.3s, top 0.3s;
-  -o-transition: left 0.3s, top 0.3s;
   transition: left 0.3s, top 0.3s;
 }
 .noUi-state-drag * {
@@ -54,7 +53,7 @@
 .noUi-base,
 .noUi-handle {
   -webkit-transform: translate3d(0, 0, 0);
-  transform: translate3d(0, 0, 0);
+          transform: translate3d(0, 0, 0);
 }
 /* Slider size and handle placement;
  */
@@ -79,32 +78,29 @@
 /* Styling;
  */
 .noUi-background {
-  background: #FAFAFA;
+  background: #fafafa;
   -webkit-box-shadow: inset 0 1px 1px #f0f0f0;
           box-shadow: inset 0 1px 1px #f0f0f0;
 }
 .noUi-connect {
-  background: #3FB8AF;
+  background: #3fb8af;
   -webkit-box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45);
           box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45);
   -webkit-transition: background 450ms;
-  -o-transition: background 450ms;
   transition: background 450ms;
 }
 .noUi-origin {
-  -webkit-border-radius: 2px;
-          border-radius: 2px;
+  border-radius: 2px;
 }
 .noUi-target {
-  -webkit-border-radius: 4px;
-          border-radius: 4px;
-  border: 1px solid #D3D3D3;
-  -webkit-box-shadow: inset 0 1px 1px #F0F0F0, 0 3px 6px -5px #BBB;
-          box-shadow: inset 0 1px 1px #F0F0F0, 0 3px 6px -5px #BBB;
+  border-radius: 4px;
+  border: 1px solid #d3d3d3;
+  -webkit-box-shadow: inset 0 1px 1px #f0f0f0, 0 3px 6px -5px #bbb;
+          box-shadow: inset 0 1px 1px #f0f0f0, 0 3px 6px -5px #bbb;
 }
 .noUi-target.noUi-connect {
-  -webkit-box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45), 0 3px 6px -5px #BBB;
-          box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45), 0 3px 6px -5px #BBB;
+  -webkit-box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45), 0 3px 6px -5px #bbb;
+          box-shadow: inset 0 0 3px rgba(51, 51, 51, 0.45), 0 3px 6px -5px #bbb;
 }
 /* Handles and cursors;
  */
@@ -115,17 +111,16 @@
   cursor: n-resize;
 }
 .noUi-handle {
-  border: 1px solid #D9D9D9;
-  -webkit-border-radius: 3px;
-          border-radius: 3px;
-  background: #FFF;
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  background: #fff;
   cursor: default;
-  -webkit-box-shadow: inset 0 0 1px #FFF, inset 0 1px 7px #EBEBEB, 0 3px 6px -3px #BBB;
-          box-shadow: inset 0 0 1px #FFF, inset 0 1px 7px #EBEBEB, 0 3px 6px -3px #BBB;
+  -webkit-box-shadow: inset 0 0 1px #fff, inset 0 1px 7px #ebebeb, 0 3px 6px -3px #bbb;
+          box-shadow: inset 0 0 1px #fff, inset 0 1px 7px #ebebeb, 0 3px 6px -3px #bbb;
 }
 .noUi-active {
-  -webkit-box-shadow: inset 0 0 1px #FFF, inset 0 1px 7px #DDD, 0 3px 6px -3px #BBB;
-          box-shadow: inset 0 0 1px #FFF, inset 0 1px 7px #DDD, 0 3px 6px -3px #BBB;
+  -webkit-box-shadow: inset 0 0 1px #fff, inset 0 1px 7px #ddd, 0 3px 6px -3px #bbb;
+          box-shadow: inset 0 0 1px #fff, inset 0 1px 7px #ddd, 0 3px 6px -3px #bbb;
 }
 /* Handle stripes;
  */
@@ -136,7 +131,7 @@
   position: absolute;
   height: 14px;
   width: 1px;
-  background: #E8E7E6;
+  background: #e8e7e6;
   left: 14px;
   top: 6px;
 }
@@ -157,7 +152,7 @@
  */
 [disabled] .noUi-connect,
 [disabled].noUi-connect {
-  background: #B8B8B8;
+  background: #b8b8b8;
 }
 [disabled] .noUi-handle,
 [disabled].noUi-origin {

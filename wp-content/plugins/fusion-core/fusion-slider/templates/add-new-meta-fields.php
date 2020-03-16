@@ -39,7 +39,7 @@
 		<option value=""><?php esc_attr_e( 'None', 'fusion-core' ); ?></option>
 		<option value="scroll_down_indicator"><?php esc_attr_e( 'Scroll Down Indicator', 'fusion-core' ); ?></option>
 		<option value="pagination_circles"><?php esc_attr_e( 'Pagination Circles', 'fusion-core' ); ?></option>
-  </select>
+	</select>
 	<p class="description"><?php esc_attr_e( 'Choose do you want to display pagination circler or scroll down indicator.', 'fusion-core' ); ?></p>
 </div>
 <div class="form-field">
@@ -94,23 +94,23 @@
 	<p class="description"><?php esc_attr_e( 'Check this box to have the slider loop infinitely.', 'fusion-core' ); ?></p>
 </div>
 <div class="form-field">
-  <label for="term_meta[orderby]"><?php esc_attr_e( 'Order By', 'fusion-core' ); ?></label>
-  <select name="term_meta[orderby]" id="term_meta[orderby]">
+	<label for="term_meta[orderby]"><?php esc_attr_e( 'Order By', 'fusion-core' ); ?></label>
+	<select name="term_meta[orderby]" id="term_meta[orderby]">
 		<option value="date"><?php esc_attr_e( 'Date', 'fusion-core' ); ?></option>
 		<option value="ID"><?php esc_attr_e( 'ID', 'fusion-core' ); ?></option>
 		<option value="title"><?php esc_attr_e( 'Title', 'fusion-core' ); ?></option>
 		<option value="modified"><?php esc_attr_e( 'Modified', 'fusion-core' ); ?></option>
 		<option value="rand"><?php esc_attr_e( 'Random', 'fusion-core' ); ?></option>
-  </select>
-  <p class="description"><?php esc_attr_e( 'Defines how the slides should be ordered.', 'fusion-core' ); ?></p>
+	</select>
+	<p class="description"><?php esc_attr_e( 'Defines how the slides should be ordered.', 'fusion-core' ); ?></p>
 </div>
 <div class="form-field">
-  <label for="term_meta[order]"><?php esc_attr_e( 'Order', 'fusion-core' ); ?></label>
-  <select name="term_meta[order]" id="term_meta[order]">
+	<label for="term_meta[order]"><?php esc_attr_e( 'Order', 'fusion-core' ); ?></label>
+	<select name="term_meta[order]" id="term_meta[order]">
 		<option value="DESC"><?php esc_attr_e( 'Descending', 'fusion-core' ); ?></option>
 		<option value="ASC"><?php esc_attr_e( 'Ascending', 'fusion-core' ); ?></option>
-  </select>
-  <p class="description"><?php esc_attr_e( 'Defines the sorting order of the slides.', 'fusion-core' ); ?></p>
+	</select>
+	<p class="description"><?php esc_attr_e( 'Defines the sorting order of the slides.', 'fusion-core' ); ?></p>
 </div>
 <div class="form-field">
 	<label for="term_meta[animation]"><?php esc_attr_e( 'Animation', 'fusion-core' ); ?></label>
@@ -133,7 +133,7 @@
 <div class="form-field">
 	<label for="term_meta[typo_sensitivity]"><?php esc_attr_e( 'Responsive Typography Sensitivity', 'fusion-core' ); ?></label>
 	<input type="text" name="term_meta[typo_sensitivity]" id="term_meta[typo_sensitivity]" value="1">
-	<p class="description"><?php esc_attr_e( 'Values below 1 decrease resizing, values above 1 increase sizing. ex: .6', 'fusion-core' ); ?></p>
+	<p class="description"><?php _e( 'Enter a value between <code>0</code> and <code>1</code>. ex: <code>0.1</code>.', 'fusion-core' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
 </div>
 <div class="form-field">
 	<label for="term_meta[typo_factor]"><?php esc_attr_e( 'Minimum Font Size Factor', 'fusion-core' ); ?></label>

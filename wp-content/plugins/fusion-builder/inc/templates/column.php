@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-column-template">
 	<div class="column-sizes">
 		<div class="column-size column-size-1_6" data-column-size="1_6">1/6</div>
@@ -25,5 +33,5 @@
 		<a href="#" class="fusion-builder-save fusion-builder-save-column-dialog" title="{{ fusionBuilderText.save_column }}"><span class="fusiona-drive"></span></a>
 		<a href="#" class="fusion-builder-remove fusion-builder-remove-column" title="{{ fusionBuilderText.delete_column }}"><span class="fusiona-trash-o"></span></a>
 	</div>
-	<a href="#" class="fusion-builder-add-element" title="{{ fusionBuilderText.add_element }}"><span class="fusiona-plus"></span> {{ fusionBuilderText.element }}</a>
+	<a href="#" class="fusion-builder-add-element fusion-builder-module-control" title="{{ fusionBuilderText.add_element }}"><span class="fusiona-plus"></span> {{ fusionBuilderText.element }}</a>
 </script>

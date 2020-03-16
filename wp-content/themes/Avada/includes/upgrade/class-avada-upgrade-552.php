@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -38,7 +38,7 @@ class Avada_Upgrade_552 extends Avada_Upgrade_Abstract {
 	 * @since 5.5.2
 	 * @var array
 	 */
-	private static $available_languages = array();
+	private static $available_languages = [];
 
 	/**
 	 * The actual migration process.
@@ -49,8 +49,8 @@ class Avada_Upgrade_552 extends Avada_Upgrade_Abstract {
 	 */
 	protected function migration_process() {
 
-		$available_languages = Fusion_Multilingual::get_available_languages();
-		self::$available_languages = ( ! empty( $available_languages ) ) ? $available_languages : array( '' );
+		$available_languages       = Fusion_Multilingual::get_available_languages();
+		self::$available_languages = ( ! empty( $available_languages ) ) ? $available_languages : [ '' ];
 
 		$this->migrate_options();
 	}
@@ -64,7 +64,7 @@ class Avada_Upgrade_552 extends Avada_Upgrade_Abstract {
 	protected function migrate_options() {
 		$available_langs = self::$available_languages;
 
-		$options = get_option( $this->option_name, array() );
+		$options = get_option( $this->option_name, [] );
 		$options = $this->set_sidebar_gutter_options( $options );
 		$options = $this->set_alert_boxes_accent_colors( $options );
 		$options = $this->set_archive_header_background_color( $options );
@@ -79,7 +79,7 @@ class Avada_Upgrade_552 extends Avada_Upgrade_Abstract {
 				continue;
 			}
 
-			$options = get_option( $this->option_name . '_' . $language, array() );
+			$options = get_option( $this->option_name . '_' . $language, [] );
 			$options = $this->set_sidebar_gutter_options( $options );
 			$options = $this->set_alert_boxes_accent_colors( $options );
 			$options = $this->set_archive_header_background_color( $options );

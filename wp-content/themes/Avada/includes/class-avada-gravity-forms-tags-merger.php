@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.1.0
@@ -28,7 +28,7 @@ class Avada_Gravity_Forms_Tags_Merger {
 	 * @since 5.1
 	 * @var string
 	 */
-	public static $_entry = null;
+	public static $entry = null;
 
 	/**
 	 * The object.
@@ -53,17 +53,18 @@ class Avada_Gravity_Forms_Tags_Merger {
 		}
 
 		$this->_args = wp_parse_args(
-			$args, array(
+			$args,
+			[
 				'auto_append_eid' => true, // Boolean or array of form IDs.
 				'encrypt_eid'     => true,
-			)
+			]
 		);
 
-		add_filter( 'the_content', array( $this, 'replace_merge_tags' ), 1 );
-		add_filter( 'gform_replace_merge_tags', array( $this, 'replace_encrypt_entry_id_merge_tag' ), 10, 3 );
+		add_filter( 'the_content', [ $this, 'replace_merge_tags' ], 1 );
+		add_filter( 'gform_replace_merge_tags', [ $this, 'replace_encrypt_entry_id_merge_tag' ], 10, 3 );
 
 		if ( ! empty( $this->_args['auto_append_eid'] ) ) {
-			add_filter( 'gform_confirmation', array( $this, 'append_eid_parameter' ), 20, 3 );
+			add_filter( 'gform_confirmation', [ $this, 'append_eid_parameter' ], 20, 3 );
 		}
 	}
 
@@ -76,7 +77,7 @@ class Avada_Gravity_Forms_Tags_Merger {
 	 * @param array $args Array of bool auto_append_eid and encrypt_eid.
 	 * @return object $instance Instance of this class.
 	 */
-	public static function get_instance( $args = array() ) {
+	public static function get_instance( $args = [] ) {
 
 		if ( ! self::$instance ) {
 			self::$instance = new self( $args );
@@ -139,7 +140,7 @@ class Avada_Gravity_Forms_Tags_Merger {
 				if ( is_array( $field['inputs'] ) ) {
 
 					foreach ( $field['inputs'] as $input ) {
-						if ( GFFormsModel::get_label( $field, $input['id'] ) == $field_label ) {
+						if ( GFFormsModel::get_label( $field, $input['id'] ) === $field_label ) {
 							$matches_field_label = true;
 							$input_id            = $input['id'];
 							break;
@@ -147,7 +148,7 @@ class Avada_Gravity_Forms_Tags_Merger {
 					}
 				} else {
 
-					$matches_field_label = GFFormsModel::get_label( $field ) == $field_label;
+					$matches_field_label = GFFormsModel::get_label( $field ) === $field_label;
 					$input_id            = $field['id'];
 
 				}
@@ -217,17 +218,19 @@ class Avada_Gravity_Forms_Tags_Merger {
 			preg_match_all( '/gformRedirect.+?(http.+?)(?=\'|")/', $confirmation, $matches, PREG_SET_ORDER );
 			list( $full_match, $url ) = $matches[0];
 			$redirect_url             = add_query_arg(
-				array(
+				[
 					'eid' => $eid,
-				), $url
+				],
+				$url
 			);
 			$confirmation             = str_replace( $url, $redirect_url, $confirmation );
 
 		} else {
 			$redirect_url             = add_query_arg(
-				array(
+				[
 					'eid' => $eid,
-				), $confirmation['redirect']
+				],
+				$confirmation['redirect']
 			);
 			$confirmation['redirect'] = $redirect_url;
 		}
@@ -249,9 +252,9 @@ class Avada_Gravity_Forms_Tags_Merger {
 		$eid        = $entry_id;
 		$do_encrypt = $force_encrypt || $this->_args['encrypt_eid'];
 
-		if ( $do_encrypt && is_callable( array( 'GFCommon', 'openssl_encrypt' ) ) ) {
+		if ( $do_encrypt && is_callable( [ 'GFCommon', 'openssl_encrypt' ] ) ) {
 			$eid = rawurlencode( GFCommon::openssl_encrypt( $eid ) );
-		} elseif ( $do_encrypt && is_callable( array( 'GFCommon', 'encrypt' ) ) ) {
+		} elseif ( $do_encrypt && is_callable( [ 'GFCommon', 'encrypt' ] ) ) {
 			$eid = rawurlencode( GFCommon::encrypt( $eid ) );
 		}
 
@@ -263,11 +266,11 @@ class Avada_Gravity_Forms_Tags_Merger {
 	 *
 	 * @access public
 	 * @since 5.1
-	 * @return bool|object $_entryEntry Object and false if none available.
+	 * @return bool|object $entryEntry Object and false if none available.
 	 */
 	public function get_entry() {
 
-		if ( ! self::$_entry ) {
+		if ( ! self::$entry ) {
 
 			$entry_id = $this->get_entry_id();
 			if ( ! $entry_id ) {
@@ -279,11 +282,11 @@ class Avada_Gravity_Forms_Tags_Merger {
 				return false;
 			}
 
-			self::$_entry = $entry;
+			self::$entry = $entry;
 
 		}
 
-		return self::$_entry;
+		return self::$entry;
 	}
 
 	/**
@@ -326,9 +329,9 @@ class Avada_Gravity_Forms_Tags_Merger {
 			return $entry_id;
 		} else {
 
-			if ( is_callable( array( 'GFCommon', 'openssl_decrypt' ) ) ) {
+			if ( is_callable( [ 'GFCommon', 'openssl_decrypt' ] ) ) {
 				$entry_id = rawurlencode( GFCommon::openssl_decrypt( $entry_id ) );
-			} elseif ( is_callable( array( 'GFCommon', 'decrypt' ) ) ) {
+			} elseif ( is_callable( [ 'GFCommon', 'decrypt' ] ) ) {
 				$entry_id = rawurlencode( GFCommon::decrypt( $entry_id ) );
 			}
 

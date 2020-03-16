@@ -1,10 +1,10 @@
-/* global FusionPageBuilderApp, FusionPageBuilder, FusionPageBuilderElements, fusionBuilderInsertIntoEditor */
+/* global FusionPageBuilderApp, FusionPageBuilder, FusionPageBuilderElements */
+/* eslint no-unused-vars: 0 */
 ( function( $ ) {
 
 	// Insert shortcode into post editor
-	fusionBuilderInsertIntoEditor = function( shortcode, editorID ) { // jshint ignore:line
-		var currentEditor = window.SCmoduleContentEditorMode, // jshint ignore:line
-			editorArea,
+	window.fusionBuilderInsertIntoEditor = function( shortcode, editorID ) { // jshint ignore:line
+		var editorArea,
 			editor;
 
 		if ( 'tinymce' === window.SCmoduleContentEditorMode && ( '' === editorID || 'undefined' === typeof editorID ) ) {
@@ -55,7 +55,7 @@
 		}
 	};
 
-} ( jQuery ) );
+}( jQuery ) );
 
 function openShortcodeGenerator( trigger ) { // jshint ignore:line
 
@@ -95,7 +95,7 @@ function openShortcodeGenerator( trigger ) { // jshint ignore:line
 }
 
 // Helper function to check the cursor position of text editor content field before the shortcode generator is opened
-( function( $, undefined ) {
+( function( $ ) {
 	$.fn.getCursorPosition = function() {
 		var el  = $( this ).get( 0 ),
 			pos = 0,
@@ -113,4 +113,4 @@ function openShortcodeGenerator( trigger ) { // jshint ignore:line
 		}
 		return pos;
 	};
-} ( jQuery ) );
+}( jQuery ) );

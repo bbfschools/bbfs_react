@@ -1,22 +1,27 @@
 <?php
+/**
+ * Add an element to fusion-builder.
+ *
+ * @package fusion-builder
+ * @since 1.0
+ */
 
 if ( ! class_exists( 'FusionSC_Column' ) ) {
 	/**
 	 * Shortcode class.
 	 *
-	 * @package fusion-builder
 	 * @since 1.0
 	 */
 	class FusionSC_Column extends Fusion_Element {
 
 		/**
-		 * An array of the shortcode arguments.
+		 * Column counter.
 		 *
-		 * @access protected
-		 * @since 1.0
-		 * @var array
+		 * @access private
+		 * @since 1.9
+		 * @var int
 		 */
-		protected $args;
+		private $column_counter = 0;
 
 		/**
 		 * Constructor.
@@ -26,7 +31,135 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 		 */
 		public function __construct() {
 			parent::__construct();
-			add_shortcode( 'fusion_builder_column', array( $this, 'render' ) );
+			add_shortcode( 'fusion_builder_column', [ $this, 'render' ] );
+		}
+
+		/**
+		 * Gets the default values.
+		 *
+		 * @static
+		 * @access public
+		 * @since 2.0.0
+		 * @return array
+		 */
+		public static function get_element_defaults() {
+			$fusion_settings = fusion_get_fusion_settings();
+			return [
+				'hide_on_mobile'             => fusion_builder_default_visibility( 'string' ),
+				'class'                      => '',
+				'id'                         => '',
+				'background_color'           => '',
+				'gradient_start_color'       => '',
+				'gradient_end_color'         => '',
+				'gradient_start_position'    => '0',
+				'gradient_end_position'      => '100',
+				'gradient_type'              => 'linear',
+				'radial_direction'           => 'center',
+				'linear_angle'               => '180',
+				'background_image'           => '',
+				'background_image_id'        => '',
+				'background_position'        => 'left top',
+				'background_repeat'          => 'no-repeat',
+				'background_blend_mode'      => 'none',
+				'border_color'               => '',
+				'border_position'            => 'all',
+				'border_radius_bottom_left'  => '',
+				'border_radius_bottom_right' => '',
+				'border_radius_top_left'     => '',
+				'border_radius_top_right'    => '',
+				'border_size'                => '',
+				'border_style'               => '',
+				'box_shadow'                 => '',
+				'box_shadow_blur'            => '',
+				'box_shadow_color'           => '',
+				'box_shadow_horizontal'      => '',
+				'box_shadow_spread'          => '',
+				'box_shadow_style'           => '',
+				'box_shadow_vertical'        => '',
+				'margin_top'                 => $fusion_settings->get( 'col_margin', 'top' ),
+				'margin_bottom'              => $fusion_settings->get( 'col_margin', 'bottom' ),
+				'row_column_index'           => '',
+				'spacing'                    => '4%',
+				'padding'                    => '',
+				'padding_top'                => '0px',
+				'padding_right'              => '0px',
+				'padding_bottom'             => '0px',
+				'padding_left'               => '0px',
+				'animation_type'             => '',
+				'animation_direction'        => 'left',
+				'animation_speed'            => '0.3',
+				'animation_offset'           => $fusion_settings->get( 'animation_offset' ),
+				'center_content'             => 'no',
+				'type'                       => '1_3',
+				'last'                       => '',
+				'link'                       => '',
+				'target'                     => '_self',
+				'hover_type'                 => 'none',
+				'min_height'                 => '',
+				// Filters.
+				'filter_hue'                 => '0',
+				'filter_saturation'          => '100',
+				'filter_brightness'          => '100',
+				'filter_contrast'            => '100',
+				'filter_invert'              => '0',
+				'filter_sepia'               => '0',
+				'filter_opacity'             => '100',
+				'filter_blur'                => '0',
+				'filter_hue_hover'           => '0',
+				'filter_saturation_hover'    => '100',
+				'filter_brightness_hover'    => '100',
+				'filter_contrast_hover'      => '100',
+				'filter_invert_hover'        => '0',
+				'filter_sepia_hover'         => '0',
+				'filter_opacity_hover'       => '100',
+				'filter_blur_hover'          => '0',
+			];
+		}
+
+		/**
+		 * Maps settings to param variables.
+		 *
+		 * @static
+		 * @access public
+		 * @since 2.0.0
+		 * @return array
+		 */
+		public static function settings_to_params() {
+			return [
+				'animation_offset'   => 'animation_offset',
+				'col_margin[top]'    => 'margin_top',
+				'col_margin[bottom]' => 'margin_bottom',
+			];
+		}
+
+		/**
+		 * Used to set any other variables for use on front-end editor template.
+		 *
+		 * @static
+		 * @access public
+		 * @since 2.0.0
+		 * @return array
+		 */
+		public static function get_element_extras() {
+			$fusion_settings = fusion_get_fusion_settings();
+			return [
+				'col_margin' => $fusion_settings->get( 'col_margin' ),
+			];
+		}
+
+		/**
+		 * Maps settings to extra variables.
+		 *
+		 * @static
+		 * @access public
+		 * @since 2.0.0
+		 * @return array
+		 */
+		public static function settings_to_extras() {
+
+			return [
+				'col_margin' => 'col_margin',
+			];
 		}
 
 		/**
@@ -40,76 +173,67 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 		 */
 		public function render( $atts, $content = '' ) {
 
-			global $columns, $global_column_array, $fusion_library, $fusion_settings;
-			if ( ! $fusion_settings ) {
-				$fusion_settings = Fusion_Settings::get_instance();
-			}
+			global $columns, $global_column_array;
+			$fusion_settings = fusion_get_fusion_settings();
 
-			$content_id = get_the_id();
+			$column_counter = $this->column_counter++;
+
+			$lazy_load  = $fusion_settings->get( 'lazy_load' );
+			$content_id = get_the_ID();
 			if ( isset( $atts['widget_id'] ) ) {
 				$content_id = $atts['widget_id'];
 			}
 
+			$defaults = self::get_element_defaults();
 			if ( ! isset( $atts['padding'] ) ) {
-				$padding_values = array();
-				$padding_values['top']    = ( isset( $atts['padding_top'] ) && '' !== $atts['padding_top'] ) ? $atts['padding_top'] : '0px';
-				$padding_values['right']  = ( isset( $atts['padding_right'] ) && '' !== $atts['padding_right'] ) ? $atts['padding_right'] : '0px';
-				$padding_values['bottom'] = ( isset( $atts['padding_bottom'] ) && '' !== $atts['padding_bottom'] ) ? $atts['padding_bottom'] : '0px';
-				$padding_values['left']   = ( isset( $atts['padding_left'] ) && '' !== $atts['padding_left'] ) ? $atts['padding_left'] : '0px';
+				$padding_values           = [];
+				$padding_values['top']    = ( isset( $atts['padding_top'] ) && '' !== $atts['padding_top'] ) ? $atts['padding_top'] : $defaults['padding_top'];
+				$padding_values['right']  = ( isset( $atts['padding_right'] ) && '' !== $atts['padding_right'] ) ? $atts['padding_right'] : $defaults['padding_right'];
+				$padding_values['bottom'] = ( isset( $atts['padding_bottom'] ) && '' !== $atts['padding_bottom'] ) ? $atts['padding_bottom'] : $defaults['padding_bottom'];
+				$padding_values['left']   = ( isset( $atts['padding_left'] ) && '' !== $atts['padding_left'] ) ? $atts['padding_left'] : $defaults['padding_left'];
 
-				$atts['padding'] = implode( ' ', $padding_values );
+				$defaults['padding'] = implode( ' ', $padding_values );
 			}
 
-			extract(
-				FusionBuilder::set_shortcode_defaults(
-					array(
-						'hide_on_mobile'      => fusion_builder_default_visibility( 'string' ),
-						'class'               => '',
-						'id'                  => '',
-						'background_color'    => '',
-						'background_image'    => '',
-						'background_position' => 'left top',
-						'background_repeat'   => 'no-repeat',
-						'border_style'        => '',
-						'border_size'         => '',
-						'border_color'        => '',
-						'border_position'     => 'all',
-						'margin_top'          => $fusion_settings->get( 'col_margin', 'top' ),
-						'margin_bottom'       => $fusion_settings->get( 'col_margin', 'bottom' ),
-						'row_column_index'    => '',
-						'spacing'             => '4%',
-						'padding'             => '',
-						'animation_type'      => '',
-						'animation_direction' => 'left',
-						'animation_speed'     => '0.3',
-						'animation_offset'    => $fusion_settings->get( 'animation_offset' ),
-						'center_content'      => 'no',
-						'type'                => '1_3',
-						'last'                => '',
-						'link'                => '',
-						'target'              => '_self',
-						'hover_type'          => 'none',
-						'min_height'          => '',
-					), $atts
-				)
-			);
+			$args = FusionBuilder::set_shortcode_defaults( $defaults, $atts, 'fusion_builder_column' );
+			extract( $args );
 
-			// @codingStandardsIgnoreLine
 			global $fusion_col_type, $is_IE, $is_edge;
-			$fusion_col_type = array(
+			$fusion_col_type = [
 				'padding' => $padding,
 				'type'    => $type,
-			);
+			];
+
+			if ( ! $background_image || '' === $background_image ) {
+				$lazy_load = false;
+			}
+
+			$alpha_background_color     = 1;
+			$alpha_gradient_start_color = 1;
+			$alpha_gradient_end_color   = 1;
+
+			if ( class_exists( 'Fusion_Color' ) ) {
+				$alpha_background_color     = Fusion_Color::new_color( $background_color )->alpha;
+				$alpha_gradient_start_color = Fusion_Color::new_color( $gradient_start_color )->alpha;
+				$alpha_gradient_end_color   = Fusion_Color::new_color( $gradient_end_color )->alpha;
+			}
+
+			$is_gradient_color = ( ! empty( $gradient_start_color ) && 0 !== $alpha_gradient_start_color ) || ( ! empty( $gradient_end_color ) && 0 !== $alpha_gradient_end_color ) ? true : false;
+
+			// If no blend mode is defined, check if we should set to overlay.
+			if ( ! isset( $atts['background_blend_mode'] ) && 1 > $alpha_background_color && 0 !== $alpha_background_color && ! $is_gradient_color && ! empty( $background_image ) ) {
+				$background_blend_mode = 'overlay';
+			}
 
 			if ( '' === $margin_bottom ) {
 				$margin_bottom = $fusion_settings->get( 'col_margin', 'bottom' );
 			} else {
-				$margin_bottom = $fusion_library->sanitize->get_value_with_unit( $margin_bottom );
+				$margin_bottom = fusion_library()->sanitize->get_value_with_unit( $margin_bottom );
 			}
 			if ( '' === $margin_top ) {
 				$margin_top = $fusion_settings->get( 'col_margin', 'top' );
 			} else {
-				$margin_top = $fusion_library->sanitize->get_value_with_unit( $margin_top );
+				$margin_top = fusion_library()->sanitize->get_value_with_unit( $margin_top );
 			}
 
 			if ( empty( $animation_offset ) ) {
@@ -119,16 +243,23 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				$border_size = FusionBuilder::validate_shortcode_attr_value( $border_size, 'px' );
 			}
 			if ( $padding ) {
-				$padding = $fusion_library->sanitize->get_value_with_unit( $padding );
+				$padding = fusion_library()->sanitize->get_value_with_unit( $padding );
 			}
 			// If there is no map of columns, we must use fallback method like 4.0.3.
-			if ( ( ! isset( $global_column_array[ $content_id ] ) || ! array( $global_column_array[ $content_id ] ) || 0 === count( $global_column_array[ $content_id ] ) ) && 'no' !== $spacing ) {
+			if ( ( ! isset( $global_column_array[ $content_id ] ) || ! [ $global_column_array[ $content_id ] ] || 0 === count( $global_column_array[ $content_id ] ) ) && 'no' !== $spacing ) {
 				$spacing = 'yes';
 			}
 
+			$border_radius_top_left     = $border_radius_top_left ? fusion_library()->sanitize->get_value_with_unit( $border_radius_top_left ) : '0px';
+			$border_radius_top_right    = $border_radius_top_right ? fusion_library()->sanitize->get_value_with_unit( $border_radius_top_right ) : '0px';
+			$border_radius_bottom_right = $border_radius_bottom_right ? fusion_library()->sanitize->get_value_with_unit( $border_radius_bottom_right ) : '0px';
+			$border_radius_bottom_left  = $border_radius_bottom_left ? fusion_library()->sanitize->get_value_with_unit( $border_radius_bottom_left ) : '0px';
+			$border_radius              = $border_radius_top_left . ' ' . $border_radius_top_right . ' ' . $border_radius_bottom_right . ' ' . $border_radius_bottom_left;
+			$border_radius              = ( '0px 0px 0px 0px' === $border_radius ) ? '' : $border_radius;
+
 			// Columns. added last attribute.
 			$style               = '';
-			$classes             = '';
+			$classes             = 'fusion-builder-column-' . $column_counter;
 			$wrapper_classes     = 'fusion-column-wrapper';
 			$wrapper_style       = '';
 			$wrapper_style_bg    = '';
@@ -138,8 +269,8 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 			// Set the row and column index as well as the column type for the current column.
 			if ( '' !== $row_column_index ) {
-				$row_column_index = explode( '_', $row_column_index );
-				$current_row_index = $row_column_index[0];
+				$row_column_index     = explode( '_', $row_column_index );
+				$current_row_index    = $row_column_index[0];
 				$current_column_index = $row_column_index[1];
 				if ( isset( $global_column_array[ $content_id ] ) && isset( $global_column_array[ $content_id ][ $current_row_index ] ) ) {
 					$current_row = $global_column_array[ $content_id ][ $current_row_index ];
@@ -147,7 +278,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 				if ( isset( $current_row ) && is_array( $current_row ) ) {
 					$current_row_number_of_columns = count( $current_row );
-					$current_column_type = $current_row[ $current_column_index ][1];
+					$current_column_type           = $current_row[ $current_column_index ][1];
 				}
 			}
 
@@ -155,56 +286,56 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 			switch ( $type ) {
 				case '1_1':
 					$column_size = 1;
-					$classes .= ' fusion-one-full';
+					$classes    .= ' fusion-one-full';
 					break;
 				case '1_4':
 					$column_size = 0.25;
-					$classes .= ' fusion-one-fourth';
+					$classes    .= ' fusion-one-fourth';
 					break;
 				case '3_4':
 					$column_size = 0.75;
-					$classes .= ' fusion-three-fourth';
+					$classes    .= ' fusion-three-fourth';
 					break;
 				case '1_2':
 					$column_size = 0.50;
-					$classes .= ' fusion-one-half';
+					$classes    .= ' fusion-one-half';
 					break;
 				case '1_3':
 					$column_size = 0.3333;
-					$classes .= ' fusion-one-third';
+					$classes    .= ' fusion-one-third';
 					break;
 				case '2_3':
 					$column_size = 0.6666;
-					$classes .= ' fusion-two-third';
+					$classes    .= ' fusion-two-third';
 					break;
 				case '1_5':
 					$column_size = 0.20;
-					$classes .= ' fusion-one-fifth';
+					$classes    .= ' fusion-one-fifth';
 					break;
 				case '2_5':
 					$column_size = 0.40;
-					$classes .= ' fusion-two-fifth';
+					$classes    .= ' fusion-two-fifth';
 					break;
 				case '3_5':
 					$column_size = 0.60;
-					$classes .= ' fusion-three-fifth';
+					$classes    .= ' fusion-three-fifth';
 					break;
 				case '4_5':
 					$column_size = 0.80;
-					$classes .= ' fusion-four-fifth';
+					$classes    .= ' fusion-four-fifth';
 					break;
 				case '5_6':
 					$column_size = 0.8333;
-					$classes .= ' fusion-five-sixth';
+					$classes    .= ' fusion-five-sixth';
 					break;
 				case '1_6':
 					$column_size = 0.1666;
-					$classes .= ' fusion-one-sixth';
+					$classes    .= ' fusion-one-sixth';
 					break;
 			}
 
 			// Map old column width to old width with spacing.
-			$map_old_spacing = array(
+			$map_old_spacing = [
 				'0.1666' => '13.3333%',
 				'0.8333' => '82.6666%',
 				'0.2'    => '16.8%',
@@ -217,20 +348,20 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				'0.6666' => '65.3333%',
 				'0.5'    => '48%',
 				'1'      => '100%',
-			);
+			];
 
-			$old_spacing_values = array(
+			$old_spacing_values = [
 				'yes',
 				'Yes',
 				'No',
 				'no',
-			);
+			];
 
 			// Check if all columns are yes, no, or empty.
 			$fallback = true;
 			if ( is_array( $current_row ) && 0 !== count( $global_column_array[ $content_id ] ) ) {
 				foreach ( $current_row as $column_space ) {
-					if ( isset( $column_space[0] ) && ! in_array( $column_space[0], $old_spacing_values ) ) {
+					if ( isset( $column_space[0] ) && ! in_array( $column_space[0], $old_spacing_values, true ) ) {
 						$fallback = false;
 					}
 				}
@@ -244,7 +375,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 				if ( false !== strpos( $current_column_type, 'last' ) ) {
 					$classes .= ' fusion-column-last';
-					$last = 'yes';
+					$last     = 'yes';
 				} else {
 					$last = 'no';
 				}
@@ -261,12 +392,12 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				}
 				$columns += $column_size;
 				if ( 0.990 < $columns ) {
-					$last = 'yes';
+					$last    = 'yes';
 					$columns = 0;
 				}
 				if ( 1 < $columns ) {
-					$last = 'no';
-					$columns = $column_size;
+					$last     = 'no';
+					$columns  = $column_size;
 					$classes .= ' fusion-column-first';
 				}
 
@@ -277,51 +408,94 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 			// Background.
 			$background_color_style = '';
-			if ( ! empty( $background_color ) ) {
-				$alpha = 1;
-				if ( class_exists( 'Fusion_Color' ) ) {
-					$alpha = Fusion_Color::new_color( $background_color )->alpha;
-				}
-				if ( empty( $background_image ) || 1 > $alpha && 0 !== $alpha ) {
-
-					$classes .= ' fusion-blend-mode';
-					$background_color_style = 'background-color:' . esc_attr( $background_color ) . ';';
-					if ( ( 'none' === $hover_type || empty( $hover_type ) ) && empty( $link ) ) {
-						$wrapper_style .= $background_color_style;
-					} else {
-						$wrapper_style_bg .= $background_color_style;
-					}
+			if ( ! empty( $background_color ) && ( empty( $background_image ) || 0 !== $alpha_background_color ) ) {
+				$background_color_style = 'background-color:' . esc_attr( $background_color ) . ';';
+				if ( ( 'none' === $hover_type || empty( $hover_type ) ) && empty( $link ) ) {
+					$wrapper_style .= $background_color_style;
+				} else {
+					$wrapper_style_bg .= $background_color_style;
 				}
 			}
 
 			$background_image_style = '';
+			$bg_title               = '';
 			if ( ! empty( $background_image ) ) {
-				$background_data = $fusion_library->images->get_attachment_data_from_url( $background_image );
-				$background_image_style .= "background-image: url('" . esc_attr( $background_image ) . "');"; }
+
+				$background_data = fusion_library()->images->get_attachment_data_by_helper( $background_image_id, $background_image );
+
+				$background_image_style .= $lazy_load ? '' : "background-image: url('" . esc_attr( $background_image ) . "');";
+				$bg_title                = $background_data['title'];
+			}
+
+			if ( $is_gradient_color ) {
+				$background_image_style .= 'background-image: ' . Fusion_Builder_Gradient_Helper::get_gradient_string( $args, 'column' );
+			}
 
 			if ( ! empty( $background_position ) ) {
 				$background_image_style .= 'background-position:' . esc_attr( $background_position ) . ';';
 			}
 
+			if ( 'none' !== $background_blend_mode ) {
+				$background_image_style .= 'background-blend-mode: ' . esc_attr( $background_blend_mode ) . ';';
+			}
+
 			if ( ! empty( $background_repeat ) ) {
 				$background_image_style .= 'background-repeat:' . esc_attr( $background_repeat ) . ';';
+
 				if ( 'no-repeat' === $background_repeat ) {
 					$background_image_style .= '-webkit-background-size:cover;-moz-background-size:cover;-o-background-size:cover;background-size:cover;';
 				}
 			}
 
-			// @codingStandardsIgnoreLine
-			if ( ( ! $is_IE && ! $is_edge ) || ( 'none' !== $hover_type || ( ! empty( $hover_type ) && 'none' !== $hover_type )  || ! empty( $link ) ) ) {
+			if ( ( ! $is_IE && ! $is_edge ) || ( 'none' !== $hover_type || ( ! empty( $hover_type ) && 'none' !== $hover_type ) || ! empty( $link ) ) ) {
 				$wrapper_style_bg .= $background_image_style;
 			}
 
 			// Border.
 			if ( $border_color && $border_size && $border_style ) {
 				$border_position = ( 'all' !== $border_position ) ? '-' . $border_position : '';
+				$wrapper_style  .= 'border' . $border_position . ':' . $border_size . ' ' . $border_style . ' ' . $border_color . ';';
+
 				if ( 'liftup' === $hover_type ) {
 					$wrapper_style_bg .= 'border' . $border_position . ':' . $border_size . ' ' . $border_style . ' ' . $border_color . ';';
+
+					$classes .= ' fusion-column-liftup-border';
+				}
+			}
+
+			// Border radius.
+			$inner_bg_style    = '';
+			$lift_up_style_tag = '';
+			if ( $border_radius ) {
+				$wrapper_style    .= 'overflow:hidden;border-radius:' . esc_attr( $border_radius ) . ';';
+				$wrapper_style_bg .= 'border-radius:' . esc_attr( $border_radius ) . ';';
+
+				if ( 'liftup' === $hover_type ) {
+					$lift_up_style_tag = '<style type="text/css">.fusion-builder-column-' . $column_counter . ' .hover-type-liftup:before{border-radius:' . $border_radius . ';}</style>';
+				} elseif ( 'zoomin' === $hover_type || 'zoomout' === $hover_type || ! empty( $link ) ) {
+					$inner_bg_style .= 'style="overflow:hidden;border-radius:' . esc_attr( $border_radius ) . ';"';
+				}
+			}
+
+			// Box shadow.
+			if ( 'yes' === $box_shadow ) {
+				$box_shadow_styles = Fusion_Builder_Box_Shadow_Helper::get_box_shadow_styles(
+					[
+						'box_shadow_horizontal' => $box_shadow_horizontal,
+						'box_shadow_vertical'   => $box_shadow_vertical,
+						'box_shadow_blur'       => $box_shadow_blur,
+						'box_shadow_spread'     => $box_shadow_spread,
+						'box_shadow_color'      => $box_shadow_color,
+						'box_shadow_style'      => $box_shadow_style,
+					]
+				);
+				$box_shadow_styles = 'box-shadow:' . esc_attr( trim( $box_shadow_styles ) ) . ';';
+
+				if ( 'liftup' === $hover_type ) {
+					$wrapper_style_bg .= $box_shadow_styles;
 				} else {
-					$wrapper_style .= 'border' . $border_position . ':' . $border_size . ' ' . $border_style . ' ' . $border_color . ';';
+					$wrapper_style   .= $box_shadow_styles;
+					$wrapper_classes .= ' fusion-column-has-shadow';
 				}
 			}
 
@@ -329,6 +503,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 			if ( ! empty( $padding ) ) {
 				$wrapper_style .= 'padding: ' . esc_attr( $padding ) . ';';
 			}
+
 			// Top margin.
 			if ( '' !== $margin_top ) {
 				$style .= 'margin-top:' . esc_attr( $margin_top ) . ';';
@@ -352,17 +527,20 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				}
 			}
 
+			$fusion_col_type['spacings'] = $current_row;
+
 			// Spacing.  If using fallback and spacing is no then ignore and just use full % width.
-			if ( isset( $spacing ) && ! ( in_array( $spacing, array( '0px', 'no' ) ) && $fallback ) ) {
+			if ( isset( $spacing ) && ! ( in_array( $spacing, [ '0px', 'no' ], true ) && $fallback ) ) {
 				$width = $column_size * 100 . '%';
+
 				if ( 'yes' === $spacing || '' === $spacing ) {
 					$spacing = '4%';
 				} elseif ( 'no' === $spacing ) {
 					$spacing = '0px';
 				}
-				$spacing = $fusion_library->sanitize->get_value_with_unit( esc_attr( $spacing ) );
+				$spacing = fusion_library()->sanitize->get_value_with_unit( esc_attr( $spacing ) );
 
-				if ( '0' == filter_var( $spacing, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION ) ) {
+				if ( 0 === filter_var( $spacing, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION ) ) {
 					$classes .= ' fusion-spacing-no';
 				}
 
@@ -371,7 +549,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 					$width_offset = '( ( ' . implode( ' + ', $current_row ) . ' ) * ' . $column_size . ' ) ';
 				}
 
-				if ( 'yes' !== $last && ! ( $fallback && '0px' == $spacing ) ) {
+				if ( 'yes' !== $last && ! ( $fallback && '0px' === $spacing ) ) {
 					$spacing_direction = 'right';
 					if ( is_rtl() ) {
 						$spacing_direction = 'left';
@@ -384,7 +562,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				} elseif ( isset( $current_row_number_of_columns ) && 1 < $current_row_number_of_columns ) {
 					if ( ! $fallback ) {
 						$style .= 'width:' . $width . ';width:calc(' . $width . ' - ' . $width_offset . ');';
-					} elseif ( '0px' != $spacing && isset( $map_old_spacing[ strval( $column_size ) ] ) ) {
+					} elseif ( '0px' !== $spacing && isset( $map_old_spacing[ strval( $column_size ) ] ) ) {
 						$style .= 'width:' . $map_old_spacing[ strval( $column_size ) ];
 					} else {
 						$style .= 'width:' . $width;
@@ -414,6 +592,8 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 			if ( '_blank' === $target ) {
 				$href_link .= ' rel="noopener noreferrer" target="_blank"';
+			} elseif ( 'lightbox' === $target ) {
+				$href_link .= ' data-rel="iLightbox"';
 			}
 
 			// Min height for newly created columns by the converter.
@@ -423,7 +603,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 			// Animation.
 			$animation = fusion_builder_animation_data( $animation_type, $animation_direction, $animation_speed, $animation_offset );
-			$classes .= $animation['class'];
+			$classes  .= $animation['class'];
 
 			// Style.
 			$style = ! empty( $style ) ? " style='{$style}'" : '';
@@ -442,22 +622,44 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 			// Clearing div at end of inner content, as we did in old builder.
 			$inner_content .= '<div class="fusion-clearfix"></div>';
 
+			$lazy_class = $lazy_bg = $lazy_dims = '';
+			if ( $lazy_load ) {
+				$lazy_bg    = 'data-bg="' . $background_image . '"';
+				$lazy_class = ' lazyload';
+				if ( isset( $background_data ) ) {
+					$lazy_dims = ' data-bg-height="' . $background_data['height'] . '"  data-bg-width="' . $background_data['width'] . '"';
+				}
+
+				if ( $is_gradient_color ) {
+					$lazy_bg .= 'data-bg-gradient="' . Fusion_Builder_Gradient_Helper::get_gradient_string( $args ) . '"';
+				}
+			}
+
 			if ( ( 'none' === $hover_type && empty( $link ) ) || ( empty( $hover_type ) && empty( $link ) ) ) {
 				// Background color fallback for IE and Edge.
 				$additional_bg_image_div = '';
-				// @codingStandardsIgnoreLine
-				if ( $is_IE || $is_edge ) {
-					$additional_bg_image_div = '<div class="' . $wrapper_classes . '" style="content:\'\';z-index:-1;position:absolute;top:0;right:0;bottom:0;left:0;' . $background_image_style . '"  data-bg-url="' . $background_image . '"></div>';
+
+				if ( $lazy_load ) {
+					$wrapper_classes .= $lazy_class;
 				}
 
-				$output =
-				'<div ' . ( ! empty( $id ) ? 'id="' . esc_attr( $id ) . '"' : '' ) . esc_attr( $animation['data'] ) . ' class="fusion-layout-column fusion_builder_column fusion_builder_column_' . $type . ' ' . esc_attr( $classes ) . ' ' . ( ! empty( $type ) ? esc_attr( $type ) : '' ) . '" ' . $style . '>
-					<div class="' . $wrapper_classes . '" style="' . $wrapper_style . $wrapper_style_bg . '"  data-bg-url="' . $background_image . '">
-						' . $inner_content
-						. $additional_bg_image_div . '
+				$bg_color_fix = '';
 
-					</div>
-				</div>';
+				if ( $is_IE || $is_edge ) {
+					$ms_border_radius = $border_radius ? 'border-radius:' . esc_attr( $border_radius ) . ';' : '';
+
+					if ( ! empty( $background_color ) && 1 === $alpha_background_color && ! empty( $background_image ) ) {
+						$bg_color_fix            = 'background-color:transparent;';
+						$background_image_style .= 'background-color:' . esc_attr( $background_color ) . ';';
+					}
+					$additional_bg_image_div = '<div class="' . $wrapper_classes . '" style="content:\'\';z-index:-1;position:absolute;top:0;right:0;bottom:0;left:0;' . $ms_border_radius . $background_image_style . '"' . $lazy_bg . ' ' . $lazy_dims . ' data-bg-url="' . $background_image . '"></div>';
+					$wrapper_classes         = str_replace( ' lazyload', '', $wrapper_classes );
+				}
+
+				$output  = '<div ' . ( ! empty( $id ) ? 'id="' . esc_attr( $id ) . '"' : '' ) . esc_attr( $animation['data'] ) . ' class="fusion-layout-column fusion_builder_column fusion_builder_column_' . $type . ' ' . esc_attr( $classes ) . ' ' . ( ! empty( $type ) ? esc_attr( $type ) : '' ) . '" ' . $style . '>';
+				$output .= '<div class="' . $wrapper_classes . '" style="' . $wrapper_style . $wrapper_style_bg . $bg_color_fix . '" ' . $lazy_bg . ' ' . $lazy_dims . ' data-bg-url="' . $background_image . '">';
+				$output .= $inner_content . $additional_bg_image_div;
+				$output .= '</div></div>';
 
 			} else {
 
@@ -467,237 +669,35 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 
 				// Background color fallback for IE and Edge.
 				$additional_bg_color_span = '';
-				// @codingStandardsIgnoreLine
 				if ( $background_color_style && ( $is_IE || $is_edge ) ) {
-					$additional_bg_color_span = '<span class="fusion-column-inner-bg-image" style="' . $background_color_style . '"></span>';
+					if ( ! empty( $background_color ) && 1 === $alpha_background_color && ! empty( $background_image ) ) {
+						$background_color_style .= 'background-color:transparent;';
+					}
+					$additional_bg_color_span = '<span class="fusion-column-inner-bg-image' . $lazy_class . '"' . $lazy_bg . ' style="' . $background_color_style . '"></span>';
 				}
 
-				$output =
-				'<div ' . ( ! empty( $id ) ? 'id="' . esc_attr( $id ) . '"' : '' ) . esc_attr( $animation['data'] ) . ' class="fusion-layout-column fusion_builder_column fusion_builder_column_' . $type . ' ' . esc_attr( $classes ) . ' ' . ( ! empty( $type ) ? esc_attr( $type ) : '' ) . '" ' . $style . '>
-					<div class="' . $wrapper_classes . '" style="' . $wrapper_style . '" data-bg-url="' . $background_image . '">
-						' . $inner_content . '
-					</div>
-					<span class="fusion-column-inner-bg hover-type-' . $hover_type . '">
-						<a ' . $href_link . ' aria-label="' . ( ( isset( $background_data['title'] ) ) ? $background_data['title'] : '' ) . '">
-							<span class="fusion-column-inner-bg-image" style="' . $wrapper_style_bg . '"></span>'
-							. $additional_bg_color_span .
-						'</a>
-					</span>
-				</div>';
+				$output  = '<div ' . ( ! empty( $id ) ? 'id="' . esc_attr( $id ) . '"' : '' ) . esc_attr( $animation['data'] ) . ' class="fusion-layout-column fusion_builder_column fusion_builder_column_' . $type . ' ' . esc_attr( $classes ) . ' ' . ( ! empty( $type ) ? esc_attr( $type ) : '' ) . '" ' . $style . '>';
+				$output .= '<div class="' . $wrapper_classes . '" style="' . $wrapper_style . '" ' . $lazy_dims . ' data-bg-url="' . $background_image . '">';
+				$output .= $inner_content;
+				$output .= '</div>';
+				$output .= $lift_up_style_tag;
+				$output .= '<span class="fusion-column-inner-bg hover-type-' . $hover_type . '" ' . $inner_bg_style . '>';
+				$output .= '<a ' . $href_link . ' aria-label="' . $bg_title . '">';
+				$output .= '<span class="fusion-column-inner-bg-image' . $lazy_class . '" ' . $lazy_bg . ' style="' . $wrapper_style_bg . '"></span>';
+				$output .= $additional_bg_color_span;
+				$output .= '</a></span></div>';
+			}
+
+			// Add filter styles.
+			$filter_style = Fusion_Builder_Filter_Helper::get_filter_style_element( $args, '.fusion-builder-column-' . $column_counter );
+			if ( '' !== $filter_style ) {
+				$output .= $filter_style;
 			}
 
 			$fusion_col_type['type'] = null;
 
-			return $output;
+			return apply_filters( 'fusion_element_column_content', $output, $atts );
 
-		}
-
-		/**
-		 * Builds the dynamic styling.
-		 *
-		 * @access public
-		 * @since 1.1
-		 * @return array
-		 */
-		public function add_styling() {
-			global $wp_version, $content_media_query, $six_fourty_media_query, $three_twenty_six_fourty_media_query, $ipad_portrait_media_query, $content_min_media_query, $small_media_query, $medium_media_query, $large_media_query, $six_columns_media_query, $five_columns_media_query, $four_columns_media_query, $three_columns_media_query, $two_columns_media_query, $one_column_media_query, $dynamic_css_helpers, $fusion_settings;
-
-			$css = array();
-
-			if ( ! $fusion_settings ) {
-				$fusion_settings = Fusion_Settings::get_instance();
-			}
-
-			if ( $fusion_settings->get( 'responsive' ) ) {
-				$css[ $content_media_query ]['.fusion-layout-column']['margin-left']  = '0 !important';
-				$css[ $content_media_query ]['.fusion-layout-column']['margin-right'] = '0 !important';
-
-				$elements = array(
-					'.fusion-layout-column:nth-child(5n)',
-					'.fusion-layout-column:nth-child(4n)',
-					'.fusion-layout-column:nth-child(3n)',
-					'.fusion-layout-column:nth-child(2n)',
-				);
-
-				$css[ $content_media_query ]['.fusion-layout-column.fusion-spacing-no']['margin-bottom'] = '0';
-				$css[ $content_media_query ]['.fusion-layout-column']['width'] = '100% !important';
-
-				$elements = array(
-					'.fusion-columns-5 .fusion-column:first-child',
-					'.fusion-columns-4 .fusion-column:first-child',
-					'.fusion-columns-3 .fusion-column:first-child',
-					'.fusion-columns-2 .fusion-column:first-child',
-					'.fusion-columns-1 .fusion-column:first-child',
-				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-left'] = '0';
-
-				$css[ $content_media_query ]['.fusion-columns .fusion-column']['width']        = '100% !important';
-				$css[ $content_media_query ]['.fusion-columns .fusion-column']['float']      = 'none';
-				$css[ $content_media_query ]['.fusion-columns .fusion-column:not(.fusion-column-last)']['margin']     = '0 0 50px';
-				$css[ $content_media_query ]['.fusion-columns .fusion-column']['box-sizing'] = 'border-box';
-
-				if ( is_rtl() ) {
-					$css[ $content_media_query ]['.rtl .fusion-column']['float'] = 'none';
-				}
-
-				$elements = array(
-					'.col-sm-12',
-					'.col-sm-6',
-					'.col-sm-4',
-					'.col-sm-3',
-					'.col-sm-2',
-					'.fusion-columns-5 .col-lg-2',
-					'.fusion-columns-5 .col-md-2',
-					'.fusion-columns-5 .col-sm-2',
-				);
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['float'] = 'none';
-				$css[ $content_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['width'] = '100%';
-
-				$css[ $three_twenty_six_fourty_media_query ]['.fusion-columns .fusion-column']['float']      = 'none';
-				$css[ $three_twenty_six_fourty_media_query ]['.fusion-columns .fusion-column']['width']      = '100% !important';
-				$css[ $three_twenty_six_fourty_media_query ]['.fusion-columns .fusion-column']['margin']     = '0 0 50px';
-				$css[ $three_twenty_six_fourty_media_query ]['.fusion-columns .fusion-column']['box-sizing'] = 'border-box';
-
-				$elements = array(
-					'.fusion-columns-5 .fusion-column:first-child',
-					'.fusion-columns-4 .fusion-column:first-child',
-					'.fusion-columns-3 .fusion-column:first-child',
-					'.fusion-columns-2 .fusion-column:first-child',
-					'.fusion-columns-1 .fusion-column:first-child',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-left'] = '0';
-
-				$elements = array(
-					'.fusion-column:nth-child(5n)',
-					'.fusion-column:nth-child(4n)',
-					'.fusion-column:nth-child(3n)',
-					'.fusion-column:nth-child(2n)',
-					'.fusion-column',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-right'] = '0';
-
-				$css[ $ipad_portrait_media_query ]['.columns .col']['float']      = 'none';
-				$css[ $ipad_portrait_media_query ]['.columns .col']['width']      = '100% !important';
-				$css[ $ipad_portrait_media_query ]['.columns .col']['margin']     = '0 0 20px';
-				$css[ $ipad_portrait_media_query ]['.columns .col']['box-sizing'] = 'border-box';
-
-				$elements = array(
-					'.fusion-columns-2 .fusion-column',
-					'.fusion-columns-2 .fusion-flip-box-wrapper',
-					'.fusion-columns-4 .fusion-column',
-					'.fusion-columns-4 .fusion-flip-box-wrapper',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['width'] = '50% !important';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['float'] = 'left !important';
-
-				$elements = array(
-					'.fusion-columns-2 .fusion-column:nth-of-type(2n+1)',
-					'.fusion-columns-4 .fusion-column:nth-of-type(2n+1)',
-					'.fusion-columns-2 .fusion-flip-box-wrapper:nth-of-type(2n+1)',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['clear'] = 'both';
-
-				$elements = array(
-					'.fusion-columns-3 .fusion-column',
-					'.fusion-columns-3 .fusion-flip-box-wrapper',
-					'.fusion-columns-5 .fusion-column',
-					'.fusion-columns-5 .fusion-flip-box-wrapper',
-					'.fusion-columns-6 .fusion-column',
-					'.fusion-columns-6 .fusion-flip-box-wrapper',
-					'.fusion-columns-5 .col-lg-2',
-					'.fusion-columns-5 .col-md-2',
-					'.fusion-columns-5 .col-sm-2',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['width'] = '33.33% !important';
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['float'] = 'left !important';
-
-				$elements = array(
-					'.fusion-columns-3 .fusion-column:nth-of-type(3n+1)',
-					'.fusion-columns-3 .fusion-flip-box-wrapper:nth-of-type(3n+1)',
-					'.fusion-columns-5 .fusion-column:nth-of-type(3n+1)',
-					'.fusion-columns-5 .fusion-flip-box-wrapper:nth-of-type(3n+1)',
-					'.fusion-columns-6 .fusion-column:nth-of-type(3n+1)',
-					'.fusion-columns-6 .fusion-flip-box-wrapper:nth-of-type(3n+1)',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['clear'] = 'both';
-
-				$elements = array(
-					'.fusion-columns-5 .fusion-column:nth-of-type(5n+1)',
-					'.fusion-columns-5 .fusion-flip-box-wrapper:nth-of-type(5n+1)',
-				);
-				$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['clear'] = 'none';
-
-				$elements = array(
-					'.fusion-layout-column.fusion-one-sixth',
-					'.fusion-layout-column.fusion-five-sixth',
-					'.fusion-layout-column.fusion-one-fifth',
-					'.fusion-layout-column.fusion-two-fifth',
-					'.fusion-layout-column.fusion-three-fifth',
-					'.fusion-layout-column.fusion-four-fifth',
-					'.fusion-layout-column.fusion-one-fourth',
-					'.fusion-layout-column.fusion-three-fourth',
-					'.fusion-layout-column.fusion-one-third',
-					'.fusion-layout-column.fusion-two-third',
-					'.fusion-layout-column.fusion-one-half',
-				);
-
-				if ( is_rtl() ) {
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['position']      = 'relative';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['float']         = 'right';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-left']   = '4%';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-right']  = '0%';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '20px';
-				} else {
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['position']      = 'relative';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['float']         = 'left';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-right']  = '4%';
-					$css[ $ipad_portrait_media_query ][ $dynamic_css_helpers->implode( $elements ) ]['margin-bottom'] = '20px';
-				}
-
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-sixth']['width']    = '13.3333%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-five-sixth']['width']   = '82.6666%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-fifth']['width']    = '16.8%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-two-fifth']['width']    = '37.6%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-three-fifth']['width']  = '58.4%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-four-fifth']['width']   = '79.2%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-fourth']['width']   = '22%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-three-fourth']['width'] = '74%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-third']['width']    = '30.6666%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-two-third']['width']    = '65.3333%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-half']['width']     = '48%';
-
-				// No spacing Columns.
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-spacing-no']['margin-left']  = '0';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-spacing-no']['margin-right'] = '0';
-
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-sixth.fusion-spacing-no']['width']    = '16.6666666667%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-five-sixth.fusion-spacing-no']['width']   = '83.333333333%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-fifth.fusion-spacing-no']['width']    = '20%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-two-fifth.fusion-spacing-no']['width']    = '40%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-three-fifth.fusion-spacing-no']['width']  = '60%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-four-fifth.fusion-spacing-no']['width']   = '80%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-fourth.fusion-spacing-no']['width']   = '25%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-three-fourth.fusion-spacing-no']['width'] = '75%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-third.fusion-spacing-no']['width']    = '33.33333333%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-two-third.fusion-spacing-no']['width']    = '66.66666667%';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-half.fusion-spacing-no']['width']     = '50%';
-
-				if ( is_rtl() ) {
-					$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-column-last']['clear'] = 'left';
-				} else {
-					$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-column-last']['clear'] = 'right';
-				}
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-one-full']['clear'] = 'both';
-
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-column-last']['zoom']         = '1';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-column-last']['margin-left']  = '0';
-				$css[ $ipad_portrait_media_query ]['.fusion-layout-column.fusion-column-last']['margin-right'] = '0';
-
-				$css[ $ipad_portrait_media_query ]['.fusion-column.fusion-spacing-no']['margin-bottom'] = '0';
-				$css[ $ipad_portrait_media_query ]['.fusion-column.fusion-spacing-no']['width']         = '100% !important';
-			}
-
-			return $css;
 		}
 
 		/**
@@ -709,32 +709,34 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 		 */
 		public function add_options() {
 
-			return array(
-				'column_shortcode_section' => array(
-					'label'       => esc_html__( 'Column Element', 'fusion-builder' ),
+			return [
+				'column_shortcode_section' => [
+					'label'       => esc_html__( 'Column', 'fusion-builder' ),
 					'description' => '',
 					'id'          => 'column_shortcode_section',
 					'default'     => '',
 					'type'        => 'accordion',
-					'fields'      => array(
-						'col_margin' => array(
+					'icon'        => 'fusiona-column',
+					'fields'      => [
+						'col_margin' => [
 							'label'       => esc_html__( 'Column Margins', 'fusion-builder' ),
 							'description' => esc_html__( 'Controls the top/bottom margins for all column sizes.', 'fusion-builder' ),
 							'id'          => 'col_margin',
 							'type'        => 'spacing',
-							'choices'     => array(
-								'top'     => true,
-								'bottom'  => true,
-								'units'   => array( 'px', '%' ),
-							),
-							'default'     => array(
-								'top'     => '0px',
-								'bottom'  => '20px',
-							),
-						),
-					),
-				),
-			);
+							'choices'     => [
+								'top'    => true,
+								'bottom' => true,
+								'units'  => [ 'px', '%' ],
+							],
+							'transport'   => 'postMessage',
+							'default'     => [
+								'top'    => '0px',
+								'bottom' => '20px',
+							],
+						],
+					],
+				],
+			];
 		}
 
 		/**
@@ -746,23 +748,20 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 		 */
 		public function add_scripts() {
 
-			global $fusion_settings;
-			if ( ! $fusion_settings ) {
-				$fusion_settings = Fusion_Settings::get_instance();
-			}
+			$fusion_settings = fusion_get_fusion_settings();
 
 			Fusion_Dynamic_JS::localize_script(
 				'fusion-column-bg-image',
 				'fusionBgImageVars',
-				array(
+				[
 					'content_break_point' => intval( $fusion_settings->get( 'content_break_point' ) ),
-				)
+				]
 			);
 			Fusion_Dynamic_JS::register_script(
 				'fusion-column-bg-image',
 				FusionBuilder::$js_folder_url . '/general/fusion-column-bg-image.js',
 				FusionBuilder::$js_folder_path . '/general/fusion-column-bg-image.js',
-				array( 'jquery', 'modernizr' ),
+				[ 'jquery', 'modernizr' ],
 				'1',
 				true
 			);
@@ -770,7 +769,7 @@ if ( ! class_exists( 'FusionSC_Column' ) ) {
 				'fusion-column',
 				FusionBuilder::$js_folder_url . '/general/fusion-column.js',
 				FusionBuilder::$js_folder_path . '/general/fusion-column.js',
-				array( 'jquery', 'fusion-animations', 'fusion-equal-heights', 'fusion-column-bg-image' ),
+				[ 'jquery', 'fusion-animations', 'fusion-equal-heights', 'fusion-column-bg-image' ],
 				'1',
 				true
 			);
@@ -787,327 +786,378 @@ new FusionSC_Column();
  */
 function fusion_element_column() {
 	fusion_builder_map(
-		array(
-			'name'              => esc_attr__( 'Column', 'fusion-builder' ),
-			'shortcode'         => 'fusion_builder_column',
-			'hide_from_builder' => true,
-			'params'            => array(
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'Column Spacing', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the column spacing between one column to the next. Enter value including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
-					'param_name'  => 'spacing',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-					'value'       => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Center Content', 'fusion-builder' ),
-					'description' => esc_attr__( 'Set to "Yes" to center the content vertically. Equal heights on the parent container must be turned on.', 'fusion-builder' ),
-					'param_name'  => 'center_content',
-					'default'     => 'no',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-					'value'       => array(
-						'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
-						'no'  => esc_attr__( 'No', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'link_selector',
-					'heading'     => esc_attr__( 'Link URL', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add the URL the column will link to, ex: http://example.com. IMPORTANT: This will disable links on elements inside the column.', 'fusion-builder' ),
-					'param_name'  => 'link',
-					'value'       => '',
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
-					'description' => esc_attr__( '_self = open in same browser tab, _blank = open in new browser tab.', 'fusion-builder' ),
-					'param_name'  => 'target',
-					'default'     => '_self',
-					'value'       => array(
-						'_self'  => esc_attr__( '_self', 'fusion-builder' ),
-						'_blank' => esc_attr__( '_blank', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Ignore Equal Heights', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose to ignore equal heights on this column if you are using equal heights on the surrounding container.', 'fusion-builder' ),
-					'param_name'  => 'min_height',
-					'default'     => '',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-					'value'       => array(
-						'none' => esc_attr__( 'Yes', 'fusion-builder' ),
-						''     => esc_attr__( 'No', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'checkbox_button_set',
-					'heading'     => esc_attr__( 'Column Visibility', 'fusion-builder' ),
-					'param_name'  => 'hide_on_mobile',
-					'value'       => fusion_builder_visibility_options( 'full' ),
-					'default'     => fusion_builder_default_visibility( 'array' ),
-					'description' => esc_attr__( 'Choose to show or hide the column on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'class',
-					'value'       => '',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'textfield',
-					'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
-					'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
-					'param_name'  => 'id',
-					'value'       => '',
-					'group'       => esc_attr__( 'General', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the background color.', 'fusion-builder' ),
-					'param_name'  => 'background_color',
-					'value'       => '',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'upload',
-					'heading'     => esc_attr__( 'Background Image', 'fusion-builder' ),
-					'description' => esc_attr__( 'Upload an image to display in the background.', 'fusion-builder' ),
-					'param_name'  => 'background_image',
-					'value'       => '',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Background Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the postion of the background image.', 'fusion-builder' ),
-					'param_name'  => 'background_position',
-					'default'     => 'left top',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-					'value'       => array(
-						'left top'      => esc_attr__( 'Left Top', 'fusion-builder' ),
-						'left center'   => esc_attr__( 'Left Center', 'fusion-builder' ),
-						'left bottom'   => esc_attr__( 'Left Bottom', 'fusion-builder' ),
-						'right top'     => esc_attr__( 'Right Top', 'fusion-builder' ),
-						'right center'  => esc_attr__( 'Right Center', 'fusion-builder' ),
-						'right bottom'  => esc_attr__( 'Right Bottom', 'fusion-builder' ),
-						'center top'    => esc_attr__( 'Center Top', 'fusion-builder' ),
-						'center center' => esc_attr__( 'Center Center', 'fusion-builder' ),
-						'center bottom' => esc_attr__( 'Center Bottom', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Background Repeat', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose how the background image repeats.', 'fusion-builder' ),
-					'param_name'  => 'background_repeat',
-					'default'     => 'no-repeat',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'background_image',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-					'value'       => array(
-						'no-repeat' => esc_attr__( 'No Repeat', 'fusion-builder' ),
-						'repeat'    => esc_attr__( 'Repeat Vertically and Horizontally', 'fusion-builder' ),
-						'repeat-x'  => esc_attr__( 'Repeat Horizontally', 'fusion-builder' ),
-						'repeat-y'  => esc_attr__( 'Repeat Vertically', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Hover Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the hover effect type. IMPORTANT: For the effect to be noticeable, you\'ll need a background color/image, and/or a border enabled. This will disable links and hover effects on elements inside the column.', 'fusion-builder' ),
-					'param_name'  => 'hover_type',
-					'default'     => 'none',
-					'value'       => array(
-						'none'    => esc_attr__( 'None', 'fusion-builder' ),
-						'zoomin'  => esc_attr__( 'Zoom In', 'fusion-builder' ),
-						'zoomout' => esc_attr__( 'Zoom Out', 'fusion-builder' ),
-						'liftup'  => esc_attr__( 'Lift Up', 'fusion-builder' ),
-					),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Border Size', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the border size of the column. In pixels.', 'fusion-builder' ),
-					'param_name'  => 'border_size',
-					'value'       => '0',
-					'min'         => '0',
-					'max'         => '50',
-					'step'        => '1',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'colorpickeralpha',
-					'heading'     => esc_attr__( 'Border Color', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the border color.', 'fusion-builder' ),
-					'param_name'  => 'border_color',
-					'value'       => '',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'border_size',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Border Style', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls the border style.', 'fusion-builder' ),
-					'param_name'  => 'border_style',
-					'default'     => 'solid',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'border_size',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-					),
-					'value'       => array(
-						'solid'  => esc_attr__( 'Solid', 'fusion-builder' ),
-						'dashed' => esc_attr__( 'Dashed', 'fusion-builder' ),
-						'dotted' => esc_attr__( 'Dotted', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Border Position', 'fusion-builder' ),
-					'description' => esc_attr__( 'Choose the postion of the border.', 'fusion-builder' ),
-					'param_name'  => 'border_position',
-					'default'     => 'all',
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'border_size',
-							'value'    => '0',
-							'operator' => '!=',
-						),
-					),
-					'value'       => array(
-						'all'    => esc_attr__( 'All', 'fusion-builder' ),
-						'top'    => esc_attr__( 'Top', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-					),
-				),
-				array(
-					'type'             => 'dimension',
-					'remove_from_atts' => true,
-					'heading'          => esc_attr__( 'Padding', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Enter values including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
-					'param_name'       => 'padding',
-					'value'            => array(
-						'padding_top'    => '',
-						'padding_right'  => '',
-						'padding_bottom' => '',
-						'padding_left'   => '',
-					),
-					'group'       => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'             => 'dimension',
-					'remove_from_atts' => true,
-					'heading'          => esc_attr__( 'Margin', 'fusion-builder' ),
-					'description'      => esc_attr__( 'Enter values including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
-					'param_name'       => 'dimension_margin',
-					'value'            => array(
-						'margin_top'    => '',
-						'margin_bottom' => '',
-					),
-					'group'            => esc_attr__( 'Design', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Animation Type', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the type of animation to use on the element.', 'fusion-builder' ),
-					'param_name'  => 'animation_type',
-					'value'       => fusion_builder_available_animations(),
-					'default'     => '',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-				),
-				array(
-					'type'        => 'radio_button_set',
-					'heading'     => esc_attr__( 'Direction of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Select the incoming direction for the animation.', 'fusion-builder' ),
-					'param_name'  => 'animation_direction',
-					'value'       => array(
-						'down'   => esc_attr__( 'Top', 'fusion-builder' ),
-						'right'  => esc_attr__( 'Right', 'fusion-builder' ),
-						'up'     => esc_attr__( 'Bottom', 'fusion-builder' ),
-						'left'   => esc_attr__( 'Left', 'fusion-builder' ),
-						'static' => esc_attr__( 'Static', 'fusion-builder' ),
-					),
-					'default'     => 'left',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'range',
-					'heading'     => esc_attr__( 'Speed of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Type in speed of animation in seconds (0.1 - 1).', 'fusion-builder' ),
-					'param_name'  => 'animation_speed',
-					'min'         => '0.1',
-					'max'         => '1',
-					'step'        => '0.1',
-					'value'       => '0.3',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-				),
-				array(
-					'type'        => 'select',
-					'heading'     => esc_attr__( 'Offset of Animation', 'fusion-builder' ),
-					'description' => esc_attr__( 'Controls when the animation should start.', 'fusion-builder' ),
-					'param_name'  => 'animation_offset',
-					'default'     => '',
-					'group'       => esc_attr__( 'Animation', 'fusion-builder' ),
-					'dependency'  => array(
-						array(
-							'element'  => 'animation_type',
-							'value'    => '',
-							'operator' => '!=',
-						),
-					),
-					'value'       => array(
-						''                => esc_attr__( 'Default', 'fusion-builder' ),
-						'top-into-view'   => esc_attr__( 'Top of element hits bottom of viewport', 'fusion-builder' ),
-						'top-mid-of-view' => esc_attr__( 'Top of element hits middle of viewport', 'fusion-builder' ),
-						'bottom-in-view'  => esc_attr__( 'Bottom of element enters viewport', 'fusion-builder' ),
-					),
-				),
-			),
+		fusion_builder_frontend_data(
+			'FusionSC_Column',
+			[
+				'name'              => esc_attr__( 'Column', 'fusion-builder' ),
+				'shortcode'         => 'fusion_builder_column',
+				'hide_from_builder' => true,
+				'help_url'          => 'https://theme-fusion.com/documentation/fusion-builder/elements/column-element/',
+				'params'            => [
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Column Spacing', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the column spacing between one column to the next. Enter value including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
+						'param_name'  => 'spacing',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+						'value'       => '',
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Center Content', 'fusion-builder' ),
+						'description' => esc_attr__( 'Set to "Yes" to center the content vertically. Equal heights on the parent container must be turned on.', 'fusion-builder' ),
+						'param_name'  => 'center_content',
+						'default'     => 'no',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+						'value'       => [
+							'yes' => esc_attr__( 'Yes', 'fusion-builder' ),
+							'no'  => esc_attr__( 'No', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'         => 'link_selector',
+						'heading'      => esc_attr__( 'Link URL', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Add the URL the column will link to, ex: http://example.com. IMPORTANT: This will disable links on elements inside the column.', 'fusion-builder' ),
+						'param_name'   => 'link',
+						'value'        => '',
+						'dynamic_data' => true,
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Link Target', 'fusion-builder' ),
+						'description' => esc_attr__( '_self = open in same browser tab, _blank = open in new browser tab.', 'fusion-builder' ),
+						'param_name'  => 'target',
+						'default'     => '_self',
+						'value'       => [
+							'_self'    => esc_attr__( '_self', 'fusion-builder' ),
+							'_blank'   => esc_attr__( '_blank', 'fusion-builder' ),
+							'lightbox' => esc_attr__( 'Lightbox', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Ignore Equal Heights', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose to ignore equal heights on this column if you are using equal heights on the surrounding container.', 'fusion-builder' ),
+						'param_name'  => 'min_height',
+						'default'     => '',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+						'value'       => [
+							'none' => esc_attr__( 'Yes', 'fusion-builder' ),
+							''     => esc_attr__( 'No', 'fusion-builder' ),
+						],
+						'callback'    => [
+							'function' => 'fusion_toggle_class',
+							'args'     => [
+								'classes' => [
+									'none' => 'fusion-column-no-min-height',
+									''     => '',
+								],
+							],
+						],
+					],
+					[
+						'type'        => 'checkbox_button_set',
+						'heading'     => esc_attr__( 'Column Visibility', 'fusion-builder' ),
+						'param_name'  => 'hide_on_mobile',
+						'value'       => fusion_builder_visibility_options( 'full' ),
+						'default'     => fusion_builder_default_visibility( 'array' ),
+						'description' => esc_attr__( 'Choose to show or hide the column on small, medium or large screens. You can choose more than one at a time.', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS Class', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add a class to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'class',
+						'value'       => '',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_add_class',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'CSS ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Add an ID to the wrapping HTML element.', 'fusion-builder' ),
+						'param_name'  => 'id',
+						'value'       => '',
+						'group'       => esc_attr__( 'General', 'fusion-builder' ),
+						'callback'    => [
+							'function' => 'fusion_add_id',
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Hover Type', 'fusion-builder' ),
+						'description' => __( 'Select the hover effect type. <strong>IMPORTANT:</strong> For the effect to be noticeable, you\'ll need a background color/image, and/or a border enabled. This will disable links and hover effects on elements inside the column.', 'fusion-builder' ),
+						'param_name'  => 'hover_type',
+						'default'     => 'none',
+						'value'       => [
+							'none'    => esc_attr__( 'None', 'fusion-builder' ),
+							'zoomin'  => esc_attr__( 'Zoom In', 'fusion-builder' ),
+							'zoomout' => esc_attr__( 'Zoom Out', 'fusion-builder' ),
+							'liftup'  => esc_attr__( 'Lift Up', 'fusion-builder' ),
+						],
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'preview'     => [
+							'selector' => '.fusion-column-inner-bg',
+							'type'     => 'class',
+							'toggle'   => 'hover',
+						],
+					],
+					[
+						'type'        => 'range',
+						'heading'     => esc_attr__( 'Border Size', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border size of the column. In pixels.', 'fusion-builder' ),
+						'param_name'  => 'border_size',
+						'value'       => '0',
+						'min'         => '0',
+						'max'         => '50',
+						'step'        => '1',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Border Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border color.', 'fusion-builder' ),
+						'param_name'  => 'border_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'border_size',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Border Style', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the border style.', 'fusion-builder' ),
+						'param_name'  => 'border_style',
+						'default'     => 'solid',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'border_size',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+						],
+						'value'       => [
+							'solid'  => esc_attr__( 'Solid', 'fusion-builder' ),
+							'dashed' => esc_attr__( 'Dashed', 'fusion-builder' ),
+							'dotted' => esc_attr__( 'Dotted', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'radio_button_set',
+						'heading'     => esc_attr__( 'Border Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the postion of the border.', 'fusion-builder' ),
+						'param_name'  => 'border_position',
+						'default'     => 'all',
+						'group'       => esc_attr__( 'Design', 'fusion-builder' ),
+						'dependency'  => [
+							[
+								'element'  => 'border_size',
+								'value'    => '0',
+								'operator' => '!=',
+							],
+						],
+						'value'       => [
+							'all'    => esc_attr__( 'All', 'fusion-builder' ),
+							'top'    => esc_attr__( 'Top', 'fusion-builder' ),
+							'right'  => esc_attr__( 'Right', 'fusion-builder' ),
+							'bottom' => esc_attr__( 'Bottom', 'fusion-builder' ),
+							'left'   => esc_attr__( 'Left', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'             => 'dimension',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Border Radius', 'fusion-builder' ),
+						'description'      => __( 'Enter values including any valid CSS unit, ex: 10px. <strong>IMPORTANT:</strong> In order to make border radius work in browsers, the overflow CSS rule of the column needs set to hidden. Thus, depending on the setup, some contents might get clipped.', 'fusion-builder' ),
+						'param_name'       => 'border_radius',
+						'value'            => [
+							'border_radius_top_left'     => '',
+							'border_radius_top_right'    => '',
+							'border_radius_bottom_right' => '',
+							'border_radius_bottom_left'  => '',
+						],
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					'fusion_box_shadow_placeholder' => [],
+					[
+						'type'             => 'dimension',
+						'remove_from_atts' => true,
+						'heading'          => esc_attr__( 'Padding', 'fusion-builder' ),
+						'description'      => esc_attr__( 'Enter values including any valid CSS unit, ex: 4%.', 'fusion-builder' ),
+						'param_name'       => 'padding',
+						'value'            => [
+							'padding_top'    => '',
+							'padding_right'  => '',
+							'padding_bottom' => '',
+							'padding_left'   => '',
+						],
+						'group'            => esc_attr__( 'Design', 'fusion-builder' ),
+					],
+					'fusion_margin_placeholder'     => [],
+					[
+						'type'             => 'subgroup',
+						'heading'          => esc_attr__( 'Background Type', 'fusion-builder' ),
+						'description'      => esc_attr__( 'Use filters to see specific type of content.', 'fusion-builder' ),
+						'param_name'       => 'background_type',
+						'default'          => 'single',
+						'group'            => esc_attr__( 'BG', 'fusion-builder' ),
+						'remove_from_atts' => true,
+						'value'            => [
+							'single'   => esc_attr__( 'Color', 'fusion-builder' ),
+							'gradient' => esc_attr__( 'Gradient', 'fusion-builder' ),
+							'image'    => esc_attr__( 'Image', 'fusion-builder' ),
+						],
+						'icons'            => [
+							'single'   => '<span class="fusiona-fill-drip-solid" style="font-size:18px;"></span>',
+							'gradient' => '<span class="fusiona-gradient-fill" style="font-size:18px;"></span>',
+							'image'    => '<span class="fusiona-image" style="font-size:18px;"></span>',
+							'video'    => '<span class="fusiona-video" style="font-size:18px;"></span>',
+						],
+					],
+					'fusion_gradient_placeholder'   => [
+						'selector' => '.fusion-column-wrapper',
+					],
+					[
+						'type'        => 'colorpickeralpha',
+						'heading'     => esc_attr__( 'Background Color', 'fusion-builder' ),
+						'description' => esc_attr__( 'Controls the background color.', 'fusion-builder' ),
+						'param_name'  => 'background_color',
+						'value'       => '',
+						'group'       => esc_attr__( 'BG', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'background_type',
+							'tab'  => 'single',
+						],
+					],
+					[
+						'type'         => 'upload',
+						'heading'      => esc_attr__( 'Background Image', 'fusion-builder' ),
+						'description'  => esc_attr__( 'Upload an image to display in the background.', 'fusion-builder' ),
+						'param_name'   => 'background_image',
+						'value'        => '',
+						'group'        => esc_attr__( 'BG', 'fusion-builder' ),
+						'dynamic_data' => true,
+						'subgroup'     => [
+							'name' => 'background_type',
+							'tab'  => 'image',
+						],
+					],
+					[
+						'type'        => 'textfield',
+						'heading'     => esc_attr__( 'Background Image ID', 'fusion-builder' ),
+						'description' => esc_attr__( 'Background Image ID from Media Library.', 'fusion-builder' ),
+						'param_name'  => 'background_image_id',
+						'value'       => '',
+						'hidden'      => true,
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Background Position', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose the postion of the background image.', 'fusion-builder' ),
+						'param_name'  => 'background_position',
+						'default'     => 'left top',
+						'group'       => esc_attr__( 'BG', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'background_type',
+							'tab'  => 'image',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'background_image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+						'value'       => [
+							'left top'      => esc_attr__( 'Left Top', 'fusion-builder' ),
+							'left center'   => esc_attr__( 'Left Center', 'fusion-builder' ),
+							'left bottom'   => esc_attr__( 'Left Bottom', 'fusion-builder' ),
+							'right top'     => esc_attr__( 'Right Top', 'fusion-builder' ),
+							'right center'  => esc_attr__( 'Right Center', 'fusion-builder' ),
+							'right bottom'  => esc_attr__( 'Right Bottom', 'fusion-builder' ),
+							'center top'    => esc_attr__( 'Center Top', 'fusion-builder' ),
+							'center center' => esc_attr__( 'Center Center', 'fusion-builder' ),
+							'center bottom' => esc_attr__( 'Center Bottom', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Background Repeat', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose how the background image repeats.', 'fusion-builder' ),
+						'param_name'  => 'background_repeat',
+						'default'     => 'no-repeat',
+						'group'       => esc_attr__( 'BG', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'background_type',
+							'tab'  => 'image',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'background_image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+						'value'       => [
+							'no-repeat' => esc_attr__( 'No Repeat', 'fusion-builder' ),
+							'repeat'    => esc_attr__( 'Repeat Vertically and Horizontally', 'fusion-builder' ),
+							'repeat-x'  => esc_attr__( 'Repeat Horizontally', 'fusion-builder' ),
+							'repeat-y'  => esc_attr__( 'Repeat Vertically', 'fusion-builder' ),
+						],
+					],
+					[
+						'type'        => 'select',
+						'heading'     => esc_attr__( 'Background Blend Mode', 'fusion-builder' ),
+						'description' => esc_attr__( 'Choose how blending should work for each background layer.', 'fusion-builder' ),
+						'param_name'  => 'background_blend_mode',
+						'value'       => [
+							'none'        => esc_attr__( 'Disabled', 'fusion-builder' ),
+							'multiply'    => esc_attr__( 'Multiply', 'fusion-builder' ),
+							'screen'      => esc_attr__( 'Screen', 'fusion-builder' ),
+							'overlay'     => esc_attr__( 'Overlay', 'fusion-builder' ),
+							'darken'      => esc_attr__( 'Darken', 'fusion-builder' ),
+							'lighten'     => esc_attr__( 'Lighten', 'fusion-builder' ),
+							'color-dodge' => esc_attr__( 'Color Dodge', 'fusion-builder' ),
+							'color-burn'  => esc_attr__( 'Color Burn', 'fusion-builder' ),
+							'hard-light'  => esc_attr__( 'Hard Light', 'fusion-builder' ),
+							'soft-light'  => esc_attr__( 'Soft Light', 'fusion-builder' ),
+							'difference'  => esc_attr__( 'Difference', 'fusion-builder' ),
+							'exclusion'   => esc_attr__( 'Exclusion', 'fusion-builder' ),
+							'hue'         => esc_attr__( 'Hue', 'fusion-builder' ),
+							'saturation'  => esc_attr__( 'Saturation', 'fusion-builder' ),
+							'color'       => esc_attr__( 'Color', 'fusion-builder' ),
+							'luminosity'  => esc_attr__( 'Luminosity', 'fusion-builder' ),
+						],
+						'default'     => 'none',
+						'group'       => esc_attr__( 'BG', 'fusion-builder' ),
+						'subgroup'    => [
+							'name' => 'background_type',
+							'tab'  => 'image',
+						],
+						'dependency'  => [
+							[
+								'element'  => 'background_image',
+								'value'    => '',
+								'operator' => '!=',
+							],
+						],
+					],
+					'fusion_animation_placeholder'  => [
+						'preview_selector' => '$el',
+					],
+					'fusion_filter_placeholder'     => [
+						'selector_base' => 'fusion-builder-column-',
+					],
+				],
+			]
 		)
 	);
 }

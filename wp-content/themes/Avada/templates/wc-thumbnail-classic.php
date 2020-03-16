@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      5.1.0
@@ -12,7 +12,7 @@
 
 global $product, $woocommerce;
 
-$items_in_cart = array();
+$items_in_cart = [];
 
 if ( $woocommerce->cart && $woocommerce->cart->get_cart() && is_array( $woocommerce->cart->get_cart() ) ) {
 	foreach ( $woocommerce->cart->get_cart() as $cart ) {
@@ -20,7 +20,7 @@ if ( $woocommerce->cart && $woocommerce->cart->get_cart() && is_array( $woocomme
 	}
 }
 
-$id      = get_the_ID();
+$id      = get_the_ID(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
 $in_cart = in_array( $id, $items_in_cart );
 $size    = 'shop_catalog';
 
@@ -32,9 +32,12 @@ if ( Avada()->settings->get( 'woocommerce_disable_crossfade_effect' ) ) {
 		$gallery          = explode( ',', $gallery );
 		$first_image_id   = $gallery[0];
 		$attachment_image = wp_get_attachment_image(
-			$first_image_id, $size, false, array(
+			$first_image_id,
+			$size,
+			false,
+			[
 				'class' => 'hover-image',
-			)
+			]
 		);
 	}
 }
@@ -50,8 +53,8 @@ if ( $attachment_image ) {
 }
 ?>
 <div class="<?php echo esc_attr( $classes ); ?>">
-	<?php echo $attachment_image; // WPCS: XSS ok. ?>
-	<?php echo $thumb_image; // WPCS: XSS ok. ?>
+	<?php echo $attachment_image; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+	<?php echo $thumb_image; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 	<?php if ( $in_cart ) : ?>
 		<div class="cart-loading"><i class="fusion-icon-check-square-o"></i></div>
 	<?php else : ?>

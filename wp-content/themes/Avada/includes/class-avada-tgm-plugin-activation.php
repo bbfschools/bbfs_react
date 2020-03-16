@@ -264,15 +264,6 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 			// Announce that the class is ready, and pass the object (for advanced use).
 			do_action_ref_array( 'tgmpa_init', array( $this ) );
 
-			/*
-			 * Load our text domain and allow for overloading the fall-back file.
-			 *
-			 * {@internal IMPORTANT! If this code changes, review the regex in the custom TGMPA
-			 * generator on the website.}}
-			 */
-			add_action( 'init', array( $this, 'load_textdomain' ), 5 );
-			add_filter( 'load_textdomain_mofile', array( $this, 'overload_textdomain_mofile' ), 10, 2 );
-
 			// When the rest of WP has loaded, kick-start the rest of the class.
 			add_action( 'init', array( $this, 'init' ) );
 		}
@@ -470,7 +461,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 			}
 
 			// Only proceed forward if the parameter is set to true and plugin is active.
-			if ( isset( $_GET['tgmpa-update'] ) && 'update-plugin' === $_GET['tgmpa-update'] && $this->is_plugin_active( $slug ) ) {
+			if ( isset( $_GET['tgmpa-update'] ) && 'update-plugin' === $_GET['tgmpa-update'] && $this->is_plugin_activated( $slug ) ) {
 				deactivate_plugins( $this->plugins[ $slug ]['file_path'], true );
 
 				if ( ! isset( $_GET['plugin_source'] ) ) {
@@ -481,33 +472,6 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 
 				wp_safe_redirect( admin_url( 'admin.php' . $query ) );
 				exit;
-			}
-		}
-
-		/**
-		 * Load translations.
-		 *
-		 * @since 2.6.0
-		 *
-		 * (@internal Uses `load_theme_textdomain()` rather than `load_plugin_textdomain()` to
-		 * get round the different ways of handling the path and deprecated notices being thrown
-		 * and such. For plugins, the actual file name will be corrected by a filter.}}
-		 *
-		 * {@internal IMPORTANT! If this function changes, review the regex in the custom TGMPA
-		 * generator on the website.}}
-		 */
-		public function load_textdomain() {
-			if ( is_textdomain_loaded( 'tgmpa' ) ) {
-				return;
-			}
-
-			if ( false !== strpos( __FILE__, WP_PLUGIN_DIR ) || false !== strpos( __FILE__, WPMU_PLUGIN_DIR ) ) {
-				// Plugin, we'll need to adjust the file name.
-				add_action( 'load_textdomain_mofile', array( $this, 'correct_plugin_mofile' ), 10, 2 );
-				load_theme_textdomain( 'tgmpa', dirname( __FILE__ ) . '/languages' );
-				remove_action( 'load_textdomain_mofile', array( $this, 'correct_plugin_mofile' ), 10 );
-			} else {
-				load_theme_textdomain( 'tgmpa', dirname( __FILE__ ) . '/languages' );
 			}
 		}
 
@@ -531,41 +495,6 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 				return $mofile;
 			}
 			return preg_replace( '`/([a-z]{2}_[A-Z]{2}.mo)$`', '/tgmpa-$1', $mofile );
-		}
-
-		/**
-		 * Potentially overload the fall-back translation file for the current language.
-		 *
-		 * WP, by default since WP 3.7, will load a local translation first and if none
-		 * can be found, will try and find a translation in the /wp-content/languages/ directory.
-		 * As this library is theme/plugin agnostic, translation files for TGMPA can exist both
-		 * in the WP_LANG_DIR /plugins/ subdirectory as well as in the /themes/ subdirectory.
-		 *
-		 * This method makes sure both directories are checked.
-		 *
-		 * {@internal IMPORTANT! If this function changes, review the regex in the custom TGMPA
-		 * generator on the website.}}
-		 *
-		 * @since 2.6.0
-		 *
-		 * @param string $mofile Full path to the target mofile.
-		 * @param string $domain The domain for which a language file is being loaded.
-		 * @return string $mofile
-		 */
-		public function overload_textdomain_mofile( $mofile, $domain ) {
-			// Exit early if not our domain, not a WP_LANG_DIR load or if the file exists and is readable.
-			if ( 'tgmpa' !== $domain || false === strpos( $mofile, WP_LANG_DIR ) || @is_readable( $mofile ) ) {
-				return $mofile;
-			}
-
-			// Current fallback file is not valid, let's try the alternative option.
-			if ( false !== strpos( $mofile, '/themes/' ) ) {
-				return str_replace( '/themes/', '/plugins/', $mofile );
-			} elseif ( false !== strpos( $mofile, '/plugins/' ) ) {
-				return str_replace( '/plugins/', '/themes/', $mofile );
-			} else {
-				return $mofile;
-			}
 		}
 
 		/**
@@ -927,7 +856,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 
 				// Only activate plugins if the config option is set to true and the plugin isn't
 				// already active (upgrade).
-				if ( $this->is_automatic && ! $this->is_plugin_active( $slug ) ) {
+				if ( $this->is_automatic && ! $this->is_plugin_activated( $slug ) ) {
 					$plugin_activate = $upgrader->plugin_info(); // Grab the plugin info from the Plugin_Upgrader method.
 					if ( false === $this->activate_single_plugin( $plugin_activate, $slug, true ) ) {
 						return true; // Finish execution of the function early as we encountered an error.
@@ -1081,7 +1010,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 					if ( ! $automatic ) {
 						// Make sure message doesn't display again if bulk activation is performed
 						// immediately after a single activation.
-						if ( ! isset( $_POST['action'] ) ) { // WPCS: CSRF OK.
+						if ( ! isset( $_POST['action'] ) ) {
 							echo '<div id="message" class="updated"><p>', esc_html( $this->strings['activated_successfully'] ), ' <strong>', esc_html( $this->plugins[ $slug ]['name'] ), '.</strong></p></div>';
 						}
 					} else {
@@ -1089,7 +1018,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 						echo '<p>', esc_html( $this->strings['plugin_activated'] ), '</p>';
 					}
 				}
-			} elseif ( $this->is_plugin_active( $slug ) ) {
+			} elseif ( $this->is_plugin_activated( $slug ) ) {
 				// No simpler message format provided as this message should never be encountered
 				// on the plugin install page.
 				echo '<div id="message" class="error"><p>',
@@ -1102,7 +1031,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 				if ( ! $automatic ) {
 					// Make sure message doesn't display again if bulk activation is performed
 					// immediately after a single activation.
-					if ( ! isset( $_POST['action'] ) ) { // WPCS: CSRF OK.
+					if ( ! isset( $_POST['action'] ) ) {
 						echo '<div id="message" class="error"><p>',
 							sprintf(
 								esc_html( $this->strings['plugin_needs_higher_version'] ),
@@ -1152,7 +1081,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 
 			foreach ( $this->plugins as $slug => $plugin ) {
 				// ThemeFusion edit for Avada theme: added ! $plugin['required'] to the conditional
-				if ( $this->is_plugin_active( $slug ) && false === $this->does_plugin_have_update( $slug ) ||
+				if ( $this->is_plugin_activated( $slug ) && false === $this->does_plugin_have_update( $slug ) ||
 					! $plugin['required']
 
 				) {
@@ -1173,7 +1102,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 						$total_required_action_count++;
 					}
 				} else {
-					if ( ! $this->is_plugin_active( $slug ) && $this->can_plugin_activate( $slug ) ) {
+					if ( ! $this->is_plugin_activated( $slug ) && $this->can_plugin_activate( $slug ) ) {
 						if ( current_user_can( 'activate_plugins' ) ) {
 							$activate_link_count++;
 
@@ -1344,15 +1273,8 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 		protected function get_admin_notice_class() {
 			if ( ! empty( $this->strings['nag_type'] ) ) {
 				return sanitize_html_class( strtolower( $this->strings['nag_type'] ) );
-			} else {
-				if ( version_compare( $this->wp_version, '4.2', '>=' ) ) {
-					return 'notice-warning';
-				} elseif ( version_compare( $this->wp_version, '4.1', '>=' ) ) {
-					return 'notice';
-				} else {
-					return 'updated';
-				}
 			}
+			return 'notice-warning';
 		}
 
 		/**
@@ -1768,10 +1690,10 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 			if ( 'update-core' === $screen->base ) {
 				// Core update screen.
 				return true;
-			} elseif ( 'plugins' === $screen->base && ! empty( $_POST['action'] ) ) { // WPCS: CSRF ok.
+			} elseif ( 'plugins' === $screen->base && ! empty( $_POST['action'] ) ) {
 				// Plugins bulk update screen.
 				return true;
-			} elseif ( 'update' === $screen->base && ! empty( $_POST['action'] ) ) { // WPCS: CSRF ok.
+			} elseif ( 'update' === $screen->base && ! empty( $_POST['action'] ) ) {
 				// Individual updates (ajax call).
 				return true;
 			}
@@ -1839,7 +1761,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 		public function is_tgmpa_complete() {
 			$complete = true;
 			foreach ( $this->plugins as $slug => $plugin ) {
-				if ( ! $this->is_plugin_active( $slug ) || false !== $this->does_plugin_have_update( $slug ) ) {
+				if ( ! $this->is_plugin_activated( $slug ) || false !== $this->does_plugin_have_update( $slug ) ) {
 					$complete = false;
 					break;
 				}
@@ -1870,8 +1792,8 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 		 * @param string $slug Plugin slug.
 		 * @return bool True if active, false otherwise.
 		 */
-		public function is_plugin_active( $slug ) {
-			return ( ( ! empty( $this->plugins[ $slug ]['is_callable'] ) && is_callable( $this->plugins[ $slug ]['is_callable'] ) ) || is_plugin_active( $this->plugins[ $slug ]['file_path'] ) );
+		public function is_plugin_activated( $slug ) {
+			return ( ( ! empty( $this->plugins[ $slug ]['is_callable'] ) && is_callable( $this->plugins[ $slug ]['is_callable'] ) ) || fusion_is_plugin_activated( $this->plugins[ $slug ]['file_path'] ) );
 		}
 
 		/**
@@ -1926,7 +1848,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 		 * @return bool True if OK to activate, false otherwise.
 		 */
 		public function can_plugin_activate( $slug ) {
-			return ( ! $this->is_plugin_active( $slug ) && ! $this->does_plugin_require_update( $slug ) );
+			return ( ! $this->is_plugin_activated( $slug ) && ! $this->does_plugin_require_update( $slug ) );
 		}
 
 		/**
@@ -2089,7 +2011,7 @@ if ( ! class_exists( 'Avada_TGM_Plugin_Activation' ) ) {
 				 * Only proceed forward if the parameter is set to true and plugin is active
 				 * as a 'normal' (not must-use) plugin.
 				 */
-				if ( true === $plugin['force_deactivation'] && is_plugin_active( $plugin['file_path'] ) ) {
+				if ( true === $plugin['force_deactivation'] && fusion_is_plugin_activated( $plugin['file_path'] ) ) {
 					deactivate_plugins( $plugin['file_path'] );
 					$deactivated[ $plugin['file_path'] ] = time();
 				}
@@ -2359,7 +2281,7 @@ if ( ! class_exists( 'TGMPA_List_Table' ) ) {
 			);
 
 			foreach ( $this->tgmpa->plugins as $slug => $plugin ) {
-				if ( $this->tgmpa->is_plugin_active( $slug ) && false === $this->tgmpa->does_plugin_have_update( $slug ) ) {
+				if ( $this->tgmpa->is_plugin_activated( $slug ) && false === $this->tgmpa->does_plugin_have_update( $slug ) ) {
 					// No need to display plugins if they are installed, up-to-date and active.
 					continue;
 				} else {
@@ -2450,7 +2372,7 @@ if ( ! class_exists( 'TGMPA_List_Table' ) ) {
 				return __( 'Not Installed', 'Avada' );
 			}
 
-			if ( ! $this->tgmpa->is_plugin_active( $slug ) ) {
+			if ( ! $this->tgmpa->is_plugin_activated( $slug ) ) {
 				$install_status = __( 'Installed But Not Activated', 'Avada' );
 			} else {
 				$install_status = __( 'Active', 'Avada' );
@@ -2665,7 +2587,11 @@ if ( ! class_exists( 'TGMPA_List_Table' ) ) {
 		 * @since 2.2.0
 		 */
 		public function no_items() {
-			echo esc_html__( 'No plugins to install, update or activate.', 'Avada' ) . ' <a href="' . esc_url( self_admin_url() ) . '"> ' . esc_html__( 'Return to the Dashboard', 'Avada' ) . '</a>';
+			printf(
+				/* translators: Dashboard URL. */
+				esc_html__( 'No plugins to install, update or activate. <a href="%s">Return to the Dashboard</a>', 'Avada' ),
+				esc_url( self_admin_url() )
+			);
 			echo '<style type="text/css">#adminmenu .wp-submenu li.current { display: none !important; }</style>';
 		}
 
@@ -3082,7 +3008,7 @@ if ( ! class_exists( 'TGMPA_List_Table' ) ) {
 					$last_plugin  = array_pop( $plugin_names ); // Pop off last name to prep for readability.
 					$imploded     = empty( $plugin_names ) ? $last_plugin : ( implode( ', ', $plugin_names ) . ' ' . esc_html_x( 'and', 'plugin A *and* plugin B', 'Avada' ) . ' ' . $last_plugin );
 
-					printf( // WPCS: xss ok.
+					printf(
 						'<div id="message" class="updated"><p>%1$s %2$s.</p></div>',
 						esc_html( _n( 'The following plugin was activated successfully:', 'The following plugins were activated successfully:', $count, 'Avada' ) ),
 						$imploded
@@ -3378,7 +3304,7 @@ if ( ! function_exists( 'tgmpa_load_bulk_installer' ) ) {
 						/*
 						[TGMPA - ]
 						foreach ( $plugins as $plugin )
-							$maintenance = $maintenance || ( is_plugin_active( $plugin ) && isset( $current->response[ $plugin] ) );
+							$maintenance = $maintenance || ( fusion_is_plugin_activated( $plugin ) && isset( $current->response[ $plugin] ) );
 						*/
 						if ( $maintenance ) {
 							$this->maintenance_mode( true );
@@ -3407,7 +3333,7 @@ if ( ! function_exists( 'tgmpa_load_bulk_installer' ) ) {
 							// Get the URL to the zip file.
 							$r = $current->response[ $plugin ];
 
-							$this->skin->plugin_active = is_plugin_active($plugin);
+							$this->skin->plugin_active = fusion_is_plugin_activated($plugin);
 							*/
 
 							$result = $this->run(
@@ -3514,7 +3440,7 @@ if ( ! function_exists( 'tgmpa_load_bulk_installer' ) ) {
 							$plugin_info = $this->plugin_info();
 
 							// Don't try to activate on upgrade of active plugin as WP will do this already.
-							if ( ! is_plugin_active( $plugin_info ) ) {
+							if ( ! fusion_is_plugin_activated( $plugin_info ) ) {
 								$activate = activate_plugin( $plugin_info );
 
 								// Adjust the success string based on the activation result.
@@ -3889,7 +3815,7 @@ if ( ! class_exists( 'TGMPA_Utils' ) ) {
 
 			return false;
 		}
-	} // End of class TGMPA_Utils
-} // End of class_exists wrapper
+	}
+}
 
 /* Omit closing PHP tag to avoid "Headers already sent" issues. */

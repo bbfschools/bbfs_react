@@ -14,9 +14,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click .fusion-builder-delete-next-page': 'removeContainer'
 			},
 
-			initialize: function() {
-			},
-
 			render: function() {
 				this.$el.html( this.template( this.model.toJSON() ) );
 
@@ -40,4 +37,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

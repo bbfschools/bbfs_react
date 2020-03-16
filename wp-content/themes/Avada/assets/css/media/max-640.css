@@ -1,3 +1,4 @@
+/* stylelint-disable no-descending-specificity */
 #wrapper {
   width: auto !important;
   overflow-x: hidden !important;
@@ -171,9 +172,6 @@ body.dark .sidebar .tab-hold .tabs li {
 }
 .fusion-google-map {
   width: 100% !important;
-}
-.social_links_shortcode .social li {
-  width: 10% !important;
 }
 #cloudsCandy {
   height: 40px;

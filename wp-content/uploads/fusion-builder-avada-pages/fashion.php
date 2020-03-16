@@ -237,7 +237,7 @@ Ut at sapien vel sem commodo faucibus. Morbi ut lorem ligula. Vivamus sodales nu
         'pyre_page_title_custom_subheader_text_size' => '',
         'pyre_page_title_font_color' => '',
         'pyre_page_title_height' => '',
-        'pyre_page_title_bar_bg' => 'https://placehold.it/1688x595',
+        'pyre_page_title_bar_bg' => 'https://placehold.it/2000x800',
         'pyre_page_title_bar_bg_retina' => '',
         'pyre_page_title_bar_bg_color' => '',
         'pyre_page_title_bar_bg_full' => 'yes',

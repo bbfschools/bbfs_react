@@ -1,4 +1,5 @@
 /* global fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderEvents, FusionPageBuilderViewManager, FusionPageBuilderApp, FusionPageBuilderElements */
+/* eslint no-shadow: 0 */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function( $ ) {
@@ -273,9 +274,9 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				_.each( module.get( 'params' ), function( value, name ) {
 
 					if ( 'undefined' === value ) {
-						columnParams[name] = '';
+						columnParams[ name ] = '';
 					} else {
-						columnParams[name] = value;
+						columnParams[ name ] = value;
 					}
 
 				} );
@@ -292,18 +293,65 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				_.each( columnAttributesCheck, function( value, name ) {
 
 					if ( 'undefined' === typeof columnParams[ name ] ) {
-						columnParams[name] = value;
+						columnParams[ name ] = value;
 					}
 
 				} );
 
 				// Build column shortcode.
-				shortcode += '[fusion_builder_column_inner type="' + module.get( 'layout' ) + '" background_position="' + columnParams.background_position + '" background_color="' + columnParams.background_color + '" border_size="' + columnParams.border_size + '" border_color="' + columnParams.border_color + '" border_style="' + columnParams.border_style + '" spacing="' + columnParams.spacing + '" background_image="' + columnParams.background_image + '" background_repeat="' + columnParams.background_repeat + '" padding_top="' + columnParams.padding_top + '" padding_bottom="' + columnParams.padding_bottom + '" padding_left="' + columnParams.padding_left + '" padding_right="' + columnParams.padding_right + '" margin_top="' + columnParams.margin_top + '" margin_bottom="' + columnParams.margin_bottom + '" class="' + columnParams.class + '" id="' + columnParams.id + '" animation_type="' + columnParams.animation_type + '" animation_speed="' + columnParams.animation_speed + '" animation_direction="' + columnParams.animation_direction + '" hide_on_mobile="' + columnParams.hide_on_mobile + '" center_content="' + columnParams.center_content + '" last="' + columnParams.last + '" min_height="' + columnParams.min_height + '" hover_type="' + columnParams.hover_type + '" link="' + columnParams.link + '"]';
+				shortcode += '[fusion_builder_column_inner type="' + module.get( 'layout' ) + '" background_position="' + columnParams.background_position + '" background_color="' + columnParams.background_color + '" border_size="' + columnParams.border_size + '" border_color="' + columnParams.border_color + '" border_style="' + columnParams.border_style + '" spacing="' + columnParams.spacing + '" background_image="' + columnParams.background_image + '" background_repeat="' + columnParams.background_repeat + '" padding_top="' + columnParams.padding_top + '" padding_bottom="' + columnParams.padding_bottom + '" padding_left="' + columnParams.padding_left + '" padding_right="' + columnParams.padding_right + '" margin_top="' + columnParams.margin_top + '" margin_bottom="' + columnParams.margin_bottom + '" class="' + columnParams[ 'class' ] + '" id="' + columnParams.id + '" animation_type="' + columnParams.animation_type + '" animation_speed="' + columnParams.animation_speed + '" animation_direction="' + columnParams.animation_direction + '" hide_on_mobile="' + columnParams.hide_on_mobile + '" center_content="' + columnParams.center_content + '" last="' + columnParams.last + '" min_height="' + columnParams.min_height + '" hover_type="' + columnParams.hover_type + '" link="' + columnParams.link + '"]';
 
-					// Find elements in this column
-					$thisColumnInner.find( '.fusion_module_block' ).each( function() {
-						shortcode += FusionPageBuilderApp.generateElementShortcode( $( this ), false );
-					} );
+				// Find elements in this column
+				$thisColumnInner.find( '.fusion_module_block' ).each( function() {
+					shortcode += FusionPageBuilderApp.generateElementShortcode( $( this ), false );
+				} );
+
+				shortcode += '[/fusion_builder_column_inner]';
+
+				return shortcode;
+			},
+
+			getElementContent: function() {
+				var $thisColumnInner = this.$el,
+					module           = this.model,
+					columnParams     = {},
+					shortcode        = '',
+					columnAttributesCheck;
+
+				_.each( module.get( 'params' ), function( value, name ) {
+
+					if ( 'undefined' === value ) {
+						columnParams[ name ] = '';
+					} else {
+						columnParams[ name ] = value;
+					}
+
+				} );
+
+				// Legacy support for new column options
+				columnAttributesCheck = {
+					min_height: '',
+					last: 'no',
+					hover_type: 'none',
+					link: '',
+					border_position: 'all'
+				};
+
+				_.each( columnAttributesCheck, function( value, name ) {
+
+					if ( 'undefined' === typeof columnParams[ name ] ) {
+						columnParams[ name ] = value;
+					}
+
+				} );
+
+				// Build column shortcdoe
+				shortcode += '[fusion_builder_column_inner type="' + module.get( 'layout' ) + '" background_position="' + columnParams.background_position + '" background_color="' + columnParams.background_color + '" border_size="' + columnParams.border_size + '" border_color="' + columnParams.border_color + '" border_style="' + columnParams.border_style + '" spacing="' + columnParams.spacing + '" background_image="' + columnParams.background_image + '" background_repeat="' + columnParams.background_repeat + '" padding="' + columnParams.padding + '" margin_top="' + columnParams.margin_top + '" margin_bottom="' + columnParams.margin_bottom + '" class="' + columnParams[ 'class' ] + '" id="' + columnParams.id + '" animation_type="' + columnParams.animation_type + '" animation_speed="' + columnParams.animation_speed + '" animation_direction="' + columnParams.animation_direction + '" hide_on_mobile="' + columnParams.hide_on_mobile + '" center_content="' + columnParams.center_content + '" last="' + columnParams.last + '" min_height="' + columnParams.min_height + '" hover_type="' + columnParams.hover_type + '" link="' + columnParams.link + '"]';
+
+				// Find elements in this column
+				$thisColumnInner.find( '.fusion_module_block' ).each( function() {
+					shortcode += FusionPageBuilderApp.generateElementShortcode( $( this ), false );
+				} );
 
 				shortcode += '[/fusion_builder_column_inner]';
 
@@ -311,4 +359,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

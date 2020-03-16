@@ -1,4 +1,9 @@
 <?php
+/**
+ * Importer functions.
+ *
+ * @package fusion-builder
+ */
 
 /**
  * Import Fusion elements/templates
@@ -7,9 +12,9 @@ function fusion_builder_importer() {
 
 	check_ajax_referer( 'fusion_import_nonce', 'fusion_import_nonce' );
 
-	if ( isset( $_FILES ) && '' != $_FILES[0] ) {
+	if ( isset( $_FILES ) && '' != $_FILES[0] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 
-		$file = $_FILES[0]['tmp_name'];
+		$file = $_FILES[0]['tmp_name']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 
 		if ( current_user_can( 'manage_options' ) ) {
 
@@ -24,15 +29,15 @@ function fusion_builder_importer() {
 			}
 
 			if ( ! class_exists( 'WXR_Importer' ) ) { // If WP importer doesn't exist.
-				include wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php' );
-				include wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/importer/class-logger-html.php' );
+				include FUSION_LIBRARY_PATH . '/inc/importer/class-logger.php';
+				include FUSION_LIBRARY_PATH . '/inc/importer/class-logger-html.php';
 
-				$wp_import = wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php' );
+				$wp_import = FUSION_LIBRARY_PATH . '/inc/importer/class-wxr-importer.php';
 				include $wp_import;
 			}
 
 			if ( ! class_exists( 'Fusion_WXR_Importer' ) ) {
-				include wp_normalize_path( FUSION_LIBRARY_PATH . '/inc/importer/class-fusion-wxr-importer.php' );
+				include FUSION_LIBRARY_PATH . '/inc/importer/class-fusion-wxr-importer.php';
 			}
 
 			if ( class_exists( 'WP_Importer' ) && class_exists( 'WXR_Importer' ) && class_exists( 'Fusion_WXR_Importer' ) ) { // Check for main import class and wp import class.

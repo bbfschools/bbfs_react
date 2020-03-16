@@ -12,25 +12,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 <?php ob_start(); ?>
-<?php if ( 'related' === $type && 'fixed' === $post_featured_image_size && get_post_thumbnail_id( $post_id ) ) : ?>
+<?php $post_thumbnail_id = get_post_thumbnail_id( $post_id ); ?>
+<?php if ( 'related' === $type && 'fixed' === $post_featured_image_size && $post_thumbnail_id ) : ?>
 	<?php
 	/**
 	 * Resize images for use as related posts.
 	 */
-	$image_args = array(
-		'width'  => '500',
-		'height' => '383',
-		'url'    => wp_get_attachment_url( get_post_thumbnail_id( $post_id ) ),
-		'path'   => get_attached_file( get_post_thumbnail_id( $post_id ) ),
-		'retina' => false,
+	$image_args           = apply_filters(
+		'fusion_related_posts_image_attr',
+		[
+			'width'  => '500',
+			'height' => '383',
+			'url'    => wp_get_attachment_url( $post_thumbnail_id ),
+			'path'   => get_attached_file( $post_thumbnail_id ),
+			'retina' => false,
+			'id'     => $post_thumbnail_id,
+		]
 	);
-	$image = Fusion_Image_Resizer::image_resize( $image_args );
-	$image_retina_args = $image_args;
+	$image_args['retina'] = false;
+	$image                = Fusion_Image_Resizer::image_resize( $image_args );
+
+	$image_retina_args           = $image_args;
 	$image_retina_args['retina'] = true;
-	$image_retina = Fusion_Image_Resizer::image_resize( $image_retina_args );
-	$scrset = ( isset( $image_retina['url'] ) && $image_retina['url'] ) ? ' srcset="' . $image['url'] . ' 1x, ' . $image_retina['url'] . ' 2x"' : '';
+	$image_retina                = Fusion_Image_Resizer::image_resize( $image_retina_args );
+	$scrset                      = '';
+	if ( isset( $image_retina['url'] ) && $image_retina['url'] ) {
+		$scrset = ' srcset="' . esc_attr( $image['url'] . ' 1x, ' . $image_retina['url'] . ' 2x' ) . '"';
+	}
 	?>
-	<img src="<?php echo esc_url_raw( $image['url'] ); ?>"<?php echo $scrset; // WPCS: XSS ok. ?> width="<?php echo absint( $image['width'] ); ?>" height="<?php echo absint( $image['height'] ); ?>" alt="<?php the_title_attribute( 'post=' . $post_id ); ?>" />
+	<img src="<?php echo esc_url_raw( $image['url'] ); ?>"<?php echo $scrset; // phpcs:ignore WordPress.Security.EscapeOutput ?> width="<?php echo absint( $image['width'] ); ?>" height="<?php echo absint( $image['height'] ); ?>" alt="<?php the_title_attribute( 'post=' . $post_id ); ?>" />
 
 <?php else : ?>
 
@@ -42,7 +52,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		?>
 		<?php echo get_the_post_thumbnail( $post_id, $post_featured_image_size ); ?>
 
-	<?php elseif ( get_post_meta( $post_id, 'pyre_video', true ) ) : ?>
+	<?php elseif ( fusion_get_page_option( 'video', $post_id ) ) : ?>
 
 		<?php
 		$image_size_class .= ' fusion-video'
@@ -52,7 +62,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		 */
 		?>
 		<div class="full-video">
-			<?php echo apply_filters( 'privacy_iframe_embed', get_post_meta( $post_id, 'pyre_video', true ) ); // WPCS: XSS ok. ?>
+			<?php echo apply_filters( 'privacy_iframe_embed', fusion_get_page_option( 'video', $post_id ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		</div>
 
 	<?php elseif ( $display_placeholder_image ) : ?>
@@ -89,18 +99,18 @@ foreach ( $attributes as $key => $value ) {
 }
 ?>
 
-<div <?php echo $image_wrapper_attributes; // WPCS: XSS ok. ?> aria-haspopup="true">
+<div <?php echo $image_wrapper_attributes; // phpcs:ignore WordPress.Security.EscapeOutput ?> aria-haspopup="true">
 	<?php $enable_rollover = apply_filters( 'fusion_builder_image_rollover', true ); ?>
 
 	<?php if ( ( $enable_rollover && 'yes' === $display_rollover ) || 'force_yes' === $display_rollover ) : ?>
 
-		<?php echo $featured_image; // WPCS: XSS ok. ?>
+		<?php echo $featured_image; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<?php do_action( 'avada_rollover', $post_id, $post_permalink, $display_woo_price, $display_woo_buttons, $display_post_categories, $display_post_title, $gallery_id, $display_woo_rating ); ?>
 
 	<?php else : ?>
 
-		<a href="<?php echo esc_url_raw( $post_permalink ); ?>">
-			<?php echo $featured_image; // WPCS: XSS ok. ?>
+		<a href="<?php echo esc_url_raw( $post_permalink ); ?>" aria-label"<?php the_title_attribute(); ?>">
+			<?php echo $featured_image; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		</a>
 
 	<?php endif; ?>

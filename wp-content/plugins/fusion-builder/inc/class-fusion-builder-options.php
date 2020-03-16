@@ -1,4 +1,9 @@
 <?php
+/**
+ * The Fusion_Builder_Options class.
+ *
+ * @package fusion-builder
+ */
 
 // Do not allow directly accessing this file.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -17,7 +22,7 @@ class Fusion_Builder_Options {
 	 * @access public
 	 * @var array
 	 */
-	public $section_names = array();
+	public $section_names = [];
 
 	/**
 	 * An array of our sections.
@@ -25,7 +30,7 @@ class Fusion_Builder_Options {
 	 * @access public
 	 * @var array
 	 */
-	public $sections      = array();
+	public $sections = [];
 
 	/**
 	 * An array of our fields.
@@ -57,17 +62,19 @@ class Fusion_Builder_Options {
 		 * These are used in the filenames AND the function-names.
 		 */
 		$this->section_names = apply_filters(
-			'fusion_builder_option_section', array(
-				'globals'    => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/globals.php',
-				'elements'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/elements.php',
-				'responsive' => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/responsive.php',
-				'lightbox'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/lightbox.php',
-				'slideshows' => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/slideshows.php',
-				'custom_css' => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/custom_css.php',
-				'advanced'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/dynamic_css_js.php',
-				'rollover'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/rollover.php',
-				'pagination' => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/pagination.php',
-			)
+			'fusion_builder_option_section',
+			[
+				'elements'     => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/elements.php',
+				'misc'         => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/misc.php',
+				'responsive'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/responsive.php',
+				'social_media' => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/social_media.php',
+				'slideshows'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/slideshows.php',
+				'lightbox'     => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/lightbox.php',
+				'extra'        => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/extra.php',
+				'advanced'     => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/advanced.php',
+				'performance'  => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/performance.php',
+				'custom_css'   => FUSION_BUILDER_PLUGIN_DIR . 'inc/options/custom_css.php',
+			]
 		);
 
 		// Include the section files.
@@ -79,7 +86,7 @@ class Fusion_Builder_Options {
 		// Set the $fields.
 		$this->set_fields();
 
-		add_filter( 'fusion_settings_all_fields', array( __CLASS__, 'get_option_fields' ) );
+		add_filter( 'fusion_settings_all_fields', [ __CLASS__, 'get_option_fields' ] );
 
 	}
 
@@ -116,7 +123,7 @@ class Fusion_Builder_Options {
 	 */
 	public function set_sections() {
 
-		$sections = array();
+		$sections = [];
 		foreach ( $this->section_names as $section => $url ) {
 			$sections = call_user_func( 'fusion_builder_options_section_' . $section, $sections );
 		}
@@ -151,10 +158,10 @@ class Fusion_Builder_Options {
 
 		// Get the options object.
 		$fusion_builder_new_options = ( class_exists( 'Avada' ) ) ? Avada::$options : false;
-		$fields = array();
+		$fields                     = [];
 
 		if ( ! $fusion_builder_new_options ) {
-			return array();
+			return [];
 		}
 
 		// Start parsing sections.
@@ -175,7 +182,7 @@ class Fusion_Builder_Options {
 				}
 
 				// For normal fields, we'll just add the field ID to our array.
-				if ( ! in_array( $field['type'], array( 'sub-section', 'accordion' ) ) ) {
+				if ( ! in_array( $field['type'], [ 'sub-section', 'accordion' ], true ) ) {
 					if ( isset( $field['id'] ) ) {
 						$fields[] = $field['id'];
 					}
@@ -216,7 +223,7 @@ class Fusion_Builder_Options {
 				}
 
 				// This is a sub-section or an accordion.
-				if ( isset( $field['type'] ) && in_array( $field['type'], array( 'sub-section', 'accordion' ) ) ) {
+				if ( isset( $field['type'] ) && in_array( $field['type'], [ 'sub-section', 'accordion' ], true ) ) {
 
 					// Start parsing the fields inside the sub-section/accordion.
 					foreach ( $field['fields'] as $sub_field ) {
@@ -242,7 +249,7 @@ class Fusion_Builder_Options {
 	 * @param array $fields The existing fields.
 	 * @return array
 	 */
-	public static function get_option_fields( $fields = array() ) {
+	public static function get_option_fields( $fields = [] ) {
 
 		if ( ! is_array( self::$fields ) || ! self::$fields || empty( self::$fields ) ) {
 			$instance = self::get_instance();

@@ -1,8 +1,13 @@
 <?php
-global $all_fusion_builder_elements;
+/**
+ * Admin Screen markup (Settings page).
+ *
+ * @package fusion-builder
+ */
 
+global $all_fusion_builder_elements;
 // If Fusion Builder is not bundled in another plugin/theme, it has its own options panel.
-if ( null == FusionBuilder()->registration ) {
+if ( null === FusionBuilder()->registration ) {
 	$options_name = __( 'Fusion Element Theme Options', 'fusion-builder' );
 } else {
 	$options_name = __( 'Fusion Element Options', 'fusion-builder' );
@@ -25,7 +30,7 @@ if ( null == FusionBuilder()->registration ) {
 				);
 				?>
 				<br/>
-				<a href="<?php echo esc_url_raw( apply_filters( 'fusion_builder_options_url', admin_url( 'admin.php?page=fusion-element-options' ) ) ); ?>#animation_offset" class="button button-primary button-large avada-large-button">
+				<a href="<?php echo esc_url_raw( apply_filters( 'fusion_builder_options_url', admin_url( 'admin.php?page=fusion-element-options' ) ) ); ?>#alert_shortcode_section_start_accordion" class="button button-primary button-large avada-large-button">
 					<?php
 					printf(
 						/* translators: Fusion Element Theme Options | Fusion Element Options. */
@@ -67,8 +72,8 @@ if ( null == FusionBuilder()->registration ) {
 					<h3><?php esc_html_e( 'Fusion Builder Elements', 'fusion-builder' ); ?></h3>
 					<span class="fusion-builder-option-label">
 						<p><?php esc_html_e( 'Each Fusion Builder element can be enabled or disabled. This can increase performance if you are not using a specific element. Check the box to enable, uncheck to disable.', 'fusion-builder' ); ?></p>
-						<p><?php _e( '<strong>NOTE:</strong> Elements for plugins like WooCommere or The Events Calendar will only be available in the builder, if the corresponding options are activated here and if those plugins are active.', 'fusion-builder' ); // WPCS: XSS ok. ?></p>
-						<p><?php _e( '<strong>WARNING:</strong> Use with caution. Disabling an element will remove it from all pages/posts, old and new. If it was on a previous page/post, it will render as regular element markup on the frontend.', 'fusion-builder' ); // WPCS: XSS ok. ?></p>
+						<p><?php _e( '<strong>NOTE:</strong> Elements for plugins like WooCommere or The Events Calendar will only be available in the builder, if the corresponding options are activated here and if those plugins are active.', 'fusion-builder' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+						<p><?php _e( '<strong>WARNING:</strong> Use with caution. Disabling an element will remove it from all pages/posts, old and new. If it was on a previous page/post, it will render as regular element markup on the frontend.', 'fusion-builder' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
 						<p>
 							<a href="#" class="button fusion-check-all" title="<?php esc_attr_e( 'Check All Elements', 'fusion-builder' ); ?>"><?php esc_attr_e( 'Check All Elements', 'fusion-builder' ); ?></a>
 
@@ -80,47 +85,47 @@ if ( null == FusionBuilder()->registration ) {
 				<div class="fusion-builder-option-field">
 					<ul>
 						<?php
-						$i = 0;
-						$plugin_elements = array(
-							'fusion_featured_products_slider' => array(
+						$i               = 0;
+						$plugin_elements = [
+							'fusion_featured_products_slider' => [
 								'name'      => esc_attr__( 'Woo Featured', 'fusion-builder' ),
 								'shortcode' => 'fusion_featured_products_slider',
 								'class'     => ( class_exists( 'WooCommerce' ) ) ? '' : 'hidden',
-							),
-							'fusion_products_slider' => array(
+							],
+							'fusion_products_slider' => [
 								'name'      => esc_attr__( 'Woo Carousel', 'fusion-builder' ),
 								'shortcode' => 'fusion_products_slider',
 								'class'     => ( class_exists( 'WooCommerce' ) ) ? '' : 'hidden',
-							),
-							'fusion_woo_shortcodes' => array(
+							],
+							'fusion_woo_shortcodes'  => [
 								'name'      => esc_attr__( 'Woo Shortcodes', 'fusion-builder' ),
 								'shortcode' => 'fusion_woo_shortcodes',
 								'class'     => ( class_exists( 'WooCommerce' ) ) ? '' : 'hidden',
-							),
-							'layerslider' => array(
-								'name'       => esc_attr__( 'Layer Slider', 'fusion-builder' ),
-								'shortcode'  => 'layerslider',
-								'class'      => ( defined( 'LS_PLUGIN_BASE' ) ) ? '' : 'hidden',
-							),
-							'rev_slider' => array(
-								'name'      => esc_attr__( 'Revolution Slider', 'fusion-builder' ),
+							],
+							'layerslider'            => [
+								'name'      => esc_attr__( 'Layer Slider', 'fusion-builder' ),
+								'shortcode' => 'layerslider',
+								'class'     => ( defined( 'LS_PLUGIN_BASE' ) ) ? '' : 'hidden',
+							],
+							'rev_slider'             => [
+								'name'      => esc_attr__( 'Slider Revolution', 'fusion-builder' ),
 								'shortcode' => 'rev_slider',
 								'class'     => ( defined( 'RS_PLUGIN_PATH' ) ) ? '' : 'hidden',
-							),
-							'fusion_events' => array(
+							],
+							'fusion_events'          => [
 								'name'      => esc_attr__( 'Events', 'fusion-builder' ),
 								'shortcode' => 'fusion_events',
 								'class'     => ( class_exists( 'Tribe__Events__Main' ) ) ? '' : 'hidden',
-							),
-							'fusion_fontawesome' => array(
+							],
+							'fusion_fontawesome'     => [
 								'name'      => esc_attr__( 'Font Awesome Icon', 'fusion-builder' ),
 								'shortcode' => 'fusion_fontawesome',
-							),
-							'fusion_fusionslider' => array(
+							],
+							'fusion_fusionslider'    => [
 								'name'      => esc_attr__( 'Fusion Slider', 'fusion-builder' ),
 								'shortcode' => 'fusion_fusionslider',
-							),
-						);
+							],
+						];
 
 						$all_fusion_builder_elements = array_merge( $all_fusion_builder_elements, apply_filters( 'fusion_builder_plugin_elements', $plugin_elements ) );
 
@@ -129,15 +134,15 @@ if ( null == FusionBuilder()->registration ) {
 							if ( empty( $module['hide_from_builder'] ) ) {
 								$i++;
 								$checked = '';
-								$class = ( isset( $module['class'] ) && '' !== $module['class'] ) ? $module['class'] : '';
+								$class   = ( isset( $module['class'] ) && '' !== $module['class'] ) ? $module['class'] : '';
 
-								if ( ( isset( $existing_settings['fusion_elements'] ) && is_array( $existing_settings['fusion_elements'] ) && in_array( $module['shortcode'], $existing_settings['fusion_elements'] ) ) || ( ! isset( $existing_settings['fusion_elements'] ) || ! is_array( $existing_settings['fusion_elements'] ) ) ) {
+								if ( ( isset( $existing_settings['fusion_elements'] ) && is_array( $existing_settings['fusion_elements'] ) && in_array( $module['shortcode'], $existing_settings['fusion_elements'] ) ) || ( ! isset( $existing_settings['fusion_elements'] ) || ! is_array( $existing_settings['fusion_elements'] ) ) || ( isset( $module['component'] ) && $module['component'] ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 									$checked = 'checked';
 								}
 								echo '<li class="' . esc_attr( $class ) . '">';
 								echo '<label for="hide_from_builder_' . esc_attr( $i ) . '">';
-								echo '<input name="fusion_elements[]" type="checkbox" value="' . esc_attr( $module['shortcode'] ) . '" ' . $checked . ' id="hide_from_builder_' . esc_attr( $i ) . '"/>'; // WPCS: XSS ok.
-								echo $module['name'] . '</label>'; // WPCS: XSS ok.
+								echo '<input name="fusion_elements[]" type="checkbox" value="' . esc_attr( $module['shortcode'] ) . '" ' . $checked . ' id="hide_from_builder_' . esc_attr( $i ) . '"/>'; // phpcs:ignore WordPress.Security.EscapeOutput
+								echo $module['name'] . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput
 								echo '</li>';
 							}
 						endforeach;
@@ -158,33 +163,35 @@ if ( null == FusionBuilder()->registration ) {
 					<ul>
 						<input type="hidden" name="post_types[]" value=" " />
 						<?php
-						$args = array(
+						$args       = [
 							'public' => true,
-						);
+						];
 						$post_types = get_post_types( $args, 'names', 'and' );
 						// Filter out not relevant post types (can add filter later).
-						$disabled_post_types = array( 'attachment', 'slide', 'themefusion_elastic', 'fusion_template' );
+						$disabled_post_types = [ 'attachment', 'slide', 'themefusion_elastic', 'fusion_template', 'fusion_tb_section', 'fusion_tb_layout' ];
 						foreach ( $disabled_post_types as $disabled ) {
 							unset( $post_types[ $disabled ] );
 						}
 						$defaults = FusionBuilder::default_post_types();
-						$i = 0;
+						$i        = 0;
 						foreach ( $post_types as $post_type ) :
 							$i++;
 							$post_type_obj = get_post_type_object( $post_type );
 							// Either selected in options saved, or in array of default post types.
 							$checked = (
-								( isset( $existing_settings['post_types'] ) && is_array( $existing_settings['post_types'] ) && in_array( $post_type, $existing_settings['post_types'] ) ) ||
-								( ! isset( $existing_settings['post_types'] ) && in_array( $post_type, $defaults ) ) )
+								( isset( $existing_settings['post_types'] ) && is_array( $existing_settings['post_types'] ) && in_array( $post_type, $existing_settings['post_types'] ) ) || // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+								( ! isset( $existing_settings['post_types'] ) && in_array( $post_type, $defaults ) ) ) // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 								? 'checked' : '';
 							echo '<li>';
 							echo '<label for="fusion_post_type_' . esc_attr( $i ) . '">';
-							echo '<input type="checkbox" name="post_types[]" value="' . esc_attr( $post_type ) . '" ' . $checked . ' id="fusion_post_type_' . esc_attr( $i ) . '"/>'; // WPCS: XSS ok.
-							echo $post_type_obj->labels->singular_name . '</label>'; // WPCS: XSS ok.
+							echo '<input type="checkbox" name="post_types[]" value="' . esc_attr( $post_type ) . '" ' . $checked . ' id="fusion_post_type_' . esc_attr( $i ) . '"/>'; // phpcs:ignore WordPress.Security.EscapeOutput
+							echo $post_type_obj->labels->singular_name . '</label>'; // phpcs:ignore WordPress.Security.EscapeOutput
 							echo '</li>';
 						endforeach;
 						?>
-						<input type="hidden" name="post_types[]" value="fusion_template" />
+						<input type="hidden" name="post_types[]" value="fusion_template" checked="checked" />
+						<input type="hidden" name="post_types[]" value="fusion_tb_section" checked="checked" />
+						<input type="hidden" name="post_types[]" value="fusion_tb_layout" checked="checked" />
 					</ul>
 				</div>
 			</div>

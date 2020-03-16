@@ -1,4 +1,4 @@
-/* global FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements */
+/* global FusionPageBuilderApp, fusionHistoryManager, fusionBuilderText, fusionAllElements, FusionPageBuilderEvents */
 var FusionPageBuilder = FusionPageBuilder || {};
 
 ( function() {
@@ -26,7 +26,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Initialize the builder sidebar.
 			 *
 			 * @since 2.0.0
-			 * @returns {void}
+			 * @return {void}
 			 */
 			initialize: function() {
 				this.copyData = {
@@ -42,7 +42,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Renders the view.
 			 *
 			 * @since 2.0.0
-			 * @returns {Object} this
+			 * @return {Object} this
 			 */
 			render: function() {
 				var offset = jQuery( '#fusion_builder_layout .inside' ).offset();
@@ -88,19 +88,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			cloneTrigger: function( event ) {
 
 				switch ( this.model.parent.attributes.element_type ) {
-					case 'fusion_builder_container' :
-						this.model.parentView.cloneContainer( event );
-						break;
-					case 'fusion_builder_column_inner' :
-					case 'fusion_builder_column' :
-						this.model.parentView.cloneColumn( event );
-						break;
-					case 'fusion_builder_row_inner' :
-						this.model.parentView.cloneNestedRow( event );
-						break;
-					default :
-						this.model.parentView.cloneElement( event );
-						break;
+				case 'fusion_builder_container':
+					this.model.parentView.cloneContainer( event );
+					break;
+				case 'fusion_builder_column_inner':
+				case 'fusion_builder_column':
+					this.model.parentView.cloneColumn( event );
+					break;
+				case 'fusion_builder_row_inner':
+					this.model.parentView.cloneNestedRow( event );
+					break;
+				default:
+					this.model.parentView.cloneElement( event );
+					break;
 				}
 			},
 
@@ -112,19 +112,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			removeTrigger: function( event ) {
 
 				switch ( this.model.parent.attributes.element_type ) {
-					case 'fusion_builder_container' :
-						this.model.parentView.removeContainer( event );
-						break;
-					case 'fusion_builder_column_inner' :
-					case 'fusion_builder_column' :
-						this.model.parentView.removeColumn( event );
-						break;
-					case 'fusion_builder_row_inner' :
-						this.model.parentView.removeRow( event );
-						break;
-					default :
-						this.model.parentView.removeElement( event );
-						break;
+				case 'fusion_builder_container':
+					this.model.parentView.removeContainer( event );
+					break;
+				case 'fusion_builder_column_inner':
+				case 'fusion_builder_column':
+					this.model.parentView.removeColumn( event );
+					break;
+				case 'fusion_builder_row_inner':
+					this.model.parentView.removeRow( event );
+					break;
+				default:
+					this.model.parentView.removeElement( event );
+					break;
 				}
 			},
 
@@ -140,19 +140,19 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					data;
 
 				switch ( this.model.parent.attributes.element_type ) {
-					case 'fusion_builder_container' :
-						content = this.model.parentView.getContainerContent();
-						break;
-					case 'fusion_builder_column_inner' :
-					case 'fusion_builder_column' :
-						content = this.model.parentView.getColumnContent( this.model.parentView.$el );
-						break;
-					case 'fusion_builder_row_inner' :
-						content = this.model.parentView.getInnerRowContent();
-						break;
-					default :
-						content = this.model.parentView.getElementContent();
-						break;
+				case 'fusion_builder_container':
+					content = this.model.parentView.getContainerContent();
+					break;
+				case 'fusion_builder_column_inner':
+				case 'fusion_builder_column':
+					content = this.model.parentView.getColumnContent( this.model.parentView.$el );
+					break;
+				case 'fusion_builder_row_inner':
+					content = this.model.parentView.getInnerRowContent();
+					break;
+				default:
+					content = this.model.parentView.getElementContent();
+					break;
 				}
 
 				// Copy to actual clipboard, handy for pasting.
@@ -173,7 +173,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Stored copy data.
 			 *
 			 * @since 2.0.0
-			 * @returns {void}
+			 * @return {void}
 			 */
 			storeCopy: function( data ) {
 				if ( 'undefined' !== typeof Storage ) {
@@ -187,7 +187,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 * Get stored data.
 			 *
 			 * @since 2.0.0
-			 * @returns {void}
+			 * @return {void}
 			 */
 			getCopy: function() {
 				if ( 'undefined' !== typeof Storage ) {
@@ -253,7 +253,8 @@ var FusionPageBuilder = FusionPageBuilder || {};
 
 					// If container, the parentId is self.
 					if ( 'fusion_builder_container' === this.model.parent.attributes.type ) {
-						parentId = FusionPageBuilderApp.targetContainerCID = this.model.parent.attributes.cid;
+						parentId = this.model.parent.attributes.cid;
+						FusionPageBuilderApp.targetContainerCID = this.model.parent.attributes.cid;
 					}
 				} else {
 					parentId = this.model.parent.attributes.cid;
@@ -265,6 +266,10 @@ var FusionPageBuilder = FusionPageBuilder || {};
 					}
 				}
 
+				// TODO: check. Arguments dont match the function:
+				//
+				//
+				// shortcodesToBuilder: function( content, parentCID, childShortcode, noCollection, targetEl, targetPosition )
 				FusionPageBuilderApp.shortcodesToBuilder( content, parentId, target, position );
 
 				if ( -1 === type.indexOf( 'fusion_builder_' ) ) {
@@ -283,7 +288,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			 *
 			 * @since 2.0.0
 			 * @param {Object} event - The event triggering the element removal.
-			 * @returns {void}
+			 * @return {void}
 			 */
 			removeMenu: function( event ) {
 
@@ -299,4 +304,4 @@ var FusionPageBuilder = FusionPageBuilder || {};
 			}
 		} );
 	} );
-} ( jQuery ) );
+}( jQuery ) );

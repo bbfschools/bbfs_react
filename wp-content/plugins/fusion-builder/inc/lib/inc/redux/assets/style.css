@@ -3,8 +3,6 @@
 }
 .no-border-radius {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -12,15 +10,12 @@
 }
 .no-box-shadow {
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
 }
 .transition {
   transition: all 200ms ease-in-out;
 }
 .select3-drop {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -28,7 +23,6 @@
   background: #F4F2F2;
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
 }
 .select3-drop.select3-drop-active,
 .select3-drop.select3-drop-active.select3-drop-above {
@@ -119,10 +113,7 @@
 .fusionredux-container #fusionredux-form-wrapper .button-primary {
   text-shadow: none;
   border-radius: 0;
-  -moz-border-radius: 0;
-  -webkit-border-radius: 0;
   box-shadow: none;
-  -webkit-box-shadow: none;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-sidebar {
   width: 250px;
@@ -348,21 +339,18 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-container-multi .select3-choices {
   padding: 0;
   background: #fff;
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-flex-wrap: wrap;
-      -ms-flex-wrap: wrap;
-          flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
   border: 1px solid #E7E7E7 !important;
   outline: none;
   box-shadow: none !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-container-multi .select3-search-field {
   display: none;
-  -webkit-flex-grow: 1;
-      -ms-flex-positive: 1;
-          flex-grow: 1;
+  -ms-flex-positive: 1;
+      flex-grow: 1;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-container-multi .select3-search-field:first-child {
   display: block;
@@ -383,9 +371,7 @@
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-container-multi .select3-search-choice-close {
   top: 50%;
-  -webkit-transform: translateY(-50%);
-      -ms-transform: translateY(-50%);
-          transform: translateY(-50%);
+  transform: translateY(-50%);
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field[data-id="header_layout"] .fusionredux_field_th {
   padding-right: 60px !important;
@@ -453,10 +439,7 @@
   font-size: 12px;
   background-color: #fff;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -476,10 +459,6 @@
   width: 68px;
   padding-top: 3px;
   padding-bottom: 3px;
-}
-.fusionredux-container #fusionredux-form-wrapper .fusionredux-main input#fusionredux_save {
-  background-color: $color_accent_2 !important;
-  color: $color_text_menu_top_level_active !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-typography-container .select_wrapper {
   max-width: calc(50% - 10px) !important;
@@ -505,10 +484,7 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-repeater .fusionredux-repeater-accordion-repeater .ui-accordion-content,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-repeater .fusionredux-repeater-accordion-repeater h3.ui-accordion-header {
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -521,6 +497,36 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-repeater .fusionredux-repeater-accordion-repeater h4 {
   margin: 5px 0;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-sortable .fusionredux-sortable li {
+  margin: 0 0 10px 0 !important;
+  padding: 0 7px;
+  width: 100%;
+  line-height: 1 !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: #f4f2f2;
+  box-sizing: border-box;
+  position: relative;
+  text-align: center;
+  cursor: move;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-sortable .fusionredux-sortable li:last-child {
+  margin-bottom: 0 !important;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-sortable .fusionredux-sortable li span {
+  margin: 0 !important;
+  height: 34px;
+  line-height: 34px;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-sortable .fusionredux-sortable .ui-sortable-placeholder {
+  background: #f3f3f3 !important;
+  border: 1px dashed rgba(0, 0, 0, 0.1) !important;
+  visibility: visible !important;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
+  animation: zoomIn 0.3s 1 cubic-bezier(0.77, 0, 0.175, 1);
+  display: block;
+}
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container {
@@ -529,25 +535,20 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container.wp-picker-active,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container.wp-picker-active,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container.wp-picker-active {
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-flex-wrap: wrap;
-      -ms-flex-wrap: wrap;
-          flex-wrap: wrap;
-  -webkit-justify-content: space-between;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  -ms-flex-pack: justify;
+      justify-content: space-between;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container.wp-picker-active .wp-picker-input-wrap,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container.wp-picker-active .wp-picker-input-wrap,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container.wp-picker-active .wp-picker-input-wrap {
-  display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
   display: inline-flex;
-  -webkit-justify-content: space-between;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
+  -ms-flex-pack: justify;
+      justify-content: space-between;
   width: 200px;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container.wp-picker-active .wp-picker-input-wrap label,
@@ -570,6 +571,7 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-picker,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-picker,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-picker {
+  overflow: hidden;
   width: 100% !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-picker .iris-palette,
@@ -605,7 +607,6 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-picker .iris-picker-inner,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-picker .iris-picker-inner,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-picker .iris-picker-inner {
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
 }
@@ -616,8 +617,6 @@
   margin-left: 15px !important;
   height: 100% !important;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -630,8 +629,6 @@
   right: 0;
   left: -3px;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -643,8 +640,6 @@
   width: calc(100% - 45px) !important;
   margin-right: 0;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -655,10 +650,25 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-picker.iris-border {
   padding-bottom: 30px !important;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-picker .iris-square-value,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-picker .iris-square-value,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-picker .iris-square-value {
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+  outline: none;
+  box-shadow: none;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-picker .iris-square-handle,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-picker .iris-square-handle,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-picker .iris-square-handle {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-palette-container,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-palette-container,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-typography .wp-picker-container .iris-palette-container {
-  display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
   width: calc(100% - 45px) !important;
@@ -672,14 +682,11 @@
   width: 19px !important;
   height: 19px !important;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color .wp-picker-container .iris-palette-container > .iris-palette:first-child,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-color_alpha .wp-picker-container .iris-palette-container > .iris-palette:first-child,
@@ -720,34 +727,43 @@
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .upload_button_div .button {
   border-radius: 0;
-  -moz-border-radius: 0;
-  -webkit-border-radius: 0;
   box-shadow: none;
-  -webkit-box-shadow: none;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusionredux-sticky #info_bar {
-  padding: 20px 50px;
+  padding: 20px 121px 20px 50px;
   height: 31px;
   background: #fff;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusionredux-sticky #info_bar .fusionredux-action_bar input {
   margin-top: 0;
 }
-.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
   float: left;
-  margin-right: 250px;
+  margin: 0;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 71px;
+  width: 71px;
+  border-left: 1px solid #dedede;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links a {
+  display: block;
+  height: 100%;
+  text-align: center;
   color: #666;
-  text-decoration: none;
-  margin-right: 10px;
-  line-height: 31px;
 }
-.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links a span.dashicons {
-  line-height: 31px;
-  margin-right: 6px;
-  font-size: 14px;
-  width: 14px;
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links a span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 3px;
+  font-size: 15px;
+  border: 2px solid #666;
+  border-radius: 50%;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main > .dashicons.dashicons-search {
   display: none;
@@ -757,12 +773,11 @@
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux_field_search {
   top: 20px;
-  left: 200px;
+  left: 140px;
   margin: 0;
   padding-left: 12px;
   width: 250px !important;
   background: #f4f2f2 !important;
-  border: none !important;
   color: #333;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .expand_options {
@@ -774,27 +789,40 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-import_export #fusionredux-import-action span {
   margin: 0 5px;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .el-arrow-up:before,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .el-arrow-up:before {
   content: "\f342";
   font-family: dashicons;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .el-arrow-down:before,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .el-arrow-down:before {
   content: "\f346";
   font-family: dashicons;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .el-arrow-right:before,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .el-arrow-right:before {
   content: "\f344";
   font-family: dashicons;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .el-arrow-left:before,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .el-arrow-left:before {
   content: "\f340";
   font-family: dashicons;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input {
   margin-right: 5px !important;
   width: calc(25% - 5px);
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-append .add-on,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-append .add-on,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-append .add-on,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-append .add-on,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-prepend .add-on,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-prepend .add-on,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-prepend .add-on,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-prepend .add-on {
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
   border-right: none !important;
@@ -803,10 +831,7 @@
   background-color: #fff;
   min-width: 31px;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -816,16 +841,31 @@
   border: none;
   padding: 0;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-append .add-on .icon-large,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-append .add-on .icon-large,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-append .add-on .icon-large,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-append .add-on .icon-large,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-prepend .add-on .icon-large,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-prepend .add-on .icon-large,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-prepend .add-on .icon-large,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-prepend .add-on .icon-large {
   height: 29px;
   line-height: 29px;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-append input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-append input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-append input,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-append input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-prepend input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input.input-prepend input,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input.input-prepend input,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input.input-prepend input {
   padding-top: 3px;
   padding-bottom: 3px;
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input input.mini[type="text"],
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-border_radius-input input.mini[type="text"],
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-spacing-input input.mini[type="text"],
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input input.mini[type="text"] {
   width: calc(100% - 33px);
 }
@@ -852,14 +892,11 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .ui-spinner-button,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   transition: all 200ms ease-in-out;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .button-primary,
@@ -879,17 +916,15 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input:not(.button-primary),
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main textarea {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   background: #f4f2f2 !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   transition: all 200ms ease-in-out;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #32373c;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-choice:active,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-drop:active,
@@ -901,36 +936,32 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main textarea:focus {
   border: 1px solid rgba(0, 0, 0, 0.11);
 }
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-action_bar input:not(.button-primary) {
+  color: #555;
+  border-color: #ccc;
+}
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-action_bar input:not(.button-primary):hover,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-action_bar input:not(.button-primary):active,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-action_bar input:not(.button-primary):focus {
+  color: #32373c;
+}
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-container .select3-choice {
   padding-left: 0.75em;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .select3-arrow {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   background: #f4f2f2 !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   transition: all 200ms ease-in-out;
   border-left: 1px solid rgba(0, 0, 0, 0.05);
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input[type=radio] {
   border-radius: 50% !important;
-  -moz-border-radius: 50% !important;
-  -webkit-border-radius: 50% !important;
   border: 1px solid rgba(0, 0, 0, 0.2);
-}
-.fusionredux-container #fusionredux-form-wrapper .fusionredux-main input[type=radio]:checked:before {
-  width: 10px;
-  height: 10px;
-  margin: 2px;
-  border-radius: 50%;
-  -moz-border-radius: 50%;
-  -webkit-border-radius: 50%;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input[type=radio] + span > p {
   margin-left: 25px;
@@ -941,13 +972,14 @@
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field-container .ui-buttonset .ui-state-active {
   background-image: none !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
   border-color: rgba(0, 0, 0, 0.1) !important;
   background-color: $color_accent_2 !important;
   color: $color_text_menu_top_level_active;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-switch .ui-buttonset label[for*="buttonsetno"].ui-state-active,
-.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field-container .ui-buttonset label[for*="buttonsetno"].ui-state-active {
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field-container .ui-buttonset label[for*="buttonsetno"].ui-state-active,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-switch .ui-buttonset label[for*="buttonsetoff"].ui-state-active,
+.fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field-container .ui-buttonset label[for*="buttonsetoff"].ui-state-active {
   background: $color_back_2 !important;
   color: $color_text_menu_top_level;
 }
@@ -965,21 +997,19 @@
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .wp-color-result {
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   box-shadow: none !important;
-  -webkit-box-shadow: none !important;
+  border-color: #ccc;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-switch .cb-disable.selected {
   background-image: none !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-switch .cb-enable.selected,
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field-container .ui-buttonset .ui-state-active {
-  border-color: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-text input {
   line-height: 1.75em;
@@ -1003,8 +1033,6 @@
   border: none;
   border-top: 2px solid $color_accent_2;
   border-radius: 0 !important;
-  -moz-border-radius: 0 !important;
-  -webkit-border-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
   border-top-left-radius: 0 !important;
@@ -1032,7 +1060,6 @@
   -webkit-touch-callout: none;
   -ms-touch-action: none;
   -webkit-user-select: none;
-     -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
   box-sizing: border-box;
@@ -1121,8 +1148,7 @@
   display: inline-block;
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-slider-container .noUi-handle.noUi-active {
-  -webkit-transform: scale3d(2.5, 2.5, 1);
-          transform: scale3d(2.5, 2.5, 1);
+  transform: scale3d(2.5, 2.5, 1);
 }
 .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-slider-container [disabled].noUi-slider {
   opacity: 0.5;
@@ -1718,7 +1744,7 @@
 .fusion-custom-color-scheme > div {
   padding-top: 25px;
 }
-.fusionredux-main .fusionredux-group-tab[data-rel="10"] .form-table tr:nth-child(3) {
+.fusionredux-main .form-table tr.color-scheme.fusion_options {
   border-bottom: none;
 }
 .color-scheme-selection .fusion_theme_options-color_scheme li img {
@@ -1776,31 +1802,76 @@
   display: inline !important;
 }
 /* Media Queries */
-@media only screen and (max-width: 1285px) {
+@media only screen and (max-width: 1370px) {
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
     margin-right: 0;
   }
-  .fusionredux-container #info_bar {
+  .fusionredux-container #fusionredux-form-wrapper div.fusionredux-main #fusionredux-sticky #info_bar {
+    margin-top: 31px;
+    padding-right: 50px;
     text-align: left;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper div.fusionredux-main #fusionredux-sticky #info_bar {
+    padding-left: 50px;
+    text-align: right;
   }
   .fusionredux-container .fusionredux-action_bar {
     float: none;
   }
+  .rtl .fusionredux-container .fusionredux-action_bar {
+    float: none !important;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+    position: absolute;
+    top: 10px;
+    left: 310px;
+    height: 30px;
+    width: 30px;
+    border: none;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+    right: 310px;
+    left: auto;
+    border: none;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux_field_search {
+    top: 10px;
+    left: 50px;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux_field_search {
+    right: 50px;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input,
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input {
     width: calc(35% - 5px);
   }
-  .fusionredux_field_search {
-    position: static;
-    margin-left: 30px !important;
-  }
-}
-@media only screen and (min-width: 1200px) {
-  .fusion_theme_options-custom_color_scheme_options {
-    width: 50%;
-    float: right;
-  }
 }
 @media only screen and (max-width: 1200px) {
+  .fusionredux-container .fusionredux-action_bar {
+    float: left;
+  }
+  .fusionredux-container .fusionredux-action_bar .spinner {
+    float: right;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux_field_search {
+    width: 200px !important;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
+    position: absolute;
+    top: 10px;
+    left: 255px;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
+    right: 255px;
+    left: auto;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+    left: 390px;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
+    right: 390px;
+    left: auto;
+  }
   .fusionredux-container #fusionredux-form-wrapper .form-table td,
   .fusionredux-container #fusionredux-form-wrapper .form-table th,
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-field[data-id="header_layout"] .fusionredux_field_th {
@@ -1837,11 +1908,20 @@
   .fusionredux-container .fusionredux-action_bar .spinner {
     display: none;
   }
+}
+@media only screen and (max-width: 782px) {
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusion-support-links {
     display: none;
   }
-}
-@media only screen and (max-width: 782px) {
+  #fusion-edit-on-front-end,
+  .fusionredux-action_bar #fusionredux_save,
+  .fusionredux-action_bar #fusionredux-defaults-section,
+  .fusionredux-action_bar #fusionredux-defaults {
+    padding-top: 0;
+    padding-bottom: 0;
+    font-size: 13px;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input,
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-spacing .field-spacing-input {
     width: 100%;
   }
@@ -1855,6 +1935,20 @@
 @media only screen and (max-width: 720px) {
   .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input#fusionredux_save {
     margin-right: 4px;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main input#fusionredux_save {
+    margin-right: 0;
+    margin-left: 4px;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
+    left: 50px;
+  }
+  .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
+    right: 50px;
+    left: auto;
+  }
+  .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux_field_search {
+    display: none;
   }
   #fusionredux-defaults-section {
     display: none;
@@ -1993,6 +2087,18 @@
   margin-left: 1px;
   margin-right: 0;
 }
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-append .add-on,
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .field-border_radius-input.input-prepend .add-on {
+  float: right;
+  border-style: solid solid solid none !important;
+  border-width: 1px 1px 1px medium !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main .fusionredux-container-border_radius .input-prepend input {
+  float: right;
+  margin-left: 1px;
+  margin-right: 0;
+}
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-sidebar .fusionredux-group-menu > li.active > a:after,
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-sidebar .fusionredux-group-menu > li.fusion-section-hover > a:after,
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-sidebar .fusionredux-group-menu li.activeChild > a:after {
@@ -2007,14 +2113,21 @@
   left: auto;
   right: 250px;
 }
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusionredux-sticky #info_bar {
+  padding: 20px 50px 20px 121px;
+}
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusion-support-links {
-  float: right;
-  margin-left: 250px;
-  margin-right: 0;
+  left: 0;
+  right: auto;
+  border-right: 1px solid #dedede;
+  border-left: none;
 }
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusion-support-links a span.dashicons {
   margin-left: 6px;
   margin-right: 0;
+}
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-main #fusion-edit-on-front-end {
+  float: right;
 }
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux_field_search {
   left: auto;
@@ -2041,16 +2154,16 @@
   padding-left: 5px;
   padding-right: 0;
 }
+.rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-field-container .field-border_radius-input.input-prepend,
 .rtl .fusionredux-container #fusionredux-form-wrapper .fusionredux-field-container .field-spacing-input.input-prepend {
   width: calc(45% - 5px);
 }
 .rtl .fusionredux-container .fusionredux-action_bar .spinner {
   float: right;
 }
+.field-border_radius-input .el.icon-large,
 #fusion_options-boxed_radius .el.icon-large {
-  -webkit-transform: rotate(-50deg);
-      -ms-transform: rotate(-50deg);
-          transform: rotate(-50deg);
+  transform: rotate(-50deg);
 }
 .fusionredux-main .fusionredux-element-highlight {
   display: inline-block;

@@ -1,4 +1,4 @@
-/* global fusionMenuConfig */
+/* global fusionMenuConfig, Fuse, fusionIconSearch, noUiSlider, wNumb */
 var FusionDelay = ( function() {
 	var timer = 0;
 
@@ -9,49 +9,78 @@ var FusionDelay = ( function() {
 }() );
 
 function fusionIconPicker( value, id, container, search ) {
-	var icons       = fusionMenuConfig.fontawesomeicons,
-		output      = jQuery( '.fusion-icons-rendered' ).html(),
-		oldIconName = '';
+	var output           = jQuery( '.fusion-icons-rendered' ).html(),
+		outputNav        = jQuery( '.fusion-icon-picker-nav-rendered' ).html(),
+		$container       = jQuery( container ),
+		$containerParent = $container.parent(),
+		oldIconName      = '',
+		valueSelector    = '',
+		selectedSetId   = '';
 
 	if ( ! container.children().length ) {
 
 		if ( 'undefined' !== typeof value && '' !== value ) {
-			value = value.split( ' ' );
 
-			// Legacy FontAwesome 4.x icon, so we need check if it needs to be updated.
-			if ( 'undefined' === typeof value[1] ) {
-				value[1] = 'fas';
+			if ( 'fusion-prefix-' === value.substr( 0, 14 ) ) {
 
-				if ( 'undefined' !== typeof window['fusion-fontawesome-free-shims'] ) {
-					oldIconName = value[0].substr( 3 );
+				// Custom icon, we need to remove prefix.
+				value = value.replace( 'fusion-prefix-', '' );
+			} else {
+				value = value.split( ' ' );
 
-					jQuery.each( window['fusion-fontawesome-free-shims'], function( i, shim ) {
+				// Legacy FontAwesome 4.x icon, so we need check if it needs to be updated.
+				if ( 'undefined' === typeof value[ 1 ] ) {
+					value[ 1 ] = 'fas';
 
-							if ( shim[0] === oldIconName ) {
+					if ( 'undefined' !== typeof window[ 'fusion-fontawesome-free-shims' ] ) { // eslint-disable-line max-depth
+						oldIconName = value[ 0 ].substr( 3 );
+
+						jQuery.each( window[ 'fusion-fontawesome-free-shims' ], function( i, shim ) {
+
+							if ( shim[ 0 ] === oldIconName ) {
 
 								// Update icon name.
-								if ( null !== shim[2] ) {
-									value[0] = 'fa-' + shim[2];
+								if ( null !== shim[ 2 ] ) {
+									value[ 0 ] = 'fa-' + shim[ 2 ];
 								}
 
 								// Update icon subset.
-								if ( null !== shim[1] ) {
-									value[1] = shim[1];
+								if ( null !== shim[ 1 ] ) {
+									value[ 1 ] = shim[ 1 ];
 								}
 								return false;
 							}
-					} );
+						} );
 
-					// Update form field with new values.
-					jQuery( container ).parent().find( '.fusion-iconpicker-input' ).attr( 'value', value[0] + ' ' + value[1] );
+						// Update form field with new values.
+						$containerParent.find( '.fusion-iconpicker-input' ).attr( 'value', value[ 0 ] + ' ' + value[ 1 ] );
+					}
 				}
 			}
 		}
 
-		jQuery( container ).append( output );
+		// Add icon container and icon navigation.
+		$container.html( output ).before( '<div class="fusion-icon-picker-nav">' + outputNav + '</div>' );
 
-		if ( 2 === value.length ) {
-			jQuery( container ).find( '.' + value[0] + '.' + value[1] ).parent().addClass( 'selected-element' );
+		// Icon navigation link is clicked.
+		$containerParent.find( '.fusion-icon-picker-nav > a' ).on( 'click', function( e ) {
+			e.preventDefault();
+
+			jQuery( '.fusion-icon-picker-nav-active' ).removeClass( 'fusion-icon-picker-nav-active' );
+			jQuery( this ).addClass( 'fusion-icon-picker-nav-active' );
+			$container.find( '.fusion-icon-set' ).css( 'display', 'none' );
+			$container.find( jQuery( this ).attr( 'href' ) ).css( 'display', 'grid' );
+		} );
+
+		if ( '' !== value ) {
+
+			// FA or custom icon.
+			valueSelector = '.' + ( Array.isArray( value ) ? value.join( '.' ) : value );
+			$container.find( valueSelector ).parent().addClass( 'selected-element' ).css( 'display', 'flex' );
+
+			// Trigger click on parent nav tab item.
+			selectedSetId = $container.find( '.selected-element' ).closest( '.fusion-icon-set' ).prepend( $container.find( '.selected-element' ) ).attr( 'id' );
+			$containerParent.find( '.fusion-icon-picker-nav a[href="#' + selectedSetId + '"]' ).trigger( 'click' );
 		}
 
 	}
@@ -61,6 +90,10 @@ function fusionIconPicker( value, id, container, search ) {
 		var thisEl = jQuery( this );
 
 		FusionDelay( function() {
+			var options,
+				fuse,
+				result;
+
 			if ( thisEl.val() ) {
 				value = thisEl.val().toLowerCase();
 
@@ -68,21 +101,50 @@ function fusionIconPicker( value, id, container, search ) {
 					return;
 				}
 
-				_.each( jQuery( container ).find( 'i' ), function( icon ) {
-					name    = jQuery( icon ).data( 'name' ).toLowerCase(); // jshint ignore:line
-					altName = 'undefined' !== typeof jQuery( icon ).data( 'alt-name' ) ? jQuery( icon ).data( 'alt-name' ).toLowerCase() : ''; // jshint ignore:line
+				$container.find( '.fusion-icon-set .icon_preview' ).css( 'display', 'none' );
+				options = {
+					threshold: 0.2,
+					location: 0,
+					distance: 100,
+					maxPatternLength: 32,
+					minMatchCharLength: 3,
+					keys: [
+						'name',
+						'keywords',
+						'categories'
+					]
+				};
+				fuse = new Fuse( fusionIconSearch, options );
+				result = fuse.search( value );
 
-					if ( -1 !== name.search( value ) || -1 !== altName.search( value ) ) {
-						jQuery( icon ).parent().css( 'display', 'inline-block' );
-					} else {
-						jQuery( icon ).parent().css( 'display', 'none' );
+				_.each( result, function( resultIcon ) {
+					$container.find( '.icon_preview.' + resultIcon.name ).css( 'display', 'flex' );
+				} );
+
+				// Add attributes to iconset containers.
+				_.each( $container.find( '.fusion-icon-set' ), function( subContainer ) {
+					var hasSearchResults = false;
+					subContainer.classList.add( 'no-search-results' );
+					subContainer.querySelectorAll( '.icon_preview' ).forEach( function( icon ) {
+						if ( 'none' !== icon.style.display && subContainer.classList.contains( 'no-search-results' ) ) {
+							hasSearchResults = true;
+						}
+					} );
+
+					if ( ! hasSearchResults && ! subContainer.querySelector( '.no-search-results-notice' ) ) {
+						jQuery( subContainer ).append( '<div class="no-search-results-notice">' + fusionMenuConfig.no_results_in.replace( '%s', jQuery( 'a[href="#' + subContainer.id + '"]' ).html() ) + '</div>' );
+					} else if ( hasSearchResults ) {
+						subContainer.classList.remove( 'no-search-results' );
 					}
 				} );
 
 			} else {
-				jQuery( container ).find( '.icon_preview' ).css( 'display', 'inline-block' );
+				$container.find( '.fusion-icon-set .icon_preview' ).css( 'display', 'flex' );
+				_.each( $container.find( '.fusion-icon-set' ), function( subContainer ) {
+					subContainer.classList.remove( 'no-search-results' );
+				} );
 			}
-		}, 500 );
+		}, 100 );
 	} );
 
 	// Iconpicker select/deselect handler.
@@ -91,26 +153,38 @@ function fusionIconPicker( value, id, container, search ) {
 
 		var fontName,
 			subset = 'fas',
-			$i     = jQuery( this ).find( 'i' );
+			$i     = jQuery( this ).find( 'i' ),
+			fielDValue  = '';
 
 		e.preventDefault();
 
 		fontName = 'fa-' + jQuery( this ).find( 'i' ).attr( 'data-name' );
 
-		if ( $i.hasClass( 'fab' ) ) {
+		if ( ! $i.hasClass( 'fas' ) && ! $i.hasClass( 'fab' ) && ! $i.hasClass( 'far' ) && ! $i.hasClass( 'fal' ) ) {
+
+			// Custom icon set, so we need to add prefix.
+			fielDValue = 'fusion-prefix-' + jQuery( this ).find( 'i' ).attr( 'class' );
+		} else if ( $i.hasClass( 'fab' ) ) {
 			subset = 'fab';
 		} else if ( $i.hasClass( 'far' ) ) {
 			subset = 'far';
+		} else if ( $i.hasClass( 'fal' ) ) {
+			subset = 'fal';
+		}
+
+		// FA icon.
+		if ( '' === fielDValue ) {
+			fielDValue = fontName + ' ' + subset;
 		}
 
 		if ( jQuery( this ).hasClass( 'selected-element' ) ) {
-			jQuery( this ).find( 'i' ).parent().parent().find( '.selected-element' ).removeClass( 'selected-element' );
-			jQuery( this ).find( 'i' ).parent().parent().parent().find( '.fusion-iconpicker-input' ).attr( 'value', '' ).trigger( 'change' );
+			$containerParent.find( '.selected-element' ).removeClass( 'selected-element' );
+			$containerParent.find( '.fusion-iconpicker-input' ).attr( 'value', '' ).trigger( 'change' );
 
 		} else {
-			jQuery( this ).find( 'i' ).parent().parent().find( '.selected-element' ).removeClass( 'selected-element' );
+			$containerParent.find( '.selected-element' ).removeClass( 'selected-element' );
 			jQuery( this ).find( 'i' ).parent().addClass( 'selected-element' );
-			jQuery( this ).find( 'i' ).parent().parent().parent().find( '.fusion-iconpicker-input' ).attr( 'value', fontName + ' ' + subset ).trigger( 'change' );
+			$containerParent.find( '.fusion-iconpicker-input' ).attr( 'value', fielDValue ).trigger( 'change' );
 		}
 	} );
 
@@ -142,7 +216,9 @@ jQuery( window ).load( function() {
 			$holder      = jQuery( this ).parents( '.menu-item-settings' ),
 			$modal       = jQuery( this ).parent().find( '.fusion-builder-modal-settings-container' ),
 			$colorPicker = jQuery( this ).parent().find( '.fusion-builder-color-picker-hex' ),
-			$clone;
+			$clone,
+			$rangeSlider,
+			$i;
 
 		event.preventDefault();
 		if ( 'undefined' !== typeof $id ) {
@@ -155,10 +231,10 @@ jQuery( window ).load( function() {
 		jQuery( 'body' ).addClass( 'fusion_builder_no_scroll' );
 
 		// Button set functionality.
-		jQuery( $modal ).find( '.fusion-form-radio-button-set a' ).on( 'click', function( event ) {
+		jQuery( $modal ).find( '.fusion-form-radio-button-set a' ).on( 'click', function( scopedEvent ) {
 			var $radiosetcontainer;
 
-			event.preventDefault();
+			scopedEvent.preventDefault();
 			$radiosetcontainer = jQuery( this ).parents( '.fusion-form-radio-button-set' );
 			$radiosetcontainer.find( '.ui-state-active' ).removeClass( 'ui-state-active' );
 			jQuery( this ).addClass( 'ui-state-active' );
@@ -175,11 +251,14 @@ jQuery( window ).load( function() {
 			dropdownCssClass: 'avada-select2',
 			width: '100%'
 		} );
+
 		if ( $colorPicker.length ) {
 			$colorPicker.each( function() {
-				jQuery( this ).wpColorPicker( {
-					palettes: [ '#000000', '#ffffff', '#f44336', '#E91E63', '#03A9F4', '#00BCD4', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#607D8B' ]
-				} );
+				if ( ! jQuery( this ).closest( '.wp-picker-container' ).length ) {
+					jQuery( this ).wpColorPicker( {
+						palettes: [ '#000000', '#ffffff', '#f44336', '#E91E63', '#03A9F4', '#00BCD4', '#8BC34A', '#FFEB3B', '#FFC107', '#FF9800', '#607D8B' ]
+					} );
+				}
 			} );
 		}
 
@@ -195,11 +274,11 @@ jQuery( window ).load( function() {
 			$i = 0;
 
 			// Method for retreiving decimal places from step
-			Number.prototype.countDecimals = function() {
+			Number.prototype.countDecimals = function() { // eslint-disable-line no-extend-native
 				if ( Math.floor( this.valueOf() ) === this.valueOf() ) {
 					return 0;
 				}
-				return this.toString().split( '.' )[1].length || 0;
+				return this.toString().split( '.' )[ 1 ].length || 0;
 			};
 
 			// Each slider on page, determine settings and create slider
@@ -211,13 +290,13 @@ jQuery( window ).load( function() {
 					$max          = jQuery( this ).data( 'max' ),
 					$step         = jQuery( this ).data( 'step' ),
 					$direction    = jQuery( this ).data( 'direction' ),
-					$value        = $rangeInput.val(),
+					scopedVal     = $rangeInput.val(),
 					$decimals     = $step.countDecimals(),
 					$rangeDefault = ( jQuery( this ).parents( '.fusion-builder-option' ).find( '.fusion-range-default' ).length ) ? jQuery( this ).parents( '.fusion-builder-option' ).find( '.fusion-range-default' ) : false,
 					$hiddenValue  = ( $rangeDefault ) ? jQuery( this ).parent().find( '.fusion-hidden-value' ) : false,
 					$defaultValue = ( $rangeDefault ) ? jQuery( this ).parents( '.fusion-builder-option' ).find( '.fusion-range-default' ).data( 'default' ) : false;
 
-				createSlider( $i, $targetId, $rangeInput, $min, $max, $step, $value, $decimals, $rangeDefault, $hiddenValue, $defaultValue, $direction );
+				createSlider( $i, $targetId, $rangeSlider, $rangeInput, $min, $max, $step, scopedVal, $decimals, $rangeDefault, $hiddenValue, $defaultValue, $direction );
 
 				$i++;
 			} );
@@ -228,7 +307,8 @@ jQuery( window ).load( function() {
 
 	// On cancel.
 	$wrapEl.on( 'click', '.fusion-builder-modal-close', function( event ) {
-		var $backup = jQuery( '.fusion-menu-clone' ).find( '.fusion-builder-modal-settings-container' ).hide();
+		var $backup = jQuery( '.fusion-menu-clone' ).find( '.fusion-builder-modal-settings-container' ).hide(),
+			colorPickers = jQuery( this ).closest( '.fusion-builder-modal-settings-container' ).find( '.fusion-builder-option .wp-color-picker' );
 
 		event.preventDefault();
 
@@ -236,7 +316,14 @@ jQuery( window ).load( function() {
 			jQuery( this ).closest( '.widget' ).css( 'z-index', '100' );
 		}
 
-		jQuery( '.fusion-builder-option .wp-color-picker' ).wpColorPicker( 'close' );
+		if ( colorPickers.length ) {
+			colorPickers.each( function() {
+				if ( jQuery( this ).closest( '.wp-picker-container' ).hasClass( 'wp-picker-active' ) ) {
+					jQuery( this ).wpColorPicker( 'close' );
+				}
+			} );
+		}
+
 		jQuery( '.fusion-builder-option select.select2-hidden-accessible' ).selectWoo( 'destroy' );
 		jQuery( '.fusion-active' ).removeClass( 'fusion-active' );
 		jQuery( this ).parents( '.fusion-builder-modal-settings-container' ).replaceWith( $backup );
@@ -249,7 +336,10 @@ jQuery( window ).load( function() {
 
 	// On outside click.
 	$wrapEl.on( 'click', itemWrapEl + ' .fusion_builder_modal_overlay', function( event ) {
-		var $backup = jQuery( '.fusion-menu-clone' ).find( '.fusion-builder-modal-settings-container' ).hide();
+		var $backup = jQuery( '.fusion-menu-clone' ).find( '.fusion-builder-modal-settings-container' ).hide(),
+			settingsContainer = jQuery( this ).next( '.fusion-builder-modal-settings-container' ),
+			colorPickers = settingsContainer.find( '.fusion-builder-option .wp-color-picker' ),
+			rangeSlider = settingsContainer.find( '.fusion-builder-option.avada-range .fusion-slider-container' );
 
 		event.preventDefault();
 
@@ -257,12 +347,20 @@ jQuery( window ).load( function() {
 			jQuery( this ).closest( '.widget' ).css( 'z-index', '100' );
 		}
 
-		if ( 'undefined' !== typeof $rangeSlider && 0 < $rangeSlider.length ) {
-			$rangeSlider.each( function() {
+		if ( 'undefined' !== typeof rangeSlider && 0 < rangeSlider.length ) {
+			rangeSlider.each( function() {
 				this.noUiSlider.destroy();
 			} );
 		}
-		jQuery( '.fusion-builder-option .wp-color-picker' ).wpColorPicker( 'close' );
+
+		if ( colorPickers.length ) {
+			colorPickers.each( function() {
+				if ( jQuery( this ).closest( '.wp-picker-container' ).hasClass( 'wp-picker-active' ) ) {
+					jQuery( this ).wpColorPicker( 'close' );
+				}
+			} );
+		}
+
 		jQuery( '.fusion-builder-option select.select2-hidden-accessible' ).selectWoo( 'destroy' );
 		jQuery( '.fusion-active' ).removeClass( 'fusion-active' );
 		jQuery( this ).next().replaceWith( $backup );
@@ -274,28 +372,40 @@ jQuery( window ).load( function() {
 
 	// On save,
 	$wrapEl.on( 'click', '.fusion-builder-modal-save', function( event ) {
+		var settingsContainer = jQuery( this ).closest( '.fusion-builder-modal-settings-container' ),
+			colorPickers = jQuery( this ).closest( '.fusion-builder-modal-settings-container' ).find( '.fusion-builder-option .wp-color-picker' ),
+			rangeSlider = settingsContainer.find( '.fusion-builder-option.avada-range .fusion-slider-container' );
+
 		event.preventDefault();
 
 		if ( '.widget-inside' === itemWrapEl  && 'auto' !== jQuery( this ).closest( '.widget' ).css( 'z-index' ) ) {
 			jQuery( this ).closest( '.widget' ).css( 'z-index', '100' );
 		}
 
-		if ( 'undefined' !== typeof $rangeSlider && 0 < $rangeSlider.length ) {
-			$rangeSlider.each( function() {
+		if ( 'undefined' !== typeof rangeSlider && 0 < rangeSlider.length ) {
+			rangeSlider.each( function() {
 				this.noUiSlider.destroy();
 			} );
 		}
-		jQuery( '.fusion-builder-option .wp-color-picker' ).wpColorPicker( 'close' );
+
+		if ( colorPickers.length ) {
+			colorPickers.each( function() {
+				if ( jQuery( this ).closest( '.wp-picker-container' ).hasClass( 'wp-picker-active' ) ) {
+					jQuery( this ).wpColorPicker( 'close' );
+				}
+			} );
+		}
+
 		jQuery( '.fusion-builder-option select.select2-hidden-accessible' ).selectWoo( 'destroy' );
 		jQuery( '.fusion-active' ).removeClass( 'fusion-active' );
 		jQuery( this ).parents( '.fusion-builder-modal-settings-container' ).hide();
 		jQuery( '.fusion_builder_modal_overlay' ).hide();
 		jQuery( 'body' ).removeClass( 'fusion_builder_no_scroll' );
 		jQuery( '.fusion-menu-clone' ).html( '' );
+
 	} );
 
-
-	function createSlider( $slide, $targetId, $rangeInput, $min, $max, $step, $value, $decimals, $rangeDefault, $hiddenValue, $defaultValue, $direction ) {
+	function createSlider( $slide, $targetId, $rangeSlider, $rangeInput, $min, $max, $step, $value, $decimals, $rangeDefault, $hiddenValue, $defaultValue, $direction ) {
 
 		// Create slider with values passed on in data attributes.
 		var $slider = noUiSlider.create( $rangeSlider[ $slide ], {
@@ -303,8 +413,8 @@ jQuery( window ).load( function() {
 				step: $step,
 				direction: $direction,
 				range: {
-					'min': $min,
-					'max': $max
+					min: $min,
+					max: $max
 				},
 				format: wNumb( {
 					decimals: $decimals
@@ -321,7 +431,7 @@ jQuery( window ).load( function() {
 		if ( $rangeDefault ) {
 			$rangeDefault.on( 'click', function( e ) {
 				e.preventDefault();
-				$rangeSlider[$slide].noUiSlider.set( $defaultValue );
+				$rangeSlider[ $slide ].noUiSlider.set( $defaultValue );
 				$hiddenValue.val( '' );
 				jQuery( this ).parent().addClass( 'checked' );
 
@@ -336,10 +446,10 @@ jQuery( window ).load( function() {
 		$slider.on( 'update', function( values, handle ) {
 			if ( $rangeDefault && $notFirst ) {
 				$rangeDefault.parent().removeClass( 'checked' );
-				$hiddenValue.val( values[handle] );
+				$hiddenValue.val( values[ handle ] );
 			}
 			$notFirst = true;
-			jQuery( this.target ).closest( '.fusion-slider-container' ).prev().val( values[handle] );
+			jQuery( this.target ).closest( '.fusion-slider-container' ).prev().val( values[ handle ] );
 			jQuery( '#' + $targetId ).trigger( 'change' );
 			if ( jQuery( '#' + $targetId ).length ) {
 				jQuery( '#' + $targetId ).trigger( 'fusion-changed' );
@@ -360,37 +470,76 @@ jQuery( window ).load( function() {
 		} );
 
 		// On manual input change, update slider position
-		$rangeInput.on( 'keyup', function( values, handle ) {
-			if ( $rangeDefault ) {
-				$rangeDefault.parent().removeClass( 'checked' );
-				$hiddenValue.val( values[handle] );
+		$rangeInput.on( 'keyup', function() {
+			var rangeSlider = jQuery( this ).next( '.fusion-slider-container' );
 
-				// Specific for Widget modals.
-				if ( '.widget-inside' === itemWrapEl ) {
-					jQuery( this ).closest( '.widget' ).find( '.widget-control-save' ).prop( 'disabled', false );
-				}
-			}
+			if ( this.value !== rangeSlider[ $slide ].noUiSlider.get() ) {
 
-			if ( this.value !== $rangeSlider[$slide].noUiSlider.get() ) {
-				$rangeSlider[$slide].noUiSlider.set( this.value );
+				// This triggers 'update' event.
+				rangeSlider[ $slide ].noUiSlider.set( this.value );
 			}
 		} );
 	}
 } );
 
-
 jQuery( document ).ready( function() {
 
 	( function initIconPicker() {
-			var icons  = fusionMenuConfig.fontawesomeicons,
-				output  = '<div class="fusion-icons-rendered" style="height:0px; overflow:hidden;">';
+		var icons       = fusionMenuConfig.fontawesomeicons,
+			output      = '<div class="fusion-icons-rendered" style="height:0px; overflow:hidden;">',
+			outputSets  = {
+				fas: '',
+				fab: '',
+				far: '',
+				fal: ''
+			},
+			iconSubsets = {
+				fas: 'Solid',
+				far: 'Regular',
+				fal: 'Light',
+				fab: 'Brands'
+			},
+			outputNav = '<div class="fusion-icon-picker-nav-rendered" style="height:0px; overflow:hidden;">',
+			isSearchDefined = 'undefined' !== typeof fusionIconSearch && Array.isArray( fusionIconSearch );
 
-			_.each( icons, function( icon, key ) {
-				output += '<span class="icon_preview icon-' + icon[0] + '"><i class="' + icon[0] + ' ' + icon[1] + '" data-name="' + icon[0].substr( 3 ) + '" data-alt-name="' + icon[2] + '"></i></span>';
+		// Iterate through all FA icons and divide them into sets (one icon can belong to multiple sets).
+		_.each( icons, function( icon, key ) {
+
+			_.each( icon[ 1 ], function( iconSubset ) {
+				if ( -1 !== fusionMenuConfig.fontawesomesubsets.indexOf( iconSubset ) ) {
+					outputSets[ iconSubset ] += '<span class="icon_preview ' + key + '" title="' + key + ' - ' + iconSubsets[ iconSubset ] + '"><i class="' + icon[ 0 ] + ' ' + iconSubset + '" data-name="' + icon[ 0 ].substr( 3 ) + '"></i></span>';
+				}
+			} );
+		} );
+
+		// Add FA sets to output.
+		_.each( iconSubsets, function( label, key ) {
+			if ( -1 !== fusionMenuConfig.fontawesomesubsets.indexOf( key ) ) {
+				outputNav += '<a href="#fusion-' + key + '">' + label + '</a>';
+				output    += '<div id="fusion-' + key + '" class="fusion-icon-set">' + outputSets[ key ] + '</div>';
+			}
+		} );
+
+		// WIP: Add custom icons.
+		icons = fusionMenuConfig.customIcons;
+		_.each( icons, function( iconSet, IconSetKey ) {
+			outputNav += '<a href="#' + IconSetKey + '">' + iconSet.name + '</a>';
+			output    += '<div id="' + IconSetKey + '" class="fusion-icon-set fusion-custom-icon-set">';
+			_.each( iconSet.icons, function( icon ) {
+
+				if ( isSearchDefined ) {
+					fusionIconSearch.push( { name: icon } );
+				}
+
+				output += '<span class="icon_preview ' + icon + '" title="' + iconSet.css_prefix + icon + '"><i class="' + iconSet.css_prefix + icon + '" data-name="' + icon + '"></i></span>';
 			} );
 			output += '</div>';
-			jQuery( 'body' ).append( output );
+		} );
 
-		} () );
+		outputNav += '</div>';
+		output    += '</div>';
 
+		jQuery( 'body' ).append( output + outputNav );
+
+	}() );
 } );

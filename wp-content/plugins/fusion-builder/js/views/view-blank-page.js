@@ -17,9 +17,6 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				'click .fusion-builder-video-button': 'openVideoModal'
 			},
 
-			initialize: function() {
-			},
-
 			render: function() {
 				this.$el.html( this.template( this.model.toJSON() ) );
 
@@ -38,6 +35,7 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				event.preventDefault();
 
 				jQuery( '#video-dialog' ).dialog( 'open' );
+				jQuery( '#video-dialog iframe' )[ 0 ].contentWindow.postMessage( '{"event":"command","func":"playVideo","args":""}', '*' );
 			},
 
 			addContainer: function( event ) {
@@ -62,28 +60,30 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				// Process default options for shortcode.
 				_.each( defaultParams, function( param )  {
 					if ( _.isObject( param.value ) ) {
-						value = param.default;
+						value = param[ 'default' ];
 					} else {
 						value = param.value;
 					}
-					params[param.param_name] = value;
+					params[ param.param_name ] = value;
 
 					if ( 'dimension' === param.type && _.isObject( param.value ) ) {
-						_.each( param.value, function( value, name )  {
-							params[name] = value;
+						_.each( param.value, function( val, name )  {
+							params[ name ] = val;
 						} );
 					}
 				} );
 
-				this.collection.add( [ {
-					type: 'fusion_builder_container',
-					added: 'manually',
-					element_type: 'fusion_builder_container',
-					cid: moduleID,
-					params: params,
-					view: this,
-					created: 'auto'
-				} ] );
+				this.collection.add( [
+					{
+						type: 'fusion_builder_container',
+						added: 'manually',
+						element_type: 'fusion_builder_container',
+						cid: moduleID,
+						params: params,
+						view: this,
+						created: 'auto'
+					}
+				] );
 
 				this.remove();
 			},
@@ -100,5 +100,14 @@ var FusionPageBuilder = FusionPageBuilder || {};
 				this.remove();
 			}
 		} );
+
+		jQuery( 'body' ).on( 'click', '.ui-dialog-titlebar-close', function() {
+			var dialog = jQuery( this ).closest( '.ui-dialog' );
+			if ( dialog.find( '#video-dialog' ).length ) {
+				dialog.find( '#video-dialog iframe' )[ 0 ].contentWindow.postMessage( '{"event":"command","func":"pauseVideo","args":""}', '*' );
+				dialog.hide();
+			}
+		} );
+
 	} );
-} ( jQuery ) );
+}( jQuery ) );

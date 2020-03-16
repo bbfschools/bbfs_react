@@ -30,6 +30,10 @@
 	display: block;
 }
 
+.menu-item-depth-0 .field-megamenu-background-image {
+	display: block;
+}
+
 .menu-item-depth-1.fusion-megamenu.fusion-megamenu-fullwidth .field-megamenu-columnwidth {
 	display: none;
 }

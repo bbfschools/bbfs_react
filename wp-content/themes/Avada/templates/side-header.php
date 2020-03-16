@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  */
@@ -22,7 +22,7 @@ do_action( 'avada_before_header_wrapper' );
 $sticky_header_logo = ( Avada()->settings->get( 'sticky_header_logo' ) ) ? true : false;
 $mobile_logo        = ( Avada()->settings->get( 'mobile_logo' ) ) ? true : false;
 
-$side_header_css    = 'clearfix fusion-mobile-menu-design-' . strtolower( Avada()->settings->get( 'mobile_menu_design' ) ) . ' fusion-sticky-logo-' . $sticky_header_logo . ' fusion-mobile-logo-' . $mobile_logo . ' fusion-sticky-menu-' . has_nav_menu( 'sticky_navigation' ) . ( Avada()->settings->get( 'header_shadow' ) ? ' header-shadow' : '' );
+$side_header_css = 'clearfix fusion-mobile-menu-design-' . strtolower( Avada()->settings->get( 'mobile_menu_design' ) ) . ' fusion-sticky-logo-' . $sticky_header_logo . ' fusion-mobile-logo-' . $mobile_logo . ' fusion-sticky-menu-' . has_nav_menu( 'sticky_navigation' ) . ( Avada()->settings->get( 'header_shadow' ) ? ' header-shadow' : '' );
 
 if ( 'flyout' === Avada()->settings->get( 'mobile_menu_design' ) ) {
 	$side_header_css .= ' fusion-header-has-flyout-menu';
@@ -49,25 +49,25 @@ if ( 'flyout' === Avada()->settings->get( 'mobile_menu_design' ) ) {
 
 		<?php avada_mobile_menu_search(); ?>
 
-		<?php if ( 'Leave Empty' != Avada()->settings->get( 'header_left_content' ) || 'Leave Empty' != Avada()->settings->get( 'header_right_content' ) ) : ?>
+		<?php if ( 'leave_empty' !== Avada()->settings->get( 'header_left_content' ) || 'leave_empty' !== fusion_get_option( 'header_right_content' ) ) : ?>
 			<?php $content_1 = avada_secondary_header_content( 'header_left_content' ); ?>
 			<?php $content_2 = avada_secondary_header_content( 'header_right_content' ); ?>
 
 			<div class="side-header-content side-header-content-1-2">
 				<?php if ( $content_1 ) : ?>
 					<div class="side-header-content-1 fusion-clearfix">
-					<?php echo $content_1; // WPCS: XSS ok. ?>
+					<?php echo $content_1; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 				<?php endif; ?>
 				<?php if ( $content_2 ) : ?>
 					<div class="side-header-content-2 fusion-clearfix">
-					<?php echo $content_2; // WPCS: XSS ok. ?>
+					<?php echo $content_2; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 					</div>
 				<?php endif; ?>
 			</div>
 		<?php endif; ?>
 
-		<?php if ( 'None' != Avada()->settings->get( 'header_v4_content' ) ) : ?>
+		<?php if ( 'none' !== fusion_get_option( 'header_v4_content' ) ) : ?>
 			<div class="side-header-content side-header-content-3">
 				<?php avada_header_content_3(); ?>
 			</div>
@@ -102,5 +102,3 @@ if ( 'flyout' === Avada()->settings->get( 'mobile_menu_design' ) ) {
 <?php
 // The avada_after_header_wrapper hook.
 do_action( 'avada_after_header_wrapper' );
-
-/* Omit closing PHP tag to avoid "Headers already sent" issues. */

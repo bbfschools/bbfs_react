@@ -1,11 +1,20 @@
+<?php
+/**
+ * Underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-block-module-settings-table-template">
 
 	<div class="fusion-builder-modal-top-container">
-		<# if ( typeof( fusionAllElements[atts.element_type] ) !== 'undefined' ) { #>
-				<h2>{{ fusionAllElements[atts.element_type].name }}</h2>
+		<# if ( 'undefined' !== typeof fusionAllElements[ atts.element_type ] ) { #>
+				<h2>{{ fusionAllElements[ atts.element_type ].name }}</h2>
 		<# }; #>
 
 		<div class="fusion-builder-modal-close fusiona-plus2"></div>
+
 		<ul class="fusion-tabs-menu">
 			<li class=""><a href="#table-options">{{ fusionBuilderText.table_options }}</a></li>
 			<li class=""><a href="#table">{{ fusionBuilderText.table }}</a></li>
@@ -15,7 +24,7 @@
 	<div class="fusion-builder-modal-bottom-container">
 		<a href="#" class="fusion-builder-modal-save"><span>
 
-			<# if ( FusionPageBuilderApp.shortcodeGenerator === true && FusionPageBuilderApp.shortcodeGeneratorMultiElementChild !== true ) { #>
+			<# if ( true === FusionPageBuilderApp.shortcodeGenerator && true !== FusionPageBuilderApp.shortcodeGeneratorMultiElementChild ) { #>
 				{{ fusionBuilderText.insert }}
 			<# } else { #>
 				{{ fusionBuilderText.save }}
@@ -115,10 +124,10 @@
 									price_shortcode_element = price_shortcode.match( inner_reg_exp ),
 									price_shortcode_attributes = price_shortcode_element[3] !== '' ? window.wp.shortcode.attrs( price_shortcode_element[3] ) : '',
 
-									currency = typeof price_shortcode_attributes.named['currency'] !== 'undefined' ? price_shortcode_attributes.named['currency'] : '',
-									currency_position = typeof price_shortcode_attributes.named['currency_position'] !== 'undefined' ? price_shortcode_attributes.named['currency_position'] : 'left',
-									price = typeof price_shortcode_attributes.named['price'] !== 'undefined' ? price_shortcode_attributes.named['price'] : '',
-									time = typeof price_shortcode_attributes.named['time'] !== 'undefined' ? price_shortcode_attributes.named['time'] : '';
+									currency = typeof price_shortcode_attributes.named !== 'undefined' && typeof price_shortcode_attributes.named['currency'] !== 'undefined' ? price_shortcode_attributes.named['currency'] : '',
+									currency_position = typeof price_shortcode_attributes.named !== 'undefined' && typeof price_shortcode_attributes.named['currency_position'] !== 'undefined' ? price_shortcode_attributes.named['currency_position'] : 'left',
+									price = typeof price_shortcode_attributes.named !== 'undefined' && typeof price_shortcode_attributes.named['price'] !== 'undefined' ? price_shortcode_attributes.named['price'] : '',
+									time = typeof price_shortcode_attributes.named !== 'undefined' && typeof price_shortcode_attributes.named['time'] !== 'undefined' ? price_shortcode_attributes.named['time'] : '';
 
 									td_pricing[column_counter] = {
 										currency : currency,
@@ -179,10 +188,10 @@
 												<span>{{ fusionBuilderText.standout_design }}</span>
 												<div class="fusion-form-radio-button-set ui-buttonset th_standout-{{c}}">
 
-													<input type="hidden" id="standout-{{c}}" name="standout-{{c}}" value="{{th_standout[c]}}" class="button-set-value" />
-													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ typeof( th_standout[c] ) !== 'undefined' && th_standout[c] === 'no' ?  ' ui-state-active' : '' }}" data-value="no">{{ fusionBuilderText.no }}</a>
+													<input type="hidden" id="standout-{{c}}" name="standout-{{c}}" value="{{th_standout[ c ]}}" class="button-set-value" />
+													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ 'undefined' !== typeof th_standout[ c ] && 'no' === th_standout[ c ] ?  ' ui-state-active' : '' }}" data-value="no">{{ fusionBuilderText.no }}</a>
 
-													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ typeof( th_standout[c] ) !== 'undefined' && th_standout[c] === 'yes' ?  ' ui-state-active' : '' }}" data-value="yes">{{ fusionBuilderText.yes }}</a>
+													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ 'undefined' !== typeof th_standout[ c ] && 'yes' === th_standout[ c ] ?  ' ui-state-active' : '' }}" data-value="yes">{{ fusionBuilderText.yes }}</a>
 												</div>
 
 											</div>
@@ -207,10 +216,10 @@
 											<span>{{ fusionBuilderText.standout_design }}</span>
 											<div class="fusion-form-radio-button-set ui-buttonset th_standout-{{c}}">
 
-												<input type="hidden" id="standout-{{c}}" name="standout-{{c}}" value="{{th_standout[c]}}" class="button-set-value" />
-												<a href="#" class="ui-button buttonset-item{{ typeof( th_standout[c] ) !== 'undefined' && th_standout[c] === 'no' ?  ' ui-state-active' : '' }}" data-value="no">{{ fusionBuilderText.no }}</a>
+												<input type="hidden" id="standout-{{c}}" name="standout-{{c}}" value="{{th_standout[ c ]}}" class="button-set-value" />
+												<a href="#" class="ui-button buttonset-item{{ 'undefined' !== typeof th_standout[ c ] && 'no' === th_standout[ c ] ?  ' ui-state-active' : '' }}" data-value="no">{{ fusionBuilderText.no }}</a>
 
-												<a href="#" class="ui-button buttonset-item{{ typeof( th_standout[c] ) !== 'undefined' && th_standout[c] === 'yes' ?  ' ui-state-active' : '' }}" data-value="yes">{{ fusionBuilderText.yes }}</a>
+												<a href="#" class="ui-button buttonset-item{{ 'undefined' !== typeof th_standout[ c ] && 'yes' === th_standout[ c ] ?  ' ui-state-active' : '' }}" data-value="yes">{{ fusionBuilderText.yes }}</a>
 											</div>
 
 										</div>
@@ -238,9 +247,9 @@
 												<div class="fusion-form-radio-button-set ui-buttonset currencypos-{{c}}">
 
 													<input type="hidden" id="currencypos-{{c}}" name="currencypos-{{c}}" value="{{ td_pricing[c].currency_position }}" class="button-set-value currency-position" />
-													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ typeof( td_pricing[c].currency_position ) !== 'undefined' && td_pricing[c].currency_position === 'left' ?  ' ui-state-active' : '' }}" data-value="left">{{ fusionBuilderText.currency_before }}</a>
+													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ 'undefined' !== typeof td_pricing[ c ].currency_position && 'left' === td_pricing[ c ].currency_position ? ' ui-state-active' : '' }}" data-value="left">{{ fusionBuilderText.currency_before }}</a>
 
-													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ typeof( td_pricing[c].currency_position ) !== 'undefined' && td_pricing[c].currency_position === 'right' ?  ' ui-state-active' : '' }}" data-value="right">{{ fusionBuilderText.currency_after }}</a>
+													<a href="#" class="fusion-form-radio-button-set-button ui-button buttonset-item{{ 'undefined' !== typeof td_pricing[ c ].currency_position && 'right' === td_pricing[ c ].currency_position ? ' ui-state-active' : '' }}" data-value="right">{{ fusionBuilderText.currency_after }}</a>
 												</div>
 											</div>
 											<input type="text" class="price-input" placeholder="{{ fusionBuilderText.price }}" value="{{ td_pricing[c].price }}" />

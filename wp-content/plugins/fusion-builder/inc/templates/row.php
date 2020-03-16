@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-row-template">
 	<div class="fusion-builder-row-content fusion-builder-data-cid" data-cid="{{ cid }}">
 		<div id="fusion-builder-row-{{ cid }}" class="fusion-builder-row-container">

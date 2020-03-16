@@ -2,7 +2,7 @@
 Contributors: enviragallery, nathansingh, chrisakelley, dimensionmedia
 Tags: gallery, image gallery, photo gallery, video gallery, wordpress gallery plugin, gallery slider, gallery slideshow, gallery widget
 Requires at least: 4.4.0
-Tested up to: 5.3.0
+Tested up to: 5.3.2
 Requires PHP: 5.3
 Stable tag: trunk
 License: GNU General Public License v2.0 or later
@@ -208,6 +208,18 @@ Yes, Envira has full translation and localization support via the envira-gallery
 
 
 == Changelog ==
+
+1.7.6
+
+* Updated: Welcome Screen, tracking links.
+
+1.7.5.1
+
+* Updated: Welcome Screen.
+
+1.7.5
+
+* Updated: Welcome Screen, Lite vs Pro tab.
 
 1.7.4.2
 

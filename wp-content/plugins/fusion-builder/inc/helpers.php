@@ -1,6 +1,8 @@
 <?php
 /**
  * Fusion Builder helper functions.
+ *
+ * @package fusion-builder
  */
 
 // Exit if accessed directly.
@@ -16,12 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return string
  */
 function fusion_builder_fix_shortcodes( $content ) {
-	$replace_tags_from_to = array(
-		'<p>[' => '[',
-		']</p>' => ']',
-		']<br />' => ']',
+	$replace_tags_from_to = [
+		'<p>['      => '[',
+		']</p>'     => ']',
+		']<br />'   => ']',
 		"<br />\n[" => '[',
-	);
+	];
 
 	return strtr( $content, $replace_tags_from_to );
 }
@@ -43,25 +45,25 @@ function fusion_builder_get_video_provider( $video_string ) {
 		if ( isset( $id[1] ) ) {
 			$video_id = $id[1];
 		}
-	} else if ( preg_match( '/youtube\.com\/embed\/([^\&\?\/]+)/', $video_string, $id ) ) {
+	} elseif ( preg_match( '/youtube\.com\/embed\/([^\&\?\/]+)/', $video_string, $id ) ) {
 		if ( isset( $id[1] ) ) {
 			$video_id = $id[1];
 		}
-	} else if ( preg_match( '/youtube\.com\/v\/([^\&\?\/]+)/', $video_string, $id ) ) {
+	} elseif ( preg_match( '/youtube\.com\/v\/([^\&\?\/]+)/', $video_string, $id ) ) {
 		if ( isset( $id[1] ) ) {
 			$video_id = $id[1];
 		}
-	} else if ( preg_match( '/youtu\.be\/([^\&\?\/]+)/', $video_string, $id ) ) {
+	} elseif ( preg_match( '/youtu\.be\/([^\&\?\/]+)/', $video_string, $id ) ) {
 		if ( isset( $id[1] ) ) {
 			$video_id = $id[1];
 		}
 	}
 
 	if ( ! empty( $video_id ) ) {
-		return array(
+		return [
 			'type' => 'youtube',
 			'id'   => $video_id,
-		);
+		];
 	}
 
 	// Check for Vimeo.
@@ -72,24 +74,24 @@ function fusion_builder_get_video_provider( $video_string ) {
 	}
 
 	if ( ! empty( $video_id ) ) {
-		return array(
+		return [
 			'type' => 'vimeo',
 			'id'   => $video_id,
-		);
+		];
 	}
 
 	// Non-URL form.
 	if ( preg_match( '/^\d+$/', $video_string ) ) {
-		return array(
+		return [
 			'type' => 'vimeo',
 			'id'   => $video_string,
-		);
+		];
 	}
 
-	return array(
+	return [
 		'type' => 'youtube',
 		'id'   => $video_string,
-	);
+	];
 }
 
 /**
@@ -103,13 +105,13 @@ function fusion_builder_get_video_provider( $video_string ) {
  */
 function fusion_builder_animation_data( $animation_type = '', $animation_direction = '', $animation_speed = '', $animation_offset = '' ) {
 
-	$animation = array();
-	$animation['data'] = '';
+	$animation          = [];
+	$animation['data']  = '';
 	$animation['class'] = '';
 
 	if ( ! empty( $animation_type ) ) {
 
-		if ( ! in_array( $animation_type, array( 'bounce', 'flase', 'shake', 'rubberBand' ), true ) ) {
+		if ( ! in_array( $animation_type, [ 'bounce', 'flash', 'shake', 'rubberBand' ], true ) ) {
 			$animation_type = sprintf( '%1$sIn%2$s', $animation_type, ucfirst( $animation_direction ) );
 		}
 
@@ -139,7 +141,7 @@ function fusion_builder_animation_data( $animation_type = '', $animation_directi
  */
 function fusion_builder_available_animations() {
 
-	$animations = array(
+	$animations = [
 		''           => esc_attr__( 'None', 'fusion-builder' ),
 		'bounce'     => esc_attr__( 'Bounce', 'fusion-builder' ),
 		'fade'       => esc_attr__( 'Fade', 'fusion-builder' ),
@@ -148,7 +150,7 @@ function fusion_builder_available_animations() {
 		'shake'      => esc_attr__( 'Shake', 'fusion-builder' ),
 		'slide'      => esc_attr__( 'Slide', 'fusion-builder' ),
 		'zoom'       => esc_attr__( 'Zoom', 'fusion-builder' ),
-	);
+	];
 
 	return $animations;
 }
@@ -162,13 +164,12 @@ function fusion_builder_available_animations() {
 function fusion_builder_get_layerslider_slides() {
 	global $wpdb;
 	$slides_array[] = 'Select a slider';
-	// Table name.
-	$table_name = $wpdb->prefix . 'layerslider';
 
 	// Check if layer slider is active.
 	if ( shortcode_exists( 'layerslider' ) ) {
+
 		// Get sliders.
-		$sliders = $wpdb->get_results( "SELECT * FROM $table_name WHERE flag_hidden = '0' AND flag_deleted = '0' ORDER BY date_c ASC" ); // WPCS: unprepared SQL ok.
+		$sliders = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}layerslider WHERE flag_hidden = '0' AND flag_deleted = '0' ORDER BY date_c ASC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 		if ( ! empty( $sliders ) ) {
 			foreach ( $sliders as $key => $item ) {
@@ -194,7 +195,7 @@ function fusion_builder_get_layerslider_slides() {
  */
 function fusion_builder_get_revslider_slides() {
 	$revsliders[] = 'Select a slider';
-	$revsliders = array( '0' => 'Select a slider' );
+	$revsliders   = [ '' => 'Select a slider' ];
 
 	// Check if slider revolution is active.
 	if ( shortcode_exists( 'rev_slider' ) ) {
@@ -225,7 +226,7 @@ function fusion_builder_shortcodes_categories( $taxonomy, $empty_choice = false,
 	if ( ! $empty_choice_label ) {
 		$empty_choice_label = esc_attr__( 'Default', 'fusion-builder' );
 	}
-	$post_categories = array();
+	$post_categories = [];
 
 	if ( $empty_choice ) {
 		$post_categories[ $empty_choice_label ] = '';
@@ -237,10 +238,8 @@ function fusion_builder_shortcodes_categories( $taxonomy, $empty_choice = false,
 
 		if ( $get_categories && is_array( $get_categories ) ) {
 			foreach ( $get_categories as $cat ) {
-				if ( array_key_exists( 'slug', $cat ) &&
-					array_key_exists( 'name', $cat )
-				) {
-					$label = $cat->name . ( ( array_key_exists( 'count', $cat ) ) ? ' (' . $cat->count . ')' : '' );
+				if ( isset( $cat->slug ) && isset( $cat->name ) ) {
+					$label                                      = $cat->name . ( ( isset( $cat->count ) ) ? ' (' . $cat->count . ')' : '' );
 					$post_categories[ urldecode( $cat->slug ) ] = $label;
 				}
 			}
@@ -265,22 +264,21 @@ function fusion_builder_shortcodes_tags( $taxonomy, $empty_choice = false, $empt
 	if ( ! $empty_choice_label ) {
 		$empty_choice_label = esc_attr__( 'Default', 'fusion-builder' );
 	}
-	$post_tags = array();
+	$post_tags = [];
 
 	if ( $empty_choice ) {
 		$post_tags[ $empty_choice_label ] = '';
 	}
 
-	$get_terms = get_terms( $taxonomy, array( 'hide_empty' => true ) );
+	$get_terms = get_terms( $taxonomy, [ 'hide_empty' => true ] );
 
 	if ( ! is_wp_error( $get_terms ) ) {
 
 		if ( $get_terms && is_array( $get_terms ) ) {
 			foreach ( $get_terms as $term ) {
+				$label = $term->name . ( ( property_exists( $term, 'count' ) ) ? ' (' . $term->count . ')' : '' );
 
-					$label = $term->name . ( ( array_key_exists( 'count', $term ) ) ? ' (' . $term->count . ')' : '' );
-					$post_tags[ urldecode( $term->slug ) ] = $label;
-
+				$post_tags[ urldecode( $term->slug ) ] = $label;
 			}
 		}
 
@@ -300,145 +298,148 @@ function fusion_builder_shortcodes_tags( $taxonomy, $empty_choice = false, $empt
 function fusion_builder_column_layouts( $module = '' ) {
 
 	$layouts = apply_filters(
-		'fusion_builder_column_layouts', array(
-			array(
-				'layout'   => array( '' ),
+		'fusion_builder_column_layouts',
+		[
+			[
+				'layout'   => [ '' ],
 				'keywords' => esc_attr__( 'empty blank', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_1' ),
+			],
+			[
+				'layout'   => [ '1_1' ],
 				'keywords' => esc_attr__( 'full one 1', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_2' ],
 				'keywords' => esc_attr__( 'two half 2 1/2', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '1_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '1_3', '1_3' ],
 				'keywords' => esc_attr__( 'third thee 3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'four fourth 4 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '2_3', '1_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '2_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '2_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '3_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '3_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '3_4', '1_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_2' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_2', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_2', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '4_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '4_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '4_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '4_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_5', '2_5' ),
+			],
+			[
+				'layout'   => [ '3_5', '2_5' ],
 				'keywords' => esc_attr__( 'three fith two fifth 3/5 2/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '2_5', '3_5' ],
 				'keywords' => esc_attr__( 'two fifth three fifth 2/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '3_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '3_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '3_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_2' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '2_3', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '2_3', '1_6' ],
 				'keywords' => esc_attr__( 'one two six sixth 2/3 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '1_5', '1_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '1_5', '1_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one six sixth 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '5_6' ),
+			],
+			[
+				'layout'   => [ '5_6' ],
 				'keywords' => esc_attr__( 'five sixth 5/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '4_5' ),
+			],
+			[
+				'layout'   => [ '4_5' ],
 				'keywords' => esc_attr__( 'four fifth 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_4' ),
+			],
+			[
+				'layout'   => [ '3_4' ],
 				'keywords' => esc_attr__( 'three fourth 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_3' ),
+			],
+			[
+				'layout'   => [ '2_3' ],
 				'keywords' => esc_attr__( 'two third 2/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_5' ),
+			],
+			[
+				'layout'   => [ '3_5' ],
 				'keywords' => esc_attr__( 'three fifth 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2' ),
+			],
+			[
+				'layout'   => [ '1_2' ],
 				'keywords' => esc_attr__( 'one half two 1/2', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_5' ),
+			],
+			[
+				'layout'   => [ '2_5' ],
 				'keywords' => esc_attr__( 'two fifth 2/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3' ),
+			],
+			[
+				'layout'   => [ '1_3' ],
 				'keywords' => esc_attr__( 'one third three 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6' ],
 				'keywords' => esc_attr__( 'one six sixth 1/6', 'fusion-builder' ),
-			),
-		)
+			],
+		]
 	);
+
+	$is_builder = fusion_is_builder_frame();
 
 	// If being viewed on a section, remove empty from layout options.
 	if ( ! isset( $module ) || 'container' !== $module ) {
@@ -449,11 +450,24 @@ function fusion_builder_column_layouts( $module = '' ) {
 	foreach ( $layouts as $layout ) {
 		$html .= '<li data-layout="' . implode( ',', $layout['layout'] ) . '">';
 		$html .= '<h4 class="fusion_module_title" style="display:none;">' . $layout['keywords'] . '</h4>';
-
+		$sizes = '';
+		if ( $is_builder ) {
+			$html .= '<div class="fusion-builder-column-previews">';
+		}
 		foreach ( $layout['layout'] as $size ) {
-			$html .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . preg_replace( '/[_]+/', '/', $size ) . '</div>';
+			$labelsize = preg_replace( '/[_]+/', '/', $size );
+			$html     .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . ( $is_builder ? '' : $labelsize ) . '</div>';
+			$sizes    .= '' === $sizes ? $labelsize : ' - ' . $labelsize;
+		}
+		if ( $is_builder ) {
+			$html .= '</div><div class="fusion-builder-column-sizes">' . $sizes . '</div>';
 		}
 		$html .= '</li>';
+	}
+	if ( $is_builder ) {
+		for ( $i = 0; $i < 16; $i++ ) {
+			$html .= '<li class="spacer fusion-builder-element"></li>';
+		}
 	}
 	$html .= '</ul>';
 
@@ -468,108 +482,125 @@ function fusion_builder_column_layouts( $module = '' ) {
 function fusion_builder_inner_column_layouts() {
 
 	$layouts = apply_filters(
-		'fusion_builder_inner_column_layouts', array(
+		'fusion_builder_inner_column_layouts',
+		[
 
-			array(
-				'layout'   => array( '1_1' ),
+			[
+				'layout'   => [ '1_1' ],
 				'keywords' => esc_attr__( 'full one 1', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_2' ],
 				'keywords' => esc_attr__( 'two half 2 1/2', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '1_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '1_3', '1_3' ],
 				'keywords' => esc_attr__( 'third thee 3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'four fourth 4 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '2_3', '1_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '2_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '2_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '3_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '3_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '3_4', '1_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_2' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_2', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_2', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '4_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '4_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '4_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '4_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_5', '2_5' ),
+			],
+			[
+				'layout'   => [ '3_5', '2_5' ],
 				'keywords' => esc_attr__( 'three fith two fifth 3/5 2/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '2_5', '3_5' ],
 				'keywords' => esc_attr__( 'two fifth three fifth 2/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '3_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '3_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '3_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_2' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '2_3', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '2_3', '1_6' ],
 				'keywords' => esc_attr__( 'one two six sixth 2/3 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '1_5', '1_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '1_5', '1_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one six sixth 1/6', 'fusion-builder' ),
-			),
-		)
+			],
+		]
 	);
+
+	$is_builder = fusion_is_builder_frame();
 
 	$html = '<ul class="fusion-builder-column-layouts fusion-builder-all-modules">';
 	foreach ( $layouts as $layout ) {
 		$html .= '<li data-layout="' . implode( ',', $layout['layout'] ) . '">';
 		$html .= '<h4 class="fusion_module_title" style="display:none;">' . $layout['keywords'] . '</h4>';
 
+		$sizes = '';
+		if ( $is_builder ) {
+			$html .= '<div class="fusion-builder-column-previews">';
+		}
 		foreach ( $layout['layout'] as $size ) {
-			$html .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . preg_replace( '/[_]+/', '/', $size ) . '</div>';
+			$labelsize = preg_replace( '/[_]+/', '/', $size );
+			$html     .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . ( $is_builder ? '' : $labelsize ) . '</div>';
+			$sizes    .= '' === $sizes ? $labelsize : ' - ' . $labelsize;
+		}
+		if ( $is_builder ) {
+			$html .= '</div><div class="fusion-builder-column-sizes">' . $sizes . '</div>';
 		}
 		$html .= '</li>';
+	}
+	if ( $is_builder ) {
+		for ( $i = 0; $i < 16; $i++ ) {
+			$html .= '<li class="spacer fusion-builder-element"></li>';
+		}
 	}
 	$html .= '</ul>';
 
@@ -584,108 +615,126 @@ function fusion_builder_inner_column_layouts() {
 function fusion_builder_generator_column_layouts() {
 
 	$layouts = apply_filters(
-		'fusion_builder_generators_column_layouts', array(
-			array(
-				'layout'   => array( '1_1' ),
+		'fusion_builder_generators_column_layouts',
+		[
+			[
+				'layout'   => [ '1_1' ],
 				'keywords' => esc_attr__( 'full one 1', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_2' ],
 				'keywords' => esc_attr__( 'two half 2 1/2', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '1_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '1_3', '1_3' ],
 				'keywords' => esc_attr__( 'third thee 3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'four fourth 4 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_3', '1_3' ),
+			],
+			[
+				'layout'   => [ '2_3', '1_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_3', '2_3' ),
+			],
+			[
+				'layout'   => [ '1_3', '2_3' ],
 				'keywords' => esc_attr__( 'two third 2/3 1/3', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '3_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '3_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '3_4', '1_4' ],
 				'keywords' => esc_attr__( 'one four fourth 1/4 3/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_4', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_4', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_4', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_4', '1_2' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_4', '1_2', '1_4' ),
+			],
+			[
+				'layout'   => [ '1_4', '1_2', '1_4' ],
 				'keywords' => esc_attr__( 'half one four fourth 1/2 1/4', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '4_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '4_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '4_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '4_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5 4/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '3_5', '2_5' ),
+			],
+			[
+				'layout'   => [ '3_5', '2_5' ],
 				'keywords' => esc_attr__( 'three fith two fifth 3/5 2/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '2_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '2_5', '3_5' ],
 				'keywords' => esc_attr__( 'two fifth three fifth 2/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '3_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '3_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '3_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '3_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth three 1/5 3/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_2', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_2', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_2' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_2' ],
 				'keywords' => esc_attr__( 'one half six sixth 1/2 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '2_3', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '2_3', '1_6' ],
 				'keywords' => esc_attr__( 'one two six sixth 2/3 1/6', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_5', '1_5', '1_5', '1_5', '1_5' ),
+			],
+			[
+				'layout'   => [ '1_5', '1_5', '1_5', '1_5', '1_5' ],
 				'keywords' => esc_attr__( 'one five fifth 1/5', 'fusion-builder' ),
-			),
-			array(
-				'layout'   => array( '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ),
+			],
+			[
+				'layout'   => [ '1_6', '1_6', '1_6', '1_6', '1_6', '1_6' ],
 				'keywords' => esc_attr__( 'one six sixth 1/6', 'fusion-builder' ),
-			),
-		)
+			],
+		]
 	);
 
-	$html = '<ul class="fusion-builder-column-layouts">';
+	$is_builder = fusion_is_builder_frame();
+
+	$html = '<ul class="fusion-builder-column-layouts fusion-builder-all-modules">';
 
 	foreach ( $layouts as $layout ) {
 		$html .= '<li class="generator-column" data-layout="' . implode( ',', $layout['layout'] ) . '">';
 		$html .= '<h4 class="fusion_module_title" style="display:none;">' . $layout['keywords'] . '</h4>';
 
+		$sizes = '';
+		if ( $is_builder ) {
+			$html .= '<div class="fusion-builder-column-previews">';
+		}
 		foreach ( $layout['layout'] as $size ) {
-			$html .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . preg_replace( '/[_]+/', '/', $size ) . '</div>';
+			$labelsize = preg_replace( '/[_]+/', '/', $size );
+			$html     .= '<div class="fusion_builder_layout_column fusion_builder_column_layout_' . $size . '">' . ( $is_builder ? '' : $labelsize ) . '</div>';
+			$sizes    .= '' === $sizes ? $labelsize : ' - ' . $labelsize;
+		}
+		if ( $is_builder ) {
+			$html .= '</div><div class="fusion-builder-column-sizes">' . $sizes . '</div>';
 		}
 		$html .= '</li>';
+	}
+
+	if ( $is_builder ) {
+		for ( $i = 0; $i < 16; $i++ ) {
+			$html .= '<li class="spacer fusion-builder-element"></li>';
+		}
 	}
 	$html .= '</ul>';
 
@@ -702,7 +751,8 @@ function fusion_builder_generator_column_layouts() {
 function fusion_builder_save_meta( $post_id, $post ) {
 
 	// Verify the nonce before proceeding.
-	if ( ! isset( $_POST['fusion_builder_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['fusion_builder_nonce'] ) ), 'fusion_builder_template' ) ) {
+	if ( ! isset( $_POST['fusion_builder_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_POST['fusion_builder_nonce'] ), 'fusion_builder_template' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+
 		return $post_id;
 	}
 
@@ -715,13 +765,13 @@ function fusion_builder_save_meta( $post_id, $post ) {
 	}
 
 	// If more than one set to an array.
-	$names = array( '_fusion_builder_custom_css' );
+	$names = [ '_fusion_builder_custom_css' ];
 
 	foreach ( $names as $name ) {
 
 		// Get the posted data and sanitize it for use as an HTML class.
 		if ( '_fusion_builder_custom_css' === $name ) {
-			$new_meta_value = ( isset( $_POST[ $name ] ) ? wp_unslash( $_POST[ $name ] ) : '' ); // WPCS: sanitization ok.
+			$new_meta_value = ( isset( $_POST[ $name ] ) ? wp_unslash( $_POST[ $name ] ) : '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		} else {
 			$new_meta_value = ( isset( $_POST[ $name ] ) ? sanitize_html_class( wp_unslash( $_POST[ $name ] ) ) : '' );
 		}
@@ -730,15 +780,15 @@ function fusion_builder_save_meta( $post_id, $post ) {
 		$meta_key = $name;
 
 		// Get the meta value of the custom field key.
-		$meta_value = get_post_meta( $post_id, $meta_key, true );
+		$meta_value = fusion_get_page_option( $meta_key, $post_id );
 
-		if ( $new_meta_value && '' == $meta_value ) {
+		if ( $new_meta_value && ! $meta_value ) {
 			// If a new meta value was added and there was no previous value, add it.
 			add_post_meta( $post_id, $meta_key, $new_meta_value, true );
-		} elseif ( $new_meta_value && $new_meta_value != $meta_value ) {
+		} elseif ( $new_meta_value && $new_meta_value !== $meta_value ) {
 			// If the new meta value does not match the old value, update it.
 			update_post_meta( $post_id, $meta_key, $new_meta_value );
-		} elseif ( '' == $new_meta_value && $meta_value ) {
+		} elseif ( ! $new_meta_value && $meta_value ) {
 			// If there is no new meta value but an old value exists, delete it.
 			delete_post_meta( $post_id, $meta_key, $meta_value );
 		}
@@ -760,205 +810,11 @@ function fusion_builder_custom_css() {
 	}
 
 	$saved_custom_css = get_post_meta( $post->ID, '_fusion_builder_custom_css', true );
-	?>
-	<?php if ( isset( $saved_custom_css ) && '' != $saved_custom_css ) : ?>
-		<style type="text/css"><?php echo stripslashes_deep( $saved_custom_css ); // WPCS: XSS ok. ?></style>
-	<?php endif; ?>
-	<?php
-
-}
-add_action( 'wp_head', 'fusion_builder_custom_css', 11 );
-
-/**
- * Fusion builder text strings.
- *
- * @since 1.0
- */
-function fusion_builder_textdomain_strings() {
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
+	if ( isset( $saved_custom_css ) && $saved_custom_css ) {
+		echo '<style type="text/css" id="fusion-builder-page-css">' . stripslashes_deep( $saved_custom_css ) . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
-
-	$text_strings = array(
-
-		'custom_css'                                  => esc_attr__( 'Custom CSS', 'fusion-builder' ),
-		'builder'                                     => esc_attr__( 'Builder', 'fusion-builder' ),
-		'library'                                     => esc_attr__( 'Library', 'fusion-builder' ),
-		'add_css_code_here'                           => esc_attr__( 'Add your CSS code here...', 'fusion-builder' ),
-		'delete_page_layout'                          => esc_attr__( 'Delete page layout', 'fusion-builder' ),
-		'undo'                                        => esc_attr__( 'Undo', 'fusion-builder' ),
-		'redo'                                        => esc_attr__( 'Redo', 'fusion-builder' ),
-		'save'                                        => esc_attr__( 'Save', 'fusion-builder' ),
-		'delete_item'                                 => esc_attr__( 'Delete item', 'fusion-builder' ),
-		'clone_item'                                  => esc_attr__( 'Clone item', 'fusion-builder' ),
-		'edit_item'                                   => esc_attr__( 'Edit item', 'fusion-builder' ),
-		'full_width_section'                          => esc_attr__( 'Container', 'fusion-builder' ),
-		'section_settings'                            => esc_attr__( 'Container Settings', 'fusion-builder' ),
-		'insert_section'                              => esc_attr__( 'Insert Container', 'fusion-builder' ),
-		'clone_section'                               => esc_attr__( 'Clone Container', 'fusion-builder' ),
-		'save_section'                                => esc_attr__( 'Save Container', 'fusion-builder' ),
-		'delete_section'                              => esc_attr__( 'Delete Container', 'fusion-builder' ),
-		'builder_sections'                            => esc_attr__( 'Builder Containers', 'fusion-builder' ),
-		'click_to_toggle'                             => esc_attr__( 'Click to toggle', 'fusion-builder' ),
-		'save_custom_section'                         => esc_attr__( 'Save Custom Container', 'fusion-builder' ),
-		'save_custom_template'                        => esc_attr__( 'Save Custom Template', 'fusion-builder' ),
-		'save_custom_section_info'                    => esc_attr__( 'Custom containers will be stored and managed on the Library tab', 'fusion-builder' ),
-		'enter_name'                                  => esc_attr__( 'Enter Name...', 'fusion-builder' ),
-		'column'                                      => esc_attr__( 'Column', 'fusion-builder' ),
-		'columns'                                     => esc_attr__( 'Columns', 'fusion-builder' ),
-		'resize_column'                               => esc_attr__( 'Resize column', 'fusion-builder' ),
-		'resized_column'                              => esc_attr__( 'Resized Column to', 'fusion-builder' ),
-		'column_library'                              => esc_attr__( 'Column settings', 'fusion-builder' ),
-		'clone_column'                                => esc_attr__( 'Clone column', 'fusion-builder' ),
-		'save_column'                                 => esc_attr__( 'Save column', 'fusion-builder' ),
-		'delete_column'                               => esc_attr__( 'Delete column', 'fusion-builder' ),
-		'delete_row'                                  => esc_attr__( 'Delete row', 'fusion-builder' ),
-		'clone_column'                                => esc_attr__( 'Clone column', 'fusion-builder' ),
-		'save_custom_column'                          => esc_attr__( 'Save Custom Column', 'fusion-builder' ),
-		'save_custom_column_info'                     => esc_attr__( 'Custom elements will be stored and managed on the Library tab', 'fusion-builder' ),
-		'add_element'                                 => esc_attr__( 'Add element', 'fusion-builder' ),
-		'element'                                     => esc_attr__( 'Element', 'fusion-builder' ),
-		'insert_columns'                              => esc_attr__( 'Insert Columns', 'fusion-builder' ),
-		'search_elements'                             => esc_attr__( 'Search elements', 'fusion-builder' ),
-		'builder_columns'                             => esc_attr__( 'Builder Columns', 'fusion-builder' ),
-		'library_columns'                             => esc_attr__( 'Library Columns', 'fusion-builder' ),
-		'library_sections'                            => esc_attr__( 'Library Containers', 'fusion-builder' ),
-		'cancel'                                      => esc_attr__( 'Cancel', 'fusion-builder' ),
-		'select_element'                              => esc_attr__( 'Select Element', 'fusion-builder' ),
-		'builder_elements'                            => esc_attr__( 'Builder Elements', 'fusion-builder' ),
-		'library_elements'                            => esc_attr__( 'Library Elements', 'fusion-builder' ),
-		'inner_columns'                               => esc_attr__( 'Nested Columns', 'fusion-builder' ),
-		'element_settings'                            => esc_attr__( 'Element Settings', 'fusion-builder' ),
-		'clone_element'                               => esc_attr__( 'Clone Element', 'fusion-builder' ),
-		'save_element'                                => esc_attr__( 'Save Element', 'fusion-builder' ),
-		'save_global'                                 => esc_attr__( 'Save As Global', 'fusion-builder' ),
-		'delete_element'                              => esc_attr__( 'Delete Element', 'fusion-builder' ),
-		'save_custom_element'                         => esc_attr__( 'Save Custom Element', 'fusion-builder' ),
-		'save_custom_element_info'                    => esc_attr__( 'Custom elements will be stored and managed on the Library tab', 'fusion-builder' ),
-		'add_edit_items'                              => esc_attr__( 'Add / Edit Items', 'fusion-builder' ),
-		'sortable_items_info'                         => esc_attr__( 'Add or edit new items for this element.  Drag and drop them into the desired order.', 'fusion-builder' ),
-		'delete_inner_columns'                        => esc_attr__( 'Delete inner columns', 'fusion-builder' ),
-		'clone_inner_columns'                         => esc_attr__( 'Clone inner columns', 'fusion-builder' ),
-		'save_inner_columns'                          => esc_attr__( 'Save inner columns', 'fusion-builder' ),
-		'delete_inner_columns'                        => esc_attr__( 'Delete inner columns', 'fusion-builder' ),
-		'save_nested_columns'                         => esc_attr__( 'Save Nested Columns', 'fusion-builder' ),
-		'select_options_or_leave_blank_for_all'       => esc_attr__( 'Select Options or Leave Blank for All', 'fusion-builder' ),
-		'select_categories_or_leave_blank_for_all'    => esc_attr__( 'Select Categories or Leave Blank for All', 'fusion-builder' ),
-		'select_categories_or_leave_blank_for_none'   => esc_attr__( 'Select Categories or Leave Blank for None', 'fusion-builder' ),
-		'please_enter_element_name'                   => esc_attr__( 'Please enter element name', 'fusion-builder' ),
-		'are_you_sure_you_want_to_delete_this_layout' => esc_attr__( 'Are you sure you want to delete this layout ?', 'fusion-builder' ),
-		'are_you_sure_you_want_to_delete_this'        => esc_attr__( 'Are you sure you want to delete this ?', 'fusion-builder' ),
-		'are_you_sure_you_want_to_delete_global'      => esc_attr__( 'This is a global item. Deleting this element will remove it from every page you have it on. Are you sure you want to remove it?', 'fusion-builder' ),
-		'global_element'                              => __( 'Global element.<br>Click to disable global status.', 'fusion-builder' ),
-		'global_column'                               => __( 'Global column.<br>Click to disable global status.', 'fusion-builder' ),
-		'global_container'                            => __( 'Global container.<br>Click to disable global status.', 'fusion-builder' ),
-		'duplicate_element_name_error'                => esc_attr__( 'An element with this name already exists. Please enter different name.', 'fusion-builder' ),
-		'please_enter_template_name'                  => esc_attr__( 'Please enter template name', 'fusion-builder' ),
-		'save_page_layout'                            => esc_attr__( 'Save page layout', 'fusion-builder' ),
-		'upload'                                      => esc_attr__( 'Upload', 'fusion-builder' ),
-		'upload_image'                                => esc_attr__( 'Upload Image', 'fusion-builder' ),
-		'attach_images'                               => esc_attr__( 'Attach Images to Gallery', 'fusion-builder' ),
-		'insert'                                      => esc_attr__( 'Insert', 'fusion-builder' ),
-		'pre_built_page'                              => esc_attr__( 'Pre-Built Page', 'fusion-builder' ),
-		'to_get_started'                              => esc_attr__( 'To get started, add a Container, or add a pre-built page.', 'fusion-builder' ),
-		'to_get_started_sub'                          => esc_attr__( 'The building process always starts with a container, then columns, then elements.', 'fusion-builder' ),
-		'watch_the_video'                             => esc_attr__( 'Watch The Video!', 'fusion-builder' ),
-		'edit_settings'                               => esc_attr__( 'Edit Settings', 'fusion-builder' ),
-		'backward_history'                            => esc_attr__( 'Backward History', 'fusion-builder' ),
-		'duplicate_content'                           => esc_attr__( 'Duplicate Content', 'fusion-builder' ),
-		'forward_history'                             => esc_attr__( 'Forward History', 'fusion-builder' ),
-		'save_custom_content'                         => esc_attr__( 'Save Custom Content', 'fusion-builder' ),
-		'delete_content'                              => esc_attr__( 'Delete Content', 'fusion-builder' ),
-		'add_content'                                 => esc_attr__( 'Add Content', 'fusion-builder' ),
-		'additional_docs'                             => esc_attr__( 'Click the ? icon to view additional documentation', 'fusion-builder' ),
-		'getting_started_video'                       => esc_attr__( 'Getting Started Video', 'fusion-builder' ),
-		'icon_control_description'                    => esc_attr__( 'Icon Control Descriptions:', 'fusion-builder' ),
-		'history'                                     => esc_attr__( 'History', 'fusion-builder' ),
-		'collapse_sections'                           => esc_attr__( 'Collapse Sections', 'fusion-builder' ),
-		'history_states'                              => esc_attr__( 'History States', 'fusion-builder' ),
-		'empty'                                       => esc_attr__( 'Start', 'fusion-builder' ),
-		'moved_column'                                => esc_attr__( 'Moved Column', 'fusion-builder' ),
-		'added_custom_element'                        => esc_attr__( 'Added Custom Element: ', 'fusion-builder' ),
-		'added_custom_column'                         => esc_attr__( 'Added Custom Column: ', 'fusion-builder' ),
-		'added_columns'                               => esc_attr__( 'Added Columns', 'fusion-builder' ),
-		'added_custom_section'                        => esc_attr__( 'Added Custom Container: ', 'fusion-builder' ),
-		'deleted'                                     => esc_attr__( 'Deleted', 'fusion-builder' ),
-		'cloned'                                      => esc_attr__( 'Cloned', 'fusion-builder' ),
-		'pasted'                                      => esc_attr__( 'Pasted', 'fusion-builder' ),
-		'moved'                                       => esc_attr__( 'Moved', 'fusion-builder' ),
-		'edited'                                      => esc_attr__( 'Edited', 'fusion-builder' ),
-		'added_nested_columns'                        => esc_attr__( 'Added Nested Columns', 'fusion-builder' ),
-		'edited_nested_columns'                       => esc_attr__( 'Edited Nested Columns', 'fusion-builder' ),
-		'deleted_nested_columns'                      => esc_attr__( 'Deleted Nested Columns', 'fusion-builder' ),
-		'moved_nested_column'                         => esc_attr__( 'Moved Nested Column', 'fusion-builder' ),
-		'head_title'                                  => esc_attr__( 'Head Title', 'fusion-builder' ),
-		'currency'                                    => esc_attr__( 'Currency', 'fusion-builder' ),
-		'price'                                       => esc_attr__( 'Price', 'fusion-builder' ),
-		'period'                                      => esc_attr__( 'Period', 'fusion-builder' ),
-		'enter_text'                                  => esc_attr__( 'Enter Text', 'fusion-builder' ),
-		'added'                                       => esc_attr__( 'Added', 'fusion-builder' ),
-		'added_section'                               => esc_attr__( 'Added Container', 'fusion-builder' ),
-		'cloned_nested_columns'                       => esc_attr__( 'Cloned Nested Columns', 'fusion-builder' ),
-		'content_imported'                            => esc_attr__( 'Content Imported', 'fusion-builder' ),
-		'table_intro'                                 => esc_attr__( 'Visually create your table below, add or remove rows and columns', 'fusion-builder' ),
-		'add_table_column'                            => esc_attr__( 'Add Column', 'fusion-builder' ),
-		'add_table_row'                               => esc_attr__( 'Add Row', 'fusion-builder' ),
-		'column_title'                                => esc_attr__( 'Column', 'fusion-builder' ),
-		'standout_design'                             => esc_attr__( 'Standout', 'fusion-builder' ),
-		'add_button'                                  => esc_attr__( 'Add Button', 'fusion-builder' ),
-		'yes'                                         => esc_attr__( 'Yes', 'fusion-builder' ),
-		'no'                                          => esc_attr__( 'No', 'fusion-builder' ),
-		'table_options'                               => esc_attr__( 'Table Options', 'fusion-builder' ),
-		'table'                                       => esc_attr__( 'Table', 'fusion-builder' ),
-		'toggle_all_sections'                         => esc_attr__( 'Toggle All Containers', 'fusion-builder' ),
-		'cloned_section'                              => esc_attr__( 'Cloned Container', 'fusion-builder' ),
-		'deleted_section'                             => esc_attr__( 'Deleted Container', 'fusion-builder' ),
-		'select_image'                                => esc_attr__( 'Select Image', 'fusion-builder' ),
-		'select_images'                               => esc_attr__( 'Select Images', 'fusion-builder' ),
-		'select_video'                                => esc_attr__( 'Select Video', 'fusion-builder' ),
-		'empty_section'                               => esc_attr__( 'To Add Elements, You Must First Add a Column', 'fusion-builder' ),
-		'empty_section_with_bg'                       => esc_attr__( 'This is an empty container with a background image. To add elements, you must first add a column', 'fusion-builder' ),
-		'to_add_images'                               => esc_attr__( 'To add images to this post or page for attachments layout, navigate to "Upload Files" tab in media manager and upload new images.', 'fusion-builder' ),
-		'importing_single_page'                       => esc_attr__( 'WARNING: Importing a single demo page will remove all other page content, fusion page options and page template. Fusion Theme Options and demo images are not imported. Click OK to continue or cancel to stop.', 'fusion-builder' ),
-		'content_error_title'                         => esc_attr__( 'Content Error', 'fusion-builder' ),
-		'content_error_description'                   => sprintf( __( 'Your page content could not be displayed as a Fusion Builder layout. Most likely that means, there is some invalid markup or shortcode in it. Please check the contents in the text editor. <a href="%s" target="_blank">See here for more information</a>.', 'fusion-builder' ), 'https://theme-fusion.com/documentation/fusion-builder/technical/page-content-not-parsable-fusion-builder/' ),
-		'moved_container'                             => esc_attr__( 'Moved Container', 'fusion-builder' ),
-		'currency_before'                             => esc_attr__( 'Before', 'fusion-builder' ),
-		'currency_after'                              => esc_attr__( 'After', 'fusion-builder' ),
-		'delete_nextpage'                             => esc_attr__( 'Delete Next Page Divider', 'fusion-builder' ),
-		'nextpage'                                    => esc_attr__( 'Next Page', 'fusion-builder' ),
-		'library_misc'                                => esc_attr__( 'Special', 'fusion-builder' ),
-		'special_title'                               => esc_attr__( 'Special Items', 'fusion-builder' ),
-		'special_description'                         => esc_attr__( 'The nextpage item allows you to break your page into several pages. Simply insert it onto the page, and automatic pagination will show on the frontend.', 'fusion-builder' ),
-		'select_link'                                 => esc_attr__( 'Select Link', 'fusion-builder' ),
-		'background_color'                            => esc_attr__( 'Background Color', 'fusion-builder' ),
-		'border_color'                                => esc_attr__( 'Border Color', 'fusion-builder' ),
-		'legend_text_color'                           => esc_attr__( 'Legend Value Text Color', 'fusion-builder' ),
-		'enter_value'                                 => esc_attr__( 'Enter Value', 'fusion-builder' ),
-		'legend_label'                                => esc_attr__( 'Legend Label', 'fusion-builder' ),
-		'x_axis_label'                                => esc_attr__( 'X Axis Label', 'fusion-builder' ),
-		'chart_bg_color_title'                        => esc_attr__( 'Chart Background Color', 'fusion-builder' ),
-		'chart_bg_color_desc'                         => sprintf( __( 'Controls the background of the chart. %s', 'fusion-builder' ), $fusion_settings->get_default_description( 'chart_bg_color', '', 'color-alpha', true, '' ) ),
-		'chart_axis_text_color_title'                 => esc_attr__( 'Chart Axis Text Color', 'fusion-builder' ),
-		'chart_axis_text_color_desc'                  => sprintf( __( 'Controls the text color of the x-axis and y-axis. %s', 'fusion-builder' ), $fusion_settings->get_default_description( 'chart_axis_text_color', '', 'color-alpha', true, '' ) ),
-		'chart_gridline_color_title'                  => esc_attr__( 'Chart Gridline Color', 'fusion-builder' ),
-		'chart_gridline_color_desc'                   => sprintf( __( 'Controls the color of the chart background grid lines and values. %s', 'fusion-builder' ), $fusion_settings->get_default_description( 'chart_gridline_color', '', 'color-alpha', true, '' ) ),
-		'chart_padding_title'                         => esc_attr__( 'Chart Padding Options', 'fusion-builder' ),
-		'chart_padding_desc'                          => esc_attr__( 'Controls the top/right/bottom/left padding of the chart.', 'fusion-builder' ),
-		'chart_options'                               => esc_attr__( 'Chart Options', 'fusion-builder' ),
-		'chart'                                       => esc_attr__( 'Chart Data', 'fusion-builder' ),
-		'chart_intro'                                 => esc_attr__( 'Visually create your chart by inserting data in the table below. The table is only for visual representation. The data will display on the front end as the chart type you selected. Add or remove columns and data sets with the buttons below.', 'fusion-builder' ),
-		'chart_bars_note'                             => __( '<strong>IMPORTANT:</strong> If you are using a <span>Bar or Horizontal Bar Chart</span>, the table interface below and available options will change depending on the number of datasets added. This setup is needed in order to ensure maximum flexibility for your chart styling.', 'fusion-builder' ),
-		'add_chart_column'                            => esc_attr__( 'Add Value Column', 'fusion-builder' ),
-		'add_chart_row'                               => esc_attr__( 'Add Data Set', 'fusion-builder' ),
-		'user_login_register_note'                    => esc_attr__( 'Registration confirmation will be emailed to you.', 'fusion-builder' ),
-		'are_you_sure_you_want_to_remove_global'      => esc_attr__( 'Are you sure you want to remove global property ?', 'fusion-builder' ),
-		'removed_global'                              => esc_attr__( 'Removed Global Status', 'fusion-builder' ),
-	);
-
-	return $text_strings;
 }
+add_action( 'wp_head', 'fusion_builder_custom_css', 1001 );
 
 /**
  * Add shortcode generator toggle button to text editor.
@@ -967,9 +823,9 @@ function fusion_builder_textdomain_strings() {
  */
 function fusion_builder_add_quicktags_button() {
 	?>
-	<?php if ( get_current_screen()->base == 'post' ) : ?>
+	<?php if ( is_object( get_current_screen() ) && 'post' === get_current_screen()->base ) : ?>
 		<script type="text/javascript" charset="utf-8">
-			if ( typeof( QTags ) == 'function' ) {
+			if ( 'function' === typeof QTags ) {
 				QTags.addButton( 'fusion_shortcodes_text_mode', ' ','', '', 'f' );
 			}
 		</script>
@@ -990,16 +846,12 @@ add_action( 'admin_print_footer_scripts', 'fusion_builder_add_quicktags_button' 
  */
 function fusion_builder_build_social_links( $social_networks = '', $filter, $defaults, $i = 0 ) {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
+	$fusion_settings    = fusion_get_fusion_settings();
+	$use_brand_colors   = false;
+	$icons              = '';
+	$shortcode_defaults = [];
 
-	$use_brand_colors = false;
-	$icons = '';
-	$shortcode_defaults = array();
-
-	if ( '' != $social_networks && is_array( $social_networks ) ) {
+	if ( $social_networks && is_array( $social_networks ) ) {
 
 		// Add compatibility for different key names in shortcodes.
 		foreach ( $defaults as $key => $value ) {
@@ -1013,37 +865,33 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 
 		extract( $shortcode_defaults );
 
+		// Custom social icon colors.
+		$icon_colors = explode( '|', $icon_colors );
+		$box_colors  = explode( '|', $box_colors );
+
+		$num_of_icon_colors = count( $icon_colors );
+		$num_of_box_colors  = count( $box_colors );
+
 		// Check for icon color type.
-		if ( 'brand' == $color_type || ( '' == $color_type && 'brand' == $fusion_settings->get( 'social_links_color_type' ) ) ) {
+		if ( 'brand' === $color_type || ( '' === $color_type && 'brand' === $fusion_settings->get( 'social_links_color_type' ) ) ) {
 			$use_brand_colors = true;
 
 			$box_colors = Fusion_Data::fusion_social_icons( true, true );
 			// Backwards compatibility for old social network names.
-			$box_colors['googleplus'] = array(
-				'label' => 'Google+',
-				'color' => '#dc4e41',
-			);
-			$box_colors['mail']       = array(
+			$box_colors['mail'] = [
 				'label' => esc_html__( 'Email Address', 'fusion-builder' ),
 				'color' => '#000000',
-			);
+			];
 
 		} else {
-
-			// Custom social icon colors.
-			$icon_colors = explode( '|', $icon_colors );
-			$box_colors  = explode( '|', $box_colors );
-
-			$num_of_icon_colors = count( $icon_colors );
-			$num_of_box_colors  = count( $box_colors );
 
 			$social_networks_count = count( $social_networks );
 
 			for ( $k = 0; $k < $social_networks_count; $k++ ) {
-				if ( 1 == $num_of_icon_colors ) {
+				if ( 1 === $num_of_icon_colors ) {
 					$icon_colors[ $k ] = $icon_colors[0];
 				}
-				if ( 1 == $num_of_box_colors ) {
+				if ( 1 === $num_of_box_colors ) {
 					$box_colors[ $k ] = $box_colors[0];
 				}
 			}
@@ -1054,16 +902,16 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 
 			foreach ( $value as $network => $link ) {
 
-				if ( 'custom' == $network && is_array( $link ) ) {
+				if ( 'custom' === $network && is_array( $link ) ) {
 
 					foreach ( $link as $custom_key => $url ) {
 
-						if ( 'yes' == $icons_boxed ) {
+						if ( 'yes' === $icons_boxed ) {
 
 							if ( true === $use_brand_colors ) {
 								$custom_icon_box_color = ( $box_colors[ $network ]['color'] ) ? $box_colors[ $network ]['color'] : '';
 							} else {
-								$custom_icon_box_color = $i < count( $box_colors ) ? $box_colors[ $i ] : '';
+								$custom_icon_box_color = isset( $num_of_box_colors[ $i ] ) ? $box_colors[ $i ] : '';
 							}
 						} else {
 							$custom_icon_box_color = '';
@@ -1071,13 +919,13 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 
 						$social_media_icons = $fusion_settings->get( 'social_media_icons' );
 						if ( ! is_array( $social_media_icons ) ) {
-							$social_media_icons = array();
+							$social_media_icons = [];
 						}
 						if ( ! isset( $social_media_icons['custom_title'] ) ) {
-							$social_media_icons['custom_title'] = array();
+							$social_media_icons['custom_title'] = [];
 						}
 						if ( ! isset( $social_media_icons['custom_source'] ) ) {
-							$social_media_icons['custom_source'] = array();
+							$social_media_icons['custom_source'] = [];
 						}
 						if ( ! isset( $social_media_icons['custom_title'][ $custom_key ] ) ) {
 							$social_media_icons['custom_title'][ $custom_key ] = '';
@@ -1086,12 +934,12 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 							$social_media_icons['custom_source'][ $custom_key ] = '';
 						}
 
-						$icon_options = array(
+						$icon_options = [
 							'social_network' => $social_media_icons['custom_title'][ $custom_key ],
 							'social_link'    => $url,
-							'icon_color'     => $i < count( $icon_colors ) ? $icon_colors[ $i ] : '',
+							'icon_color'     => isset( $icon_colors[ $i ] ) ? $icon_colors[ $i ] : '',
 							'box_color'      => $custom_icon_box_color,
-						);
+						];
 
 						$icons .= '<a ' . FusionBuilder::attributes( $filter, $icon_options ) . '>';
 						$icons .= '<img';
@@ -1099,11 +947,11 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 						if ( isset( $social_media_icons['custom_source'][ $custom_key ]['url'] ) ) {
 							$icons .= ' src="' . $social_media_icons['custom_source'][ $custom_key ]['url'] . '"';
 						}
-						if ( isset( $social_media_icons['custom_title'][ $custom_key ] ) && '' != $social_media_icons['custom_title'][ $custom_key ] ) {
+						if ( isset( $social_media_icons['custom_title'][ $custom_key ] ) && $social_media_icons['custom_title'][ $custom_key ] ) {
 							$icons .= ' alt="' . $social_media_icons['custom_title'][ $custom_key ] . '"';
 						}
 						if ( isset( $social_media_icons['custom_source'][ $custom_key ]['width'] ) && $social_media_icons['custom_source'][ $custom_key ]['width'] ) {
-							$width = intval( $social_media_icons['custom_source'][ $custom_key ]['width'] );
+							$width  = intval( $social_media_icons['custom_source'][ $custom_key ]['width'] );
 							$icons .= ' width="' . $width . '"';
 						}
 						if ( isset( $social_media_icons['custom_source'][ $custom_key ]['height'] ) && $social_media_icons['custom_source'][ $custom_key ]['height'] ) {
@@ -1114,21 +962,21 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
 					}
 				} else {
 
-					if ( true == $use_brand_colors ) {
-						$icon_options = array(
+					if ( true === $use_brand_colors ) {
+						$icon_options = [
 							'social_network' => $network,
 							'social_link'    => $link,
-							'icon_color'     => ( 'yes' == $icons_boxed ) ? '#ffffff' : $box_colors[ $network ]['color'],
-							'box_color'      => ( 'yes' == $icons_boxed ) ? $box_colors[ $network ]['color'] : '',
-						);
+							'icon_color'     => ( 'yes' === $icons_boxed ) ? '#ffffff' : $box_colors[ $network ]['color'],
+							'box_color'      => ( 'yes' === $icons_boxed ) ? $box_colors[ $network ]['color'] : '',
+						];
 
 					} else {
-						$icon_options = array(
+						$icon_options = [
 							'social_network' => $network,
 							'social_link'    => $link,
-							'icon_color'     => $i < count( $icon_colors ) ? $icon_colors[ $i ] : '',
-							'box_color'      => $i < count( $box_colors ) ? $box_colors[ $i ] : '',
-						);
+							'icon_color'     => isset( $icon_colors[ $i ] ) ? $icon_colors[ $i ] : '',
+							'box_color'      => isset( $box_colors[ $i ] ) ? $box_colors[ $i ] : '',
+						];
 					}
 					$icons .= '<a ' . FusionBuilder::attributes( $filter, $icon_options ) . '></a>';
 				}
@@ -1148,15 +996,14 @@ function fusion_builder_build_social_links( $social_networks = '', $filter, $def
  */
 function fusion_builder_get_social_networks( $defaults ) {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
-
-	$social_links_array = array();
+	$fusion_settings    = fusion_get_fusion_settings();
+	$social_links_array = [];
 
 	if ( $defaults['facebook'] ) {
 		$social_links_array['facebook'] = $defaults['facebook'];
+	}
+	if ( $defaults['twitch'] ) {
+		$social_links_array['twitch'] = $defaults['twitch'];
 	}
 	if ( $defaults['twitter'] ) {
 		$social_links_array['twitter'] = $defaults['twitter'];
@@ -1188,11 +1035,8 @@ function fusion_builder_get_social_networks( $defaults ) {
 	if ( $defaults['tumblr'] ) {
 		$social_links_array['tumblr'] = $defaults['tumblr'];
 	}
-	if ( $defaults['googleplus'] ) {
-		$social_links_array['googleplus'] = $defaults['googleplus'];
-	}
-	if ( $defaults['google'] ) {
-		$social_links_array['googleplus'] = $defaults['google'];
+	if ( $defaults['discord'] ) {
+		$social_links_array['discord'] = $defaults['discord'];
 	}
 	if ( $defaults['digg'] ) {
 		$social_links_array['digg'] = $defaults['digg'];
@@ -1202,6 +1046,9 @@ function fusion_builder_get_social_networks( $defaults ) {
 	}
 	if ( $defaults['skype'] ) {
 		$social_links_array['skype'] = $defaults['skype'];
+	}
+	if ( $defaults['mixer'] ) {
+		$social_links_array['mixer'] = $defaults['mixer'];
 	}
 	if ( $defaults['myspace'] ) {
 		$social_links_array['myspace'] = $defaults['myspace'];
@@ -1246,11 +1093,13 @@ function fusion_builder_get_social_networks( $defaults ) {
 		$social_links_array['mail'] = $defaults['email'];
 	}
 	if ( $defaults['show_custom'] && 'yes' === $defaults['show_custom'] ) {
-		$social_links_array['custom'] = array();
-		if ( is_array( $fusion_settings->get( 'social_media_icons', 'icon' ) ) ) {
-			foreach ( $fusion_settings->get( 'social_media_icons', 'icon' ) as $key => $icon ) {
+		$social_links_array['custom'] = [];
+
+		$social_media_icons_arr = $fusion_settings->get( 'social_media_icons', 'icon' );
+		if ( is_array( $social_media_icons_arr ) ) {
+			foreach ( $social_media_icons_arr as $key => $icon ) {
 				$social_media_icons_url = $fusion_settings->get( 'social_media_icons', 'url' );
-				if ( 'custom' == $icon && is_array( $social_media_icons_url ) && isset( $social_media_icons_url[ $key ] ) && ! empty( $social_media_icons_url[ $key ] ) ) {
+				if ( 'custom' === $icon && is_array( $social_media_icons_url ) && isset( $social_media_icons_url[ $key ] ) && ! empty( $social_media_icons_url[ $key ] ) ) {
 					// Check if there is a default set for this, if so use that rather than TO link.
 					if ( isset( $defaults[ 'custom_' . $key ] ) && ! empty( $defaults[ 'custom_' . $key ] ) ) {
 						$social_links_array['custom'][ $key ] = $defaults[ 'custom_' . $key ];
@@ -1274,12 +1123,8 @@ function fusion_builder_get_social_networks( $defaults ) {
  */
 function fusion_builder_sort_social_networks( $social_networks_original ) {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
-
-	$social_networks = array();
+	$fusion_settings = fusion_get_fusion_settings();
+	$social_networks = [];
 	$icon_order      = '';
 
 	// Get social networks order from theme options.
@@ -1298,8 +1143,6 @@ function fusion_builder_sort_social_networks( $social_networks_original ) {
 		foreach ( $icon_order as $key => $value ) {
 
 			// Backwards compatibility for old social network names.
-			$value = ( 'google' === $value ) ? 'googleplus' : $value;
-			$value = ( 'gplus' === $value ) ? 'googleplus' : $value;
 			$value = ( 'email' === $value ) ? 'mail' : $value;
 
 			// Check if social network from TO exists in shortcode.
@@ -1308,9 +1151,9 @@ function fusion_builder_sort_social_networks( $social_networks_original ) {
 			}
 
 			if ( 'custom' === $value ) {
-				$social_networks[] = array( $value => array( $key => $social_networks_original[ $value ][ $key ] ) );
+				$social_networks[] = [ $value => [ $key => $social_networks_original[ $value ][ $key ] ] ];
 			} else {
-				$social_networks[] = array( $value => $social_networks_original[ $value ] );
+				$social_networks[] = [ $value => $social_networks_original[ $value ] ];
 				unset( $social_networks_original[ $value ] );
 			}
 		}
@@ -1318,7 +1161,7 @@ function fusion_builder_sort_social_networks( $social_networks_original ) {
 		// Put any remaining icons after the ones from the theme options.
 		foreach ( $social_networks_original as $name => $url ) {
 			if ( 'custom' !== $name ) {
-				$social_networks[] = array( $name => $url );
+				$social_networks[] = [ $name => $url ];
 			}
 		}
 	}
@@ -1334,20 +1177,16 @@ function fusion_builder_sort_social_networks( $social_networks_original ) {
  */
 function fusion_builder_get_custom_social_networks() {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
-
-	$social_links_array = array();
+	$fusion_settings    = fusion_get_fusion_settings();
+	$social_links_array = [];
 	$social_media_icons = $fusion_settings->get( 'social_media_icons' );
 	if ( is_array( $social_media_icons ) && isset( $social_media_icons['icon'] ) && is_array( $social_media_icons['icon'] ) ) {
 		foreach ( $social_media_icons['icon'] as $key => $icon ) {
-			if ( 'custom' == $icon && isset( $social_media_icons['url'][ $key ] ) && ! empty( $social_media_icons['url'][ $key ] ) ) {
-				$social_links_array[ $key ]  = array(
+			if ( 'custom' === $icon && isset( $social_media_icons['url'][ $key ] ) && ! empty( $social_media_icons['url'][ $key ] ) ) {
+				$social_links_array[ $key ] = [
 					'url'   => $social_media_icons['url'][ $key ],
 					'title' => $social_media_icons['custom_title'][ $key ],
-				);
+				];
 			}
 		}
 	}
@@ -1362,13 +1201,13 @@ function fusion_builder_get_custom_social_networks() {
  * @return array
  */
 function fusion_builder_visibility_options( $type ) {
-
-	$visibility_options = array(
-		'small-visibility'  => esc_attr__( 'Small Screen', 'fusion-builder' ),
-		'medium-visibility' => esc_attr__( 'Medium Screen', 'fusion-builder' ),
-		'large-visibility'  => esc_attr__( 'Large Screen', 'fusion-builder' ),
-	);
-	if ( 'values' == $type ) {
+	$fb_edit            = ( isset( $_GET['fb-edit'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+	$visibility_options = [
+		'small-visibility'  => $fb_edit ? '<span class="fusiona-mobile"></span>|' . esc_attr__( 'Small Screen', 'fusion-builder' ) : esc_attr__( 'Small Screen', 'fusion-builder' ),
+		'medium-visibility' => $fb_edit ? '<span class="fusiona-tablet"></span>|' . esc_attr__( 'Medium Screen', 'fusion-builder' ) : esc_attr__( 'Medium Screen', 'fusion-builder' ),
+		'large-visibility'  => $fb_edit ? '<span class="fusiona-desktop"></span>|' . esc_attr__( 'Large Screen', 'fusion-builder' ) : esc_attr__( 'Large Screen', 'fusion-builder' ),
+	];
+	if ( 'values' === $type ) {
 		$visibility_options = array_keys( $visibility_options );
 	}
 	return $visibility_options;
@@ -1384,7 +1223,7 @@ function fusion_builder_visibility_options( $type ) {
 function fusion_builder_default_visibility( $type ) {
 
 	$default_visibility = fusion_builder_visibility_options( 'values' );
-	if ( 'string' == $type ) {
+	if ( 'string' === $type ) {
 		$default_visibility = implode( ', ', $default_visibility );
 	}
 	return $default_visibility;
@@ -1413,7 +1252,8 @@ function fusion_builder_visibility_atts( $selection, $attr ) {
 
 	// If yes is used, use all selections with mobile visibility removed.
 	if ( 'yes' === $selection ) {
-		if ( false !== ( $key = array_search( 'small-visibility', $visibility_values ) ) ) {
+		$key = array_search( 'small-visibility', $visibility_values, true );
+		if ( false !== $key ) {
 			unset( $visibility_values[ $key ] );
 			$selection = $visibility_values;
 		}
@@ -1426,7 +1266,7 @@ function fusion_builder_visibility_atts( $selection, $attr ) {
 
 	$visibility_options = fusion_builder_visibility_options( 'values' );
 	foreach ( $visibility_options as $visibility_option ) {
-		if ( ! in_array( $visibility_option, $selection ) ) {
+		if ( ! in_array( $visibility_option, $selection ) ) { // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
 			if ( is_array( $attr ) ) {
 				$attr['class'] .= ( ( $attr['class'] ) ? ' fusion-no-' . $visibility_option : 'fusion-no-' . $visibility_option );
 			} else {
@@ -1445,7 +1285,7 @@ function fusion_builder_visibility_atts( $selection, $attr ) {
  */
 function fusion_section_deprecated_args( $args ) {
 
-	$param_mapping = array(
+	$param_mapping = [
 		'backgroundposition'    => 'background_position',
 		'backgroundattachment'  => 'background_parallax',
 		'background_attachment' => 'background_parallax',
@@ -1461,15 +1301,13 @@ function fusion_section_deprecated_args( $args ) {
 		'backgroundrepeat'      => 'background_repeat',
 		'paddingBottom'         => 'padding_bottom',
 		'paddingTop'            => 'padding_top',
-	);
+	];
 
 	if ( ! is_array( $args ) ) {
-		$args = array();
+		$args = [];
 	}
 
-	if ( ( array_key_exists( 'backgroundattachment', $args ) && 'scroll' == $args['backgroundattachment'] ) ||
-		 ( array_key_exists( 'background_attachment', $args ) && 'scroll' == $args['background_attachment'] )
-	) {
+	if ( ( array_key_exists( 'backgroundattachment', $args ) && 'scroll' === $args['backgroundattachment'] ) || ( array_key_exists( 'background_attachment', $args ) && 'scroll' === $args['background_attachment'] ) ) {
 		$args['backgroundattachment'] = $args['background_attachment'] = 'none';
 	}
 
@@ -1493,9 +1331,15 @@ function fusion_section_deprecated_args( $args ) {
  */
 function fusion_builder_placeholder( $post_type, $label ) {
 	if ( current_user_can( 'publish_posts' ) ) {
+		/* translators: The label placeholder. */
 		$string = sprintf( esc_html__( 'Please add %s for them to display here.', 'fusion-builder' ), $label );
-		$link = admin_url( 'post-new.php?post_type=' . $post_type );
-		$html = '<a href="' . $link . '" class="fusion-builder-placeholder">' . $string . '</a>';
+
+		if ( 'gallery' !== $post_type && 'post_slider' !== $post_type ) {
+			$link = admin_url( 'post-new.php?post_type=' . $post_type );
+			$html = '<a href="' . $link . '" class="fusion-builder-placeholder">' . $string . '</a>';
+		} else {
+			$html = '<div class="fusion-builder-placeholder">' . $string . '</div>';
+		}
 		return $html;
 	}
 }
@@ -1524,14 +1368,17 @@ function fusion_builder_single_dimension( $dimensions, $direction ) {
 	if ( 4 === count( $dimensions ) ) {
 		list( $top, $right, $bottom, $left ) = $dimensions;
 	} elseif ( 3 === count( $dimensions ) ) {
-		$top = $dimensions[0];
-		$right = $left = $dimensions[1];
+		$top    = $dimensions[0];
+		$right  = $left = $dimensions[1];
 		$bottom = $dimensions[2];
 	} elseif ( 2 === count( $dimensions ) ) {
-		$top = $bottom = $dimensions[0];
+		$top   = $bottom = $dimensions[0];
 		$right = $left = $dimensions[1];
 	} else {
-		$top = $right = $bottom = $left = $dimensions[0];
+		$top    = $dimensions[0];
+		$right  = $dimensions[0];
+		$bottom = $dimensions[0];
+		$left   = $dimensions[0];
 	}
 	return ${ $direction };
 }
@@ -1547,20 +1394,19 @@ function fusion_builder_add_notice_of_disabled_rich_editor() {
 
 	$current_uri = '';
 	if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-		$current_uri = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+		$current_uri = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 	}
-	$uri_parts = parse_url( $current_uri );
+	$uri_parts = wp_parse_url( $current_uri );
 	if ( ! isset( $uri_parts['query'] ) ) {
 		$uri_parts['query'] = '';
 	}
-	$path = explode( '/', $uri_parts['path'] );
-	$last = end( $path );
+	$path      = explode( '/', $uri_parts['path'] );
+	$last      = end( $path );
 	$full_link = admin_url() . $last . '?' . $uri_parts['query'];
 
 	// Check that the user hasn't already clicked to ignore the message.
-	// @codingStandardsIgnoreLine
 	if ( ! get_user_meta( $user_id, 'fusion_richedit_nag_ignore' ) ) {
-		printf( '<div id="disabled-rich-editor" class="updated"><p>%s <a href="%s">%s</a><span class="dismiss" style="float:right;"><a href="%s&fusion_richedit_nag_ignore=0">%s</a></span></div>', esc_attr__( 'Note: The visual editor, which is necesarry for Fusion Builder to work, has been disabled in your profile settings.', 'fusion-builder' ), esc_url_raw( admin_url( 'profile.php' ) ), esc_attr__( 'Go to Profile', 'fusion-builder' ), esc_url_raw( $full_link ), esc_attr__( 'Hide Notice', 'fusion-builder' ) );
+		printf( '<div id="disabled-rich-editor" class="updated"><p>%s <a href="%s">%s</a><span class="dismiss" style="float:right;"><a href="%s&fusion_richedit_nag_ignore=0">%s</a></span></div>', esc_attr__( 'Note: The visual editor, which is necessary for Fusion Builder to work, has been disabled in your profile settings.', 'fusion-builder' ), esc_url_raw( admin_url( 'profile.php' ) ), esc_attr__( 'Go to Profile', 'fusion-builder' ), esc_url_raw( $full_link ), esc_attr__( 'Hide Notice', 'fusion-builder' ) );
 	}
 }
 
@@ -1593,15 +1439,15 @@ if ( ! function_exists( 'fusion_render_placeholder_image' ) ) {
 	function fusion_render_placeholder_image( $featured_image_size = 'full' ) {
 		global $_wp_additional_image_sizes;
 
-		if ( in_array( $featured_image_size, array( 'full', 'fixed' ) ) ) {
+		if ( in_array( $featured_image_size, [ 'full', 'fixed' ], true ) ) {
 			$height = apply_filters( 'fusion_set_placeholder_image_height', '150' );
 			$width  = '1500px';
 		} else {
-			@$height = $_wp_additional_image_sizes[ $featured_image_size ]['height'];
-			@$width  = $_wp_additional_image_sizes[ $featured_image_size ]['width'] . 'px';
+			@$height = $_wp_additional_image_sizes[ $featured_image_size ]['height']; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@$width  = $_wp_additional_image_sizes[ $featured_image_size ]['width'] . 'px'; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		}
 		?>
-		 <div class="fusion-placeholder-image" data-origheight="<?php echo esc_attr( $height ); ?>" data-origwidth="<?php echo esc_attr( $width ); ?>" style="height:<?php echo esc_attr( $height ); ?>px;width:<?php echo esc_attr( $width ); ?>;"></div>
+		<div class="fusion-placeholder-image" data-origheight="<?php echo esc_attr( $height ); ?>" data-origwidth="<?php echo esc_attr( $width ); ?>" style="height:<?php echo esc_attr( $height ); ?>px;width:<?php echo esc_attr( $width ); ?>;"></div>
 		<?php
 	}
 }
@@ -1615,1172 +1461,15 @@ if ( ! function_exists( 'fusion_render_placeholder_image' ) ) {
  * @return array|bool       Element option data.
  */
 function fusion_builder_map_descriptions( $shortcode, $param ) {
-	$shortcode_option_map = apply_filters( 'fusion_builder_map_descriptions', array() );
-
-	// Alert.
-	$shortcode_option_map['text_align']['fusion_alert'] = array(
-		'theme-option' => 'alert_box_text_align',
-		'type' => 'select',
-	);
-	$shortcode_option_map['text_transform']['fusion_alert'] = array(
-		'theme-option' => 'alert_box_text_transform',
-		'type' => 'select',
-	);
-	$shortcode_option_map['dismissable']['fusion_alert'] = array(
-		'theme-option' => 'alert_box_dismissable',
-		'type' => 'select',
-	);
-	$shortcode_option_map['box_shadow']['fusion_alert'] = array(
-		'theme-option' => 'alert_box_shadow',
-		'type' => 'select',
-	);
-	$shortcode_option_map['border_size']['fusion_alert'] = array(
-		'theme-option' => 'alert_border_size',
-		'type' => 'range',
-	);
-
-	// Blog.
-	$shortcode_option_map['blog_grid_columns']['fusion_blog'] = array(
-		'theme-option' => 'blog_grid_columns',
-		'type' => 'range',
-	);
-	$shortcode_option_map['blog_grid_column_spacing']['fusion_blog'] = array(
-		'theme-option' => 'blog_grid_column_spacing',
-		'type' => 'range',
-	);
-	$shortcode_option_map['grid_box_color']['fusion_blog'] = array(
-		'theme-option' => 'timeline_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['grid_element_color']['fusion_blog'] = array(
-		'theme-option' => 'timeline_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['grid_separator_style_type']['fusion_blog'] = array(
-		'theme-option' => 'grid_separator_style_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['grid_separator_color']['fusion_blog'] = array(
-		'theme-option' => 'grid_separator_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['blog_grid_padding']['fusion_blog'] = array(
-		'theme-option' => 'blog_grid_padding',
-		'subset' => array( 'top', 'left', 'bottom', 'right' ),
-	);
-	$shortcode_option_map['excerpt']['fusion_blog'] = array(
-		'theme-option' => 'blog_excerpt',
-		'type' => 'select',
-	);
-	$shortcode_option_map['blog_masonry_grid_ratio']['fusion_blog'] = array(
-		'theme-option' => 'masonry_grid_ratio',
-		'type' => 'range',
-	);
-	$shortcode_option_map['blog_masonry_width_double']['fusion_blog'] = array(
-		'theme-option' => 'masonry_width_double',
-		'type' => 'range',
-	);
-
-	// Button.
-	$shortcode_option_map['size']['fusion_button'] = array(
-		'theme-option' => 'button_size',
-		'type' => 'select',
-	);
-	$shortcode_option_map['stretch']['fusion_button'] = array(
-		'theme-option' => 'button_span',
-		'type' => 'select',
-	);
-	$shortcode_option_map['type']['fusion_button'] = array(
-		'theme-option' => 'button_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['shape']['fusion_button'] = array(
-		'theme-option' => 'button_shape',
-		'type' => 'select',
-	);
-	$shortcode_option_map['button_gradient_top_color']['fusion_button'] = array(
-		'theme-option' => 'button_gradient_top_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['button_gradient_bottom_color']['fusion_button'] = array(
-		'theme-option' => 'button_gradient_bottom_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['button_gradient_top_color_hover']['fusion_button'] = array(
-		'theme-option' => 'button_gradient_top_color_hover',
-		'reset' => true,
-	);
-	$shortcode_option_map['button_gradient_bottom_color_hover']['fusion_button'] = array(
-		'theme-option' => 'button_gradient_bottom_color_hover',
-		'reset' => true,
-	);
-	$shortcode_option_map['accent_color']['fusion_button'] = array(
-		'theme-option' => 'button_accent_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['accent_hover_color']['fusion_button'] = array(
-		'theme-option' => 'button_accent_hover_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['bevel_color']['fusion_button'] = array(
-		'theme-option' => 'button_bevel_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['border_width']['fusion_button'] = array(
-		'theme-option' => 'button_border_width',
-		'type' => 'range',
-	);
-	$shortcode_option_map['text_transform']['fusion_button'] = array(
-		'theme-option' => 'button_text_transform',
-		'type' => 'select',
-	);
-
-	$shortcode_option_map['button_fullwidth']['fusion_login'] = array(
-		'theme-option' => 'button_span',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['button_fullwidth']['fusion_register'] = array(
-		'theme-option' => 'button_span',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['button_fullwidth']['fusion_lost_password'] = array(
-		'theme-option' => 'button_span',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['button_size']['fusion_tagline_box'] = array(
-		'theme-option' => 'button_size',
-		'type' => 'select',
-	);
-	$shortcode_option_map['button_type']['fusion_tagline_box'] = array(
-		'theme-option' => 'button_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['button_shape']['fusion_tagline_box'] = array(
-		'theme-option' => 'button_shape',
-		'type' => 'select',
-	);
-
-	// Checklist.
-	$shortcode_option_map['iconcolor']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_icons_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circle']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_circle',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['circlecolor']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_circle_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['divider']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_divider',
-		'type' => 'select',
-	);
-	$shortcode_option_map['divider_color']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_divider_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['size']['fusion_checklist'] = array(
-		'theme-option' => 'checklist_item_size',
-	);
-
-	// Columns.
-	$shortcode_option_map['dimension_margin']['fusion_builder_column'] = array(
-		'theme-option' => 'col_margin',
-		'subset' => array( 'top', 'bottom' ),
-	);
-	$shortcode_option_map['dimension_margin']['fusion_builder_column_inner'] = array(
-		'theme-option' => 'col_margin',
-		'subset' => array( 'top', 'bottom' ),
-	);
-
-	// Container.
-	$shortcode_option_map['background_color']['fusion_builder_container'] = array(
-		'theme-option' => 'full_width_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['border_size']['fusion_builder_container'] = array(
-		'theme-option' => 'full_width_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['border_color']['fusion_builder_container'] = array(
-		'theme-option' => 'full_width_border_color',
-		'reset' => true,
-	);
-
-	// Content Box.
-	$shortcode_option_map['backgroundcolor']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_size']['fusion_content_boxes'] = array( 'theme-option' => 'content_box_title_size' );
-	$shortcode_option_map['title_color']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_title_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['body_color']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_body_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_size']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_size',
-		'reset' => true,
-	);
-	$shortcode_option_map['iconcolor']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_circle']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_circle',
-		'type' => 'select',
-	);
-	$shortcode_option_map['icon_circle_radius']['fusion_content_boxes'] = array( 'theme-option' => 'content_box_icon_circle_radius' );
-	$shortcode_option_map['circlecolor']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circlebordercolor']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_bg_inner_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['outercirclebordercolor']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_bg_outer_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circlebordersize']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_bg_inner_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['outercirclebordersize']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_bg_outer_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['icon_hover_type']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_icon_hover_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['button_span']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_button_span',
-		'reset' => true,
-		'type' => 'select',
-	);
-	$shortcode_option_map['hover_accent_color']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_hover_animation_accent_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['link_type']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_link_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['link_area']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_link_area',
-		'type' => 'select',
-	);
-	$shortcode_option_map['link_target']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_link_target',
-		'type' => 'select',
-	);
-	$shortcode_option_map['margin_top']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_margin',
-		'subset' => 'top',
-	);
-	$shortcode_option_map['margin_bottom']['fusion_content_boxes'] = array(
-		'theme-option' => 'content_box_margin',
-		'subset' => 'bottom',
-	);
-	$shortcode_option_map['backgroundcolor']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_bg_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['iconcolor']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_circle_radius']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_circle_radius',
-		'type' => 'child',
-	);
-	$shortcode_option_map['circlecolor']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_bg_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['circlebordercolor']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_bg_inner_border_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['outercirclebordercolor']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_bg_outer_border_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['circlebordersize']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_bg_inner_border_size',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['outercirclebordersize']['fusion_content_box'] = array(
-		'theme-option' => 'content_box_icon_bg_outer_border_size',
-		'type' => 'child',
-		'reset' => true,
-	);
-
-	// Countdown.
-	$shortcode_option_map['timezone']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_timezone',
-		'type' => 'select',
-	);
-	$shortcode_option_map['show_weeks']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_show_weeks',
-		'type' => 'select',
-	);
-	$shortcode_option_map['background_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['background_image']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_background_image',
-		'subset' => 'thumbnail',
-	);
-	$shortcode_option_map['background_repeat']['fusion_countdown'] = array( 'theme-option' => 'countdown_background_repeat' );
-	$shortcode_option_map['background_position']['fusion_countdown'] = array( 'theme-option' => 'countdown_background_position' );
-	$shortcode_option_map['counter_box_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_counter_box_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['counter_text_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_counter_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['heading_text_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_heading_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['subheading_text_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_subheading_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['link_text_color']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_link_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['link_target']['fusion_countdown'] = array(
-		'theme-option' => 'countdown_link_target',
-		'type' => 'select',
-	);
-
-	// Counter box.
-	$shortcode_option_map['color']['fusion_counters_box'] = array(
-		'theme-option' => 'counter_box_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_size']['fusion_counters_box'] = array( 'theme-option' => 'counter_box_title_size' );
-	$shortcode_option_map['icon_size']['fusion_counters_box'] = array( 'theme-option' => 'counter_box_icon_size' );
-	$shortcode_option_map['body_color']['fusion_counters_box'] = array(
-		'theme-option' => 'counter_box_body_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['body_size']['fusion_counters_box'] = array( 'theme-option' => 'counter_box_body_size' );
-	$shortcode_option_map['border_color']['fusion_counters_box'] = array(
-		'theme-option' => 'counter_box_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_top']['fusion_counters_box'] = array(
-		'theme-option' => 'counter_box_icon_top',
-		'type' => 'yesno',
-	);
-
-	// Counter Circle.
-	$shortcode_option_map['filledcolor']['fusion_counter_circle'] = array(
-		'theme-option' => 'counter_filled_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['unfilledcolor']['fusion_counter_circle'] = array(
-		'theme-option' => 'counter_unfilled_color',
-		'reset' => true,
-	);
-
-	// Dropcap.
-	$shortcode_option_map['color']['fusion_dropcap'] = array(
-		'theme-option' => 'dropcap_color',
-		'shortcode' => 'fusion_dropcap',
-		'reset' => true,
-	);
-
-	// Events.
-	$shortcode_option_map['number_posts']['fusion_events'] = array(
-		'theme-option' => 'events_per_page',
-		'type'         => 'range',
-	);
-
-	$shortcode_option_map['column_spacing']['fusion_events'] = array(
-		'theme-option' => 'events_column_spacing',
-		'type'         => 'range',
-	);
-
-	$shortcode_option_map['content_padding']['fusion_events'] = array(
-		'theme-option' => 'events_content_padding',
-		'subset'       => array( 'top', 'left', 'bottom', 'right' ),
-	);
-
-	$shortcode_option_map['content_length']['fusion_events'] = array(
-		'theme-option' => 'events_content_length',
-		'type'         => 'select',
-	);
-
-	$shortcode_option_map['excerpt_length']['fusion_events'] = array(
-		'theme-option' => 'excerpt_length_events',
-		'type'         => 'range',
-	);
-
-	$shortcode_option_map['strip_html']['fusion_events'] = array(
-		'theme-option' => 'events_strip_html_excerpt',
-		'type'         => 'yesno',
-	);
-
-	// Flipboxes.
-	$shortcode_option_map['icon_color']['fusion_flip_boxes'] = array(
-		'theme-option' => 'icon_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circle_color']['fusion_flip_boxes'] = array(
-		'theme-option' => 'icon_circle_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circle_border_color']['fusion_flip_boxes'] = array(
-		'theme-option' => 'icon_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['background_color_front']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_front_bg',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_front_color']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_front_heading',
-		'reset' => true,
-	);
-	$shortcode_option_map['text_front_color']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_front_text',
-		'reset' => true,
-	);
-	$shortcode_option_map['background_color_back']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_back_bg',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_back_color']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_back_heading',
-		'reset' => true,
-	);
-	$shortcode_option_map['text_back_color']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_back_text',
-		'reset' => true,
-	);
-	$shortcode_option_map['border_size']['fusion_flip_box'] = array(
-		'theme-option' => 'flip_boxes_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['border_color']['fusion_flip_box'] = array( 'theme-option' => 'flip_boxes_border_color' );
-	$shortcode_option_map['border_radius']['fusion_flip_box'] = array( 'theme-option' => 'flip_boxes_border_radius' );
-	$shortcode_option_map['circle_color']['fusion_flip_box'] = array(
-		'theme-option' => 'icon_circle_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['circle_border_color']['fusion_flip_box'] = array(
-		'theme-option' => 'icon_border_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_color']['fusion_flip_box'] = array(
-		'theme-option' => 'icon_color',
-		'type' => 'child',
-		'reset' => true,
-	);
-
-	// Google Map element.
-	$shortcode_option_map['api_type']['fusion_map'] = array(
-		'theme-option' => 'google_map_api_type',
-		'type' => 'select',
-	);
-
-	// Icon Element.
-	$shortcode_option_map['circlecolor']['fusion_fontawesome'] = array(
-		'theme-option' => 'icon_circle_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['circlebordercolor']['fusion_fontawesome'] = array(
-		'theme-option' => 'icon_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['iconcolor']['fusion_fontawesome'] = array(
-		'theme-option' => 'icon_color',
-		'reset' => true,
-	);
-
-	// Image Frame.
-	$shortcode_option_map['bordercolor']['fusion_imageframe'] = array(
-		'theme-option' => 'imgframe_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordersize']['fusion_imageframe'] = array(
-		'theme-option' => 'imageframe_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['borderradius']['fusion_imageframe'] = array( 'theme-option' => 'imageframe_border_radius' );
-	$shortcode_option_map['stylecolor']['fusion_imageframe'] = array(
-		'theme-option' => 'imgframe_style_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['lightbox']['fusion_imageframe'] = array(
-		'theme-option' => 'status_lightbox',
-		'type' => 'yesno',
-	);
-
-	// Image Compare.
-	$shortcode_option_map['type']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['font_size']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_font_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['accent_color']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_accent_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['label_placement']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_label_placement',
-		'type' => 'select',
-	);
-	$shortcode_option_map['handle_type']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_handle_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['handle_color']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_handle_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['handle_bg']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_handle_bg',
-		'reset' => true,
-	);
-	$shortcode_option_map['transition_time']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_transition_time',
-		'type' => 'range',
-	);
-	$shortcode_option_map['offset']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_offset',
-		'type' => 'range',
-	);
-	$shortcode_option_map['orientation']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_orientation',
-		'type' => 'select',
-	);
-	$shortcode_option_map['handle_movement']['fusion_image_before_after'] = array(
-		'theme-option' => 'before_after_handle_movement',
-		'type' => 'select',
-	);
-
-	// Modal.
-	$shortcode_option_map['background']['fusion_modal'] = array(
-		'theme-option' => 'modal_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['border_color']['fusion_modal'] = array(
-		'theme-option' => 'modal_border_color',
-		'reset' => true,
-	);
-
-	// Person.
-	$shortcode_option_map['background_color']['fusion_person'] = array(
-		'theme-option' => 'person_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['pic_bordercolor']['fusion_person'] = array(
-		'theme-option' => 'person_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['pic_bordersize']['fusion_person'] = array(
-		'theme-option' => 'person_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['pic_borderradius']['fusion_person'] = array( 'theme-option' => 'person_border_radius' );
-	$shortcode_option_map['pic_style_color']['fusion_person'] = array(
-		'theme-option' => 'person_style_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['content_alignment']['fusion_person'] = array(
-		'theme-option' => 'person_alignment',
-		'type' => 'select',
-	);
-	$shortcode_option_map['icon_position']['fusion_person'] = array(
-		'theme-option' => 'person_icon_position',
-		'type' => 'select',
-	);
-
-	// Popover.
-	$shortcode_option_map['title_bg_color']['fusion_popover'] = array(
-		'theme-option' => 'popover_heading_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['content_bg_color']['fusion_popover'] = array(
-		'theme-option' => 'popover_content_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordercolor']['fusion_popover'] = array(
-		'theme-option' => 'popover_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['textcolor']['fusion_popover'] = array(
-		'theme-option' => 'popover_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['placement']['fusion_popover'] = array(
-		'theme-option' => 'popover_placement',
-		'type' => 'select',
-	);
-
-	// Pricing table.
-	$shortcode_option_map['backgroundcolor']['fusion_pricing_table'] = array(
-		'theme-option' => 'pricing_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['background_color_hover']['fusion_pricing_table'] = array(
-		'theme-option' => 'pricing_background_color_hover',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordercolor']['fusion_pricing_table'] = array(
-		'theme-option' => 'pricing_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['dividercolor']['fusion_pricing_table'] = array(
-		'theme-option' => 'pricing_divider_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['heading_color_style_1']['fusion_pricing_table'] = array(
-		'theme-option' => 'full_boxed_pricing_box_heading_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['heading_color_style_2']['fusion_pricing_table'] = array(
-		'theme-option' => 'sep_pricing_box_heading_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['pricing_color']['fusion_pricing_table'] = array(
-		'theme-option' => 'pricing_box_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['body_text_color']['fusion_pricing_table'] = array(
-		'theme-option' => 'body_typography',
-		'reset' => true,
-		'subset' => 'color',
-	);
-
-	// Progress bar.
-	$shortcode_option_map['height']['fusion_progress'] = array( 'theme-option' => 'progressbar_height' );
-	$shortcode_option_map['text_position']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_text_position',
-		'type' => 'select',
-	);
-	$shortcode_option_map['filledcolor']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_filled_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['filledbordercolor']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_filled_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['filledbordersize']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_filled_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['unfilledcolor']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_unfilled_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['textcolor']['fusion_progress'] = array(
-		'theme-option' => 'progressbar_text_color',
-		'reset' => true,
-	);
-
-	// Section Separator.
-	$shortcode_option_map['backgroundcolor']['fusion_section_separator'] = array(
-		'theme-option' => 'section_sep_bg',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordersize']['fusion_section_separator'] = array(
-		'theme-option' => 'section_sep_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['bordercolor']['fusion_section_separator'] = array(
-		'theme-option' => 'section_sep_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_color']['fusion_section_separator'] = array(
-		'theme-option' => 'icon_color',
-		'reset' => true,
-	);
-
-	// Separator.
-	$shortcode_option_map['border_size']['fusion_separator'] = array(
-		'theme-option' => 'separator_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['icon_circle']['fusion_separator'] = array(
-		'theme-option' => 'separator_circle',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['icon_circle_color']['fusion_separator'] = array(
-		'theme-option' => 'separator_circle_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['sep_color']['fusion_separator'] = array(
-		'theme-option' => 'sep_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['style_type']['fusion_separator'] = array(
-		'theme-option' => 'separator_style_type',
-		'type' => 'select',
-	);
-
-	// Social Icons.
-	$shortcode_option_map['color_type']['fusion_social_links'] = array(
-		'theme-option' => 'social_links_color_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['icon_colors']['fusion_social_links'] = array( 'theme-option' => 'social_links_icon_color' );
-	$shortcode_option_map['icons_boxed']['fusion_social_links'] = array(
-		'theme-option' => 'social_links_boxed',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['box_colors']['fusion_social_links'] = array( 'theme-option' => 'social_links_box_color' );
-	$shortcode_option_map['icons_boxed_radius']['fusion_social_links'] = array( 'theme-option' => 'social_links_boxed_radius' );
-	$shortcode_option_map['tooltip_placement']['fusion_social_links'] = array(
-		'theme-option' => 'social_links_tooltip_placement',
-		'type' => 'select',
-	);
-
-	// Social Icons for Person.
-	$shortcode_option_map['social_icon_font_size']['fusion_person'] = array( 'theme-option' => 'social_links_font_size' );
-	$shortcode_option_map['social_icon_padding']['fusion_person'] = array( 'theme-option' => 'social_links_boxed_padding' );
-	$shortcode_option_map['social_icon_color_type']['fusion_person'] = array(
-		'theme-option' => 'social_links_color_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['social_icon_colors']['fusion_person'] = array( 'theme-option' => 'social_links_icon_color' );
-	$shortcode_option_map['social_icon_boxed']['fusion_person'] = array(
-		'theme-option' => 'social_links_boxed',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['social_icon_boxed_colors']['fusion_person'] = array( 'theme-option' => 'social_links_box_color' );
-	$shortcode_option_map['social_icon_boxed_radius']['fusion_person'] = array( 'theme-option' => 'social_links_boxed_radius' );
-	$shortcode_option_map['social_icon_tooltip']['fusion_person'] = array(
-		'theme-option' => 'social_links_tooltip_placement',
-		'type' => 'select',
-	);
-
-	// Sharing Box.
-	$shortcode_option_map['backgroundcolor']['fusion_sharing'] = array(
-		'theme-option' => 'social_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icons_boxed']['fusion_sharing'] = array(
-		'theme-option' => 'social_links_boxed',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['icons_boxed_radius']['fusion_sharing'] = array( 'theme-option' => 'social_links_boxed_radius' );
-	$shortcode_option_map['tagline_color']['fusion_sharing'] = array(
-		'theme-option' => 'sharing_box_tagline_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['tooltip_placement']['fusion_sharing'] = array(
-		'theme-option' => 'sharing_social_links_tooltip_placement',
-		'type' => 'select',
-	);
-	$shortcode_option_map['color_type']['fusion_sharing'] = array(
-		'theme-option' => 'social_links_color_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['icon_colors']['fusion_sharing'] = array( 'theme-option' => 'social_links_icon_color' );
-	$shortcode_option_map['box_colors']['fusion_sharing'] = array( 'theme-option' => 'social_links_box_color' );
-
-	// Tabs.
-	$shortcode_option_map['backgroundcolor']['fusion_tabs'] = array(
-		'theme-option' => 'tabs_bg_color',
-		'shortcode' => 'fusion_tabs',
-		'reset' => true,
-	);
-	$shortcode_option_map['inactivecolor']['fusion_tabs'] = array(
-		'theme-option' => 'tabs_inactive_color',
-		'shortcode' => 'fusion_tabs',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordercolor']['fusion_tabs'] = array(
-		'theme-option' => 'tabs_border_color',
-		'shortcode' => 'fusion_tabs',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_position']['fusion_tabs'] = array(
-		'theme-option' => 'tabs_icon_position',
-		'shortcode' => 'fusion_tabs',
-		'type' => 'select',
-	);
-	$shortcode_option_map['icon_size']['fusion_tabs'] = array(
-		'theme-option' => 'tabs_icon_size',
-		'shortcode' => 'fusion_tabs',
-		'type' => 'range',
-	);
-
-	// Tagline.
-	$shortcode_option_map['backgroundcolor']['fusion_tagline_box'] = array(
-		'theme-option' => 'tagline_bg',
-		'reset' => true,
-	);
-	$shortcode_option_map['bordercolor']['fusion_tagline_box'] = array(
-		'theme-option' => 'tagline_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['margin_top']['fusion_tagline_box'] = array(
-		'theme-option' => 'tagline_margin',
-		'subset' => 'top',
-	);
-	$shortcode_option_map['margin_bottom']['fusion_tagline_box'] = array(
-		'theme-option' => 'tagline_margin',
-		'subset' => 'bottom',
-	);
-
-	// Testimonials.
-	$shortcode_option_map['backgroundcolor']['fusion_testimonials'] = array(
-		'theme-option' => 'testimonial_bg_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['textcolor']['fusion_testimonials'] = array(
-		'theme-option' => 'testimonial_text_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['random']['fusion_testimonials'] = array(
-		'theme-option' => 'testimonials_random',
-		'type' => 'yesno',
-	);
-
-	// Text.
-	$shortcode_option_map['columns']['fusion_text'] = array(
-		'theme-option' => 'text_columns',
-		'type'         => 'range',
-	);
-	$shortcode_option_map['column_min_width']['fusion_text'] = array(
-		'theme-option' => 'text_column_min_width',
-	);
-	$shortcode_option_map['column_spacing']['fusion_text'] = array(
-		'theme-option' => 'text_column_spacing',
-	);
-	$shortcode_option_map['rule_style']['fusion_text'] = array(
-		'theme-option' => 'text_rule_style',
-		'type' => 'select',
-	);
-	$shortcode_option_map['rule_size']['fusion_text'] = array(
-		'theme-option' => 'text_rule_size',
-		'type'         => 'range',
-	);
-	$shortcode_option_map['rule_color']['fusion_text'] = array(
-		'theme-option' => 'text_rule_color',
-		'reset' => true,
-	);
-
-	// Title.
-	$shortcode_option_map['style_type']['fusion_title'] = array(
-		'theme-option' => 'title_style_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['sep_color']['fusion_title'] = array(
-		'theme-option' => 'title_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['dimensions']['fusion_title'] = array(
-		'theme-option' => 'title_margin',
-		'subset' => array( 'top', 'bottom' ),
-	);
-
-	// Toggles.
-	$shortcode_option_map['type']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_type',
-		'type' => 'select',
-	);
-	$shortcode_option_map['divider_line']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_divider_line',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['boxed_mode']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_boxed_mode',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['border_size']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['border_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['background_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['hover_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_hover_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_font_size']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_title_font_size',
-	);
-	$shortcode_option_map['icon_size']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_icon_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['icon_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_icon_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_boxed_mode']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_icon_boxed',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['icon_box_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_inactive_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['icon_alignment']['fusion_accordion'] = array(
-		'theme-option' => 'accordion_icon_align',
-		'type' => 'select',
-	);
-	$shortcode_option_map['toggle_hover_accent_color']['fusion_accordion'] = array(
-		'theme-option' => 'accordian_active_color',
-		'reset' => true,
-	);
-
-	// User Login Element.
-	$shortcode_option_map['text_align']['fusion_login'] = array(
-		'theme-option' => 'user_login_text_align',
-		'type' => 'select',
-	);
-	$shortcode_option_map['form_field_layout']['fusion_login'] = array(
-		'theme-option' => 'user_login_form_field_layout',
-		'type' => 'select',
-	);
-	$shortcode_option_map['form_background_color']['fusion_login'] = array(
-		'theme-option' => 'user_login_form_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['show_labels']['fusion_login'] = array(
-		'theme-option' => 'user_login_form_show_labels',
-		'type' => 'select',
-	);
-	$shortcode_option_map['show_placeholders']['fusion_login'] = array(
-		'theme-option' => 'user_login_form_show_placeholders',
-		'type' => 'select',
-	);
-	$shortcode_option_map['show_remember_me']['fusion_login'] = array(
-		'theme-option' => 'user_login_form_show_remember_me',
-		'type' => 'select',
-	);
-
-	$shortcode_option_map['text_align']['fusion_register'] = array(
-		'theme-option' => 'user_login_text_align',
-		'type' => 'select',
-	);
-	$shortcode_option_map['form_field_layout']['fusion_register'] = array(
-		'theme-option' => 'user_login_form_field_layout',
-		'type' => 'select',
-	);
-	$shortcode_option_map['form_background_color']['fusion_register'] = array(
-		'theme-option' => 'user_login_form_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['show_labels']['fusion_register'] = array(
-		'theme-option' => 'user_login_form_show_labels',
-		'type' => 'select',
-	);
-	$shortcode_option_map['show_placeholders']['fusion_register'] = array(
-		'theme-option' => 'user_login_form_show_placeholders',
-		'type' => 'select',
-	);
-
-	$shortcode_option_map['text_align']['fusion_lost_password'] = array(
-		'theme-option' => 'user_login_text_align',
-		'type' => 'select',
-	);
-	$shortcode_option_map['form_background_color']['fusion_lost_password'] = array(
-		'theme-option' => 'user_login_form_background_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['show_labels']['fusion_lost_password'] = array(
-		'theme-option' => 'user_login_form_show_labels',
-		'type' => 'select',
-	);
-	$shortcode_option_map['show_placeholders']['fusion_lost_password'] = array(
-		'theme-option' => 'user_login_form_show_placeholders',
-		'type' => 'select',
-	);
-	$shortcode_option_map['link_color']['fusion_login'] = array( 'theme-option' => 'link_color' );
-	$shortcode_option_map['link_color']['fusion_register'] = array( 'theme-option' => 'link_color' );
-	$shortcode_option_map['link_color']['fusion_lost_password'] = array( 'theme-option' => 'link_color' );
-
-	// Widget Area Element.
-	$shortcode_option_map['title_color']['fusion_widget_area'] = array(
-		'theme-option' => 'widget_area_title_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['title_size']['fusion_widget_area'] = array( 'theme-option' => 'widget_area_title_size' );
-
-	// Gallery.
-	$shortcode_option_map['picture_size']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_picture_size',
-		'reset' => true,
-		'type' => 'select',
-	);
-	$shortcode_option_map['layout']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_layout',
-		'reset' => true,
-		'type' => 'select',
-	);
-	$shortcode_option_map['columns']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_columns',
-		'reset' => true,
-	);
-	$shortcode_option_map['column_spacing']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_column_spacing',
-		'reset' => true,
-	);
-	$shortcode_option_map['lightbox_content']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_lightbox_content',
-		'reset' => true,
-		'type' => 'select',
-	);
-	$shortcode_option_map['lightbox']['fusion_gallery'] = array(
-		'theme-option' => 'status_lightbox',
-		'type' => 'yesno',
-	);
-	$shortcode_option_map['hover_type']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_hover_type',
-		'reset' => true,
-		'type' => 'select',
-	);
-	$shortcode_option_map['gallery_masonry_grid_ratio']['fusion_gallery'] = array(
-		'theme-option' => 'masonry_grid_ratio',
-		'type' => 'range',
-	);
-	$shortcode_option_map['gallery_masonry_width_double']['fusion_gallery'] = array(
-		'theme-option' => 'masonry_width_double',
-		'type' => 'range',
-	);
-	$shortcode_option_map['bordersize']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_border_size',
-		'type' => 'range',
-	);
-	$shortcode_option_map['bordercolor']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_border_color',
-		'reset' => true,
-	);
-	$shortcode_option_map['border_radius']['fusion_gallery'] = array(
-		'theme-option' => 'gallery_border_radius',
-	);
-
-	// Image Carousel.
-	$shortcode_option_map['lightbox']['fusion_images'] = array(
-		'theme-option' => 'status_lightbox',
-		'type' => 'yesno',
-	);
-
-	// Slide.
-	$shortcode_option_map['lightbox']['fusion_slide'] = array(
-		'theme-option' => 'status_lightbox',
-		'type' => 'yesno',
-	);
-
-	// Post Slider.
-	$shortcode_option_map['lightbox']['fusion_postslider'] = array(
-		'theme-option' => 'status_lightbox',
-		'type' => 'yesno',
-	);
-
-	// Syntax Highlighter.
-	$shortcode_option_map['theme']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_theme',
-		'type'         => 'select',
-	);
-	$shortcode_option_map['line_numbers']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_line_numbers',
-		'type'         => 'select',
-	);
-	$shortcode_option_map['background_color']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_background_color',
-		'reset'        => true,
-	);
-	$shortcode_option_map['line_number_background_color']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_line_number_background_color',
-		'reset'        => true,
-	);
-	$shortcode_option_map['line_number_text_color']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_line_number_text_color',
-		'reset'        => true,
-	);
-	$shortcode_option_map['line_wrapping']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_line_wrapping',
-		'type'         => 'select',
-	);
-	$shortcode_option_map['copy_to_clipboard']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_copy_to_clipboard',
-		'type'         => 'select',
-	);
-	$shortcode_option_map['copy_to_clipboard_text']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_copy_to_clipboard_text',
-		'type'         => 'reset',
-	);
-	$shortcode_option_map['font_size']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_font_size',
-		'type'         => 'range',
-	);
-	$shortcode_option_map['border_size']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_border_size',
-		'type'         => 'range',
-	);
-	$shortcode_option_map['border_color']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_border_color',
-		'reset'        => true,
-	);
-	$shortcode_option_map['border_style']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_border_style',
-		'type'         => 'select',
-	);
-	$shortcode_option_map['margin']['fusion_syntax_highlighter'] = array(
-		'theme-option' => 'syntax_highlighter_margin',
-		'subset'       => array( 'top', 'left', 'bottom', 'right' ),
-	);
-
-	// Chart.
-	$shortcode_option_map['show_tooltips']['fusion_chart'] = array(
-		'theme-option' => 'chart_show_tooltips',
-		'type'         => 'select',
-	);
-
-	$shortcode_option_map['chart_legend_position']['fusion_chart'] = array(
-		'theme-option' => 'chart_legend_position',
-		'type'         => 'select',
-	);
-
 	if ( 'animation_offset' === $param ) {
-		return array(
+		return [
 			'theme-option' => 'animation_offset',
-			'type' => 'select',
-		);
+			'type'         => 'select',
+		];
 	}
 
-	if ( isset( $shortcode_option_map[ $param ][ $shortcode ] ) ) {
-		return $shortcode_option_map[ $param ][ $shortcode ];
+	if ( isset( FusionBuilder::$element_descriptions_map[ $param ][ $shortcode ] ) ) {
+		return FusionBuilder::$element_descriptions_map[ $param ][ $shortcode ];
 	}
 	return false;
 }
@@ -2796,757 +1485,20 @@ function fusion_builder_map_descriptions( $shortcode, $param ) {
  */
 function fusion_builder_element_dependencies( $dependencies, $shortcode, $option ) {
 
-	global $fusion_settings;
-	if ( ! $fusion_settings ) {
-		$fusion_settings = Fusion_Settings::get_instance();
-	}
-
-	$shortcode_option_map = array();
-
-	// Blog.
-	$blog_is_excerpt = array(
-		'check' => array(
-			'element-option' => 'blog_excerpt',
-			'value' => 'yes',
-			'operator' => '!=',
-		),
-		'output' => array(
-			'element' => 'excerpt',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['excerpt_length']['fusion_blog'][] = $blog_is_excerpt;
-	$shortcode_option_map['strip_html']['fusion_blog'][]     = $blog_is_excerpt;
-
-	$blog_is_single_column = array(
-		'check' => array(
-			'element-option' => 'blog_grid_columns',
-			'value'          => '1',
-			'operator'       => '==',
-		),
-		'output' => array(
-			'element'  => 'blog_grid_columns',
-			'value'    => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['blog_grid_column_spacing']['fusion_blog'][] = $blog_is_single_column;
-	$shortcode_option_map['equal_heights']['fusion_blog'][]            = $blog_is_single_column;
-
-	// Google Map.
-	$is_embed_map = array(
-		'check' => array(
-			'element-option' => 'google_map_api_type',
-			'value' => 'embed',
-			'operator' => '!=',
-		),
-		'output' => array(
-			'element' => 'api_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['embed_address']['fusion_map'][]  = $is_embed_map;
-	$shortcode_option_map['embed_map_type']['fusion_map'][] = $is_embed_map;
-
-	$is_not_embed_map = array(
-		'check' => array(
-			'element-option' => 'google_map_api_type',
-			'value' => 'embed',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'api_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['address']['fusion_map'][]  = $is_not_embed_map;
-	$shortcode_option_map['type']['fusion_map'][]     = $is_not_embed_map;
-
-	$is_static_map = array(
-		'check' => array(
-			'element-option' => 'google_map_api_type',
-			'value' => 'static',
-			'operator' => '!=',
-		),
-		'output' => array(
-			'element' => 'api_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['icon_static']['fusion_map'][]      = $is_static_map;
-	$shortcode_option_map['static_map_color']['fusion_map'][] = $is_static_map;
-
-	$is_js_map = array(
-		'check' => array(
-			'element-option' => 'google_map_api_type',
-			'value' => 'js',
-			'operator' => '!=',
-		),
-		'output' => array(
-			'element' => 'api_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['scrollwheel']['fusion_map'][]     = $is_js_map;
-	$shortcode_option_map['scale']['fusion_map'][]           = $is_js_map;
-	$shortcode_option_map['zoom_pancontrol']['fusion_map'][] = $is_js_map;
-	$shortcode_option_map['animation']['fusion_map'][]       = $is_js_map;
-	$shortcode_option_map['popup']['fusion_map'][]           = $is_js_map;
-	$shortcode_option_map['map_style']['fusion_map'][]       = $is_js_map;
-	$shortcode_option_map['overlay_color']['fusion_map'][]   = $is_js_map;
-	$shortcode_option_map['infobox_content']['fusion_map'][]          = $is_js_map;
-	$shortcode_option_map['infobox']['fusion_map'][]                  = $is_js_map;
-	$shortcode_option_map['icon']['fusion_map'][]                     = $is_js_map;
-	$shortcode_option_map['infobox_text_color']['fusion_map'][]       = $is_js_map;
-	$shortcode_option_map['infobox_background_color']['fusion_map'][] = $is_js_map;
-
-	// Progress.
-	$shortcode_option_map['filledbordercolor']['fusion_progress'][] = array(
-		'check' => array(
-			'element-option' => 'progressbar_filled_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'filledbordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Social links.
-	$shortcode_option_map['icons_boxed_radius']['fusion_social_links'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icons_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['box_colors']['fusion_social_links'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icons_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['icon_colors']['fusion_social_links'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['box_colors']['fusion_social_links'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Sharing box.
-	$shortcode_option_map['icons_boxed_radius']['fusion_sharing'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icons_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['box_colors']['fusion_sharing'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['box_colors']['fusion_sharing'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icons_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['icon_colors']['fusion_sharing'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Toggles.
-	$shortcode_option_map['divider_line']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_boxed_mode',
-			'value' => '1',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['border_size']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_boxed_mode',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['border_color']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_boxed_mode',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['background_color']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_boxed_mode',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['icon_box_color']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_icon_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icon_boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['hover_color']['fusion_accordion'][] = array(
-		'check' => array(
-			'element-option' => 'accordion_boxed_mode',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'boxed_mode',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Checklist.
-	$shortcode_option_map['circlecolor']['fusion_checklist'][] = array(
-		'check' => array(
-			'element-option' => 'checklist_circle',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'circle',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['divider_color']['fusion_checklist'][] = array(
-		'check' => array(
-			'element-option' => 'checklist_divider',
-			'value' => 'no',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'divider',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Imageframe.
-	$shortcode_option_map['bordercolor']['fusion_imageframe'][] = array(
-		'check' => array(
-			'element-option' => 'imageframe_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'bordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Image Compare.
-	$shortcode_option_map['before_label']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['after_label']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['font_size']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['accent_color']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['label_placement']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_type']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_color']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_bg']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_bg']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_handle_type',
-			'value' => 'arrows',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'handle_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_bg']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_handle_type',
-			'value' => 'circle',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'handle_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['transition_time']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'before_after',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['offset']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['orientation']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['handle_movement']['fusion_image_before_after'][] = array(
-		'check' => array(
-			'element-option' => 'before_after_type',
-			'value' => 'switch',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Button.
-	$shortcode_option_map['bevel_color']['fusion_button'][] = array(
-		'check' => array(
-			'element-option' => 'button_type',
-			'value' => 'Flat',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Gallery.
-	$shortcode_option_map['bordercolor']['fusion_gallery'][] = array(
-		'check' => array(
-			'element-option' => 'gallery_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'bordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['border_radius']['fusion_gallery'][] = array(
-		'check' => array(
-			'element-option' => 'gallery_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'bordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Person.
-	$shortcode_option_map['social_icon_boxed_radius']['fusion_person'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'social_icon_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['social_icon_boxed_colors']['fusion_person'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_boxed',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'social_icon_boxed',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['social_icon_boxed_colors']['fusion_person'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'social_icon_color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['social_icon_colors']['fusion_person'][] = array(
-		'check' => array(
-			'element-option' => 'social_links_color_type',
-			'value' => 'brand',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'social_icon_color_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Content boxes.
-	$shortcode_option_map['circlebordercolor']['fusion_content_boxes'][] = array(
-		'check' => array(
-			'element-option' => 'content_box_icon_bg_inner_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'circlebordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['outercirclebordercolor']['fusion_content_boxes'][] = array(
-		'check' => array(
-			'element-option' => 'content_box_icon_bg_outer_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'outercirclebordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['button_span']['fusion_content_boxes'][] = array(
-		'check' => array(
-			'element-option' => 'content_box_link_type',
-			'value' => 'button',
-			'operator' => '!=',
-		),
-		'output' => array(
-			'element' => 'link_type',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$boxed_content_boxes = array(
-		'check' => array(
-			'element-option' => 'content_box_icon_circle',
-			'value' => 'no',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icon_circle',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['icon_circle_radius']['fusion_content_boxes'][] = $boxed_content_boxes;
-	$shortcode_option_map['circlecolor']['fusion_content_boxes'][] = $boxed_content_boxes;
-	$shortcode_option_map['circlebordercolor']['fusion_content_boxes'][] = $boxed_content_boxes;
-	$shortcode_option_map['circlebordersize']['fusion_content_boxes'][] = $boxed_content_boxes;
-	$shortcode_option_map['outercirclebordercolor']['fusion_content_boxes'][] = $boxed_content_boxes;
-	$shortcode_option_map['outercirclebordersize']['fusion_content_boxes'][] = $boxed_content_boxes;
-
-	$parent_boxed_content_boxes = array(
-		'check' => array(
-			'element-option' => 'content_box_icon_circle',
-			'value' => 'no',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'parent_icon_circle',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['circlecolor']['fusion_content_box'][] = $parent_boxed_content_boxes;
-	$shortcode_option_map['circlebordercolor']['fusion_content_box'][] = $parent_boxed_content_boxes;
-	$shortcode_option_map['circlebordersize']['fusion_content_box'][] = $parent_boxed_content_boxes;
-	$shortcode_option_map['outercirclebordercolor']['fusion_content_box'][] = $parent_boxed_content_boxes;
-	$shortcode_option_map['outercirclebordersize']['fusion_content_box'][] = $parent_boxed_content_boxes;
-
-	// Flip boxes.
-	$shortcode_option_map['border_color']['fusion_flip_box'][] = array(
-		'check' => array(
-			'element-option' => 'flip_boxes_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'border_size',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Container.
-	$shortcode_option_map['border_color']['fusion_builder_container'][] = array(
-		'check' => array(
-			'element-option' => 'full_width_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'border_size',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-	$shortcode_option_map['border_style']['fusion_builder_container'][] = array(
-		'check' => array(
-			'element-option' => 'full_width_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'border_size',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Section separator.
-	$shortcode_option_map['bordercolor']['fusion_section_separator'][] = array(
-		'check' => array(
-			'element-option' => 'section_sep_border_size',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'bordersize',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
-
-	// Separator.
-	$shortcode_option_map['icon_circle_color']['fusion_separator'][] = array(
-		'check' => array(
-			'element-option' => 'separator_circle',
-			'value' => '0',
-			'operator' => '==',
-		),
-		'output' => array(
-			'element' => 'icon_circle',
-			'value' => '',
-			'operator' => '!=',
-		),
-	);
+	$fusion_settings = fusion_get_fusion_settings();
 
 	// If has TO related dependency, do checks.
-	if ( isset( $shortcode_option_map[ $option ][ $shortcode ] ) && is_array( $shortcode_option_map[ $option ][ $shortcode ] ) ) {
-		foreach ( $shortcode_option_map[ $option ][ $shortcode ] as $option_check ) {
+	if ( isset( FusionBuilder::$element_dependency_map[ $option ][ $shortcode ] ) && is_array( FusionBuilder::$element_dependency_map[ $option ][ $shortcode ] ) ) {
+		foreach ( FusionBuilder::$element_dependency_map[ $option ][ $shortcode ] as $option_check ) {
 			$option_value = $fusion_settings->get( $option_check['check']['element-option'] );
-			$pass = false;
+			$pass         = false;
 
 			// Check the result of check.
-			if ( '==' == $option_check['check']['operator'] ) {
-				$pass = ( $option_value == $option_check['check']['value'] ) ? true : false;
+			if ( '==' === $option_check['check']['operator'] ) {
+				$pass = ( $option_value == $option_check['check']['value'] ) ? true : false; // phpcs:ignore WordPress.PHP.StrictComparisons
 			}
-			if ( '!=' == $option_check['check']['operator'] ) {
-				$pass = ( $option_value != $option_check['check']['value'] ) ? true : false;
+			if ( '!=' === $option_check['check']['operator'] ) {
+				$pass = ( $option_value != $option_check['check']['value'] ) ? true : false; // phpcs:ignore WordPress.PHP.StrictComparisons
 			}
 
 			// If check passes then add dependency for checking.
@@ -3569,18 +1521,14 @@ if ( ! function_exists( 'fusion_builder_render_rich_snippets_for_pages' ) ) {
 	 */
 	function fusion_builder_render_rich_snippets_for_pages( $title_tag = true, $author_tag = true, $updated_tag = true ) {
 
-		global $fusion_settings;
-		if ( ! $fusion_settings ) {
-			$fusion_settings = Fusion_Settings::get_instance();
-		}
-
+		$fusion_settings = fusion_get_fusion_settings();
 		ob_start();
 		?>
 		<?php if ( $fusion_settings->get( 'disable_date_rich_snippet_pages' ) ) : ?>
 
 			<?php if ( $title_tag && $fusion_settings->get( 'disable_rich_snippet_title' ) ) : ?>
 				<span class="entry-title" style="display: none;">
-					<?php echo get_the_title(); ?>
+					<?php the_title(); ?>
 				</span>
 			<?php endif; ?>
 
@@ -3594,14 +1542,14 @@ if ( ! function_exists( 'fusion_builder_render_rich_snippets_for_pages' ) ) {
 
 			<?php if ( $updated_tag && $fusion_settings->get( 'disable_rich_snippet_date' ) ) : ?>
 				<span class="updated" style="display:none;">
-					<?php echo get_the_modified_time( 'c' ); // WPCS: XSS ok. ?>
+					<?php echo get_the_modified_time( 'c' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				</span>
 			<?php endif; ?>
 
 		<?php endif; ?>
 		<?php
 		$rich_snippets = ob_get_clean();
-		return str_replace( array( "\t", "\n", "\r", "\0", "\x0B" ), '', $rich_snippets );
+		return str_replace( [ "\t", "\n", "\r", "\0", "\x0B" ], '', $rich_snippets );
 	}
 }
 
@@ -3659,14 +1607,26 @@ if ( ! function_exists( 'fusion_builder_get_post_content_excerpt' ) ) {
 			return $content;
 		}
 		$post = get_post( get_the_ID() );
-		// Filter to set the default [...] read more to something arbritary.
-		$read_more_text = apply_filters( 'fusion_blog_read_more_excerpt', '&#91;...&#93;' );
 
 		// If read more for excerpts is not disabled.
 		if ( $fusion_settings->get( 'disable_excerpts' ) ) {
+
+			$read_more_text = $fusion_settings->get( 'excerpt_read_more_symbol' );
+			if ( '' === $read_more_text ) {
+				$read_more_text = '&#91;...&#93;';
+			}
+
+			// Filter to set the default [...] read more to something arbritary.
+			$read_more_text = apply_filters( 'fusion_blog_read_more_excerpt', $read_more_text );
+
 			// Check if the read more [...] should link to single post.
 			if ( $fusion_settings->get( 'link_read_more' ) ) {
-				$read_more = ' <a href="' . get_permalink( get_the_ID() ) . '">' . $read_more_text . '</a>';
+				$permalink = get_permalink( get_the_ID() );
+				if ( 'private' === get_post_status() && ! is_user_logged_in() || in_array( get_post_status(), [ 'pending', 'draft', 'future' ], true ) && ! current_user_can( 'edit-post' ) ) {
+					$permalink = '#';
+				}
+
+				$read_more = ' <a href="' . esc_url( $permalink ) . '">' . $read_more_text . '</a>';
 			} else {
 				$read_more = ' ' . $read_more_text;
 			}
@@ -3700,14 +1660,14 @@ if ( ! function_exists( 'fusion_builder_get_post_content_excerpt' ) ) {
 		// Limit the contents to the $limit length.
 		if ( ! has_excerpt() ) {
 			// Check if the excerpting should be char or word based.
-			if ( 'Characters' === $fusion_settings->get( 'excerpt_base' ) ) {
-				$content = mb_substr( $content, 0, $limit );
+			if ( 'characters' === fusion_get_option( 'excerpt_base' ) ) {
+				$content  = mb_substr( $content, 0, $limit );
 				$content .= $read_more;
 			} else { // Excerpting is word based.
 				$content = explode( ' ', $content, $limit + 1 );
 				if ( count( $content ) > $limit ) {
 					array_pop( $content );
-					$content = implode( ' ', $content );
+					$content  = implode( ' ', $content );
 					$content .= $read_more;
 				} else {
 					$content = implode( ' ', $content );
@@ -3721,7 +1681,7 @@ if ( ! function_exists( 'fusion_builder_get_post_content_excerpt' ) ) {
 			}
 			$content = do_shortcode( $content );
 		}
-		return $content;
+		return fusion_force_balance_tags( $content );
 	}
 }
 
@@ -3735,35 +1695,38 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 	 * @param string $settings HTML markup to display the date and post format box.
 	 * @return  string
 	 */
-	function fusion_builder_render_post_metadata( $layout, $settings = array() ) {
+	function fusion_builder_render_post_metadata( $layout, $settings = [] ) {
 
-		global $fusion_settings;
-		if ( ! $fusion_settings ) {
-			$fusion_settings = Fusion_Settings::get_instance();
-		}
+		$fusion_settings = fusion_get_fusion_settings();
 
 		$html = $author = $date = $metadata = '';
 
-		$settings = ( is_array( $settings ) ) ? $settings : array();
+		$settings = ( is_array( $settings ) ) ? $settings : [];
 
-		$default_settings = array(
+		$default_settings = [
 			'post_meta'          => fusion_library()->get_option( 'post_meta' ),
 			'post_meta_author'   => fusion_library()->get_option( 'post_meta_author' ),
 			'post_meta_date'     => fusion_library()->get_option( 'post_meta_date' ),
 			'post_meta_cats'     => fusion_library()->get_option( 'post_meta_cats' ),
 			'post_meta_tags'     => fusion_library()->get_option( 'post_meta_tags' ),
 			'post_meta_comments' => fusion_library()->get_option( 'post_meta_comments' ),
-		);
+		];
 
-		$settings = wp_parse_args( $settings, $default_settings );
-		$post_meta = get_post_meta( get_queried_object_id(), 'pyre_post_meta', true );
+		$settings  = wp_parse_args( $settings, $default_settings );
+		$post_meta = fusion_data()->post_meta( get_queried_object_id() )->get( 'post_meta' );
 
 		// Check if meta data is enabled.
 		if ( ( $settings['post_meta'] && 'no' !== $post_meta ) || ( ! $settings['post_meta'] && 'yes' === $post_meta ) ) {
 
 			// For alternate, grid and timeline layouts return empty single-line-meta if all meta data for that position is disabled.
-			if ( in_array( $layout, array( 'alternate', 'grid_timeline' ), true ) && ! $settings['post_meta_author'] && ! $settings['post_meta_date'] && ! $settings['post_meta_cats'] && ! $settings['post_meta_tags'] && ! $settings['post_meta_comments'] ) {
+			if ( in_array( $layout, [ 'alternate', 'grid_timeline' ], true ) && ! $settings['post_meta_author'] && ! $settings['post_meta_date'] && ! $settings['post_meta_cats'] && ! $settings['post_meta_tags'] && ! $settings['post_meta_comments'] ) {
 				return '';
+			}
+
+			// Render post type meta data.
+			if ( isset( $settings['post_meta_type'] ) && $settings['post_meta_type'] ) {
+				$metadata .= '<span class="fusion-meta-post-type">' . esc_html( ucwords( get_post_type() ) ) . '</span>';
+				$metadata .= '<span class="fusion-inline-sep">|</span>';
 			}
 
 			// Render author meta data.
@@ -3774,8 +1737,10 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 
 				// Check if rich snippets are enabled.
 				if ( $fusion_settings->get( 'disable_date_rich_snippet_pages' ) && $fusion_settings->get( 'disable_rich_snippet_author' ) ) {
+					/* translators: The author. */
 					$metadata .= sprintf( esc_html__( 'By %s', 'fusion-builder' ), '<span class="vcard"><span class="fn">' . $author_post_link . '</span></span>' );
 				} else {
+					/* translators: The author. */
 					$metadata .= sprintf( esc_html__( 'By %s', 'fusion-builder' ), '<span>' . $author_post_link . '</span>' );
 				}
 				$metadata .= '<span class="fusion-inline-sep">|</span>';
@@ -3785,11 +1750,10 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 
 			// Render the updated meta data or at least the rich snippet if enabled.
 			if ( $settings['post_meta_date'] ) {
-				$metadata .= fusion_builder_render_rich_snippets_for_pages( false, false, true );
-
+				$metadata      .= fusion_builder_render_rich_snippets_for_pages( false, false, true );
 				$formatted_date = get_the_time( $fusion_settings->get( 'date_format' ) );
-				$date_markup = '<span>' . $formatted_date . '</span><span class="fusion-inline-sep">|</span>';
-				$metadata .= apply_filters( 'fusion_post_metadata_date', $date_markup, $formatted_date );
+				$date_markup    = '<span>' . $formatted_date . '</span><span class="fusion-inline-sep">|</span>';
+				$metadata      .= apply_filters( 'fusion_post_metadata_date', $date_markup, $formatted_date );
 			} else {
 				$date .= fusion_builder_render_rich_snippets_for_pages( false, false, true );
 			}
@@ -3802,6 +1766,7 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 				$categories = ob_get_clean();
 
 				if ( $categories ) {
+					/* translators: The categories. */
 					$metadata .= ( $settings['post_meta_tags'] ) ? sprintf( esc_html__( 'Categories: %s', 'fusion-builder' ), $categories ) : $categories;
 					$metadata .= '<span class="fusion-inline-sep">|</span>';
 				}
@@ -3814,15 +1779,21 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 				$tags = ob_get_clean();
 
 				if ( $tags ) {
+					/* translators: The tags. */
 					$metadata .= '<span class="meta-tags">' . sprintf( esc_html__( 'Tags: %s', 'fusion-builder' ), $tags ) . '</span><span class="fusion-inline-sep">|</span>';
 				}
 			}
 
 			// Render comments.
 			if ( $settings['post_meta_comments'] && 'grid_timeline' !== $layout ) {
-				ob_start();
-				comments_popup_link( esc_html__( '0 Comments', 'fusion-builder' ), esc_html__( '1 Comment', 'fusion-builder' ), esc_html__( '% Comments', 'fusion-builder' ) );
-				$comments = ob_get_clean();
+				if ( 'private' === get_post_status() && ! is_user_logged_in() || in_array( get_post_status(), [ 'pending', 'draft', 'future' ], true ) && ! current_user_can( 'edit-post' ) ) {
+					$comments = '<a href="#">' . get_comments_number() . ' ' . esc_html__( 'Comment(s)', 'fusion-builder' ) . '</a>';
+				} else {
+					ob_start();
+					comments_popup_link( esc_html__( '0 Comments', 'fusion-builder' ), esc_html__( '1 Comment', 'fusion-builder' ), esc_html__( '% Comments', 'fusion-builder' ) );
+					$comments = ob_get_clean();
+				}
+
 				$metadata .= '<span class="fusion-comments">' . $comments . '</span>';
 			}
 
@@ -3832,7 +1803,7 @@ if ( ! function_exists( 'fusion_builder_render_post_metadata' ) ) {
 
 				if ( 'single' === $layout ) {
 					$html .= '<div class="fusion-meta-info"><div class="fusion-meta-info-wrapper">' . $metadata . '</div></div>';
-				} elseif ( in_array( $layout, array( 'alternate', 'grid_timeline' ), true ) ) {
+				} elseif ( in_array( $layout, [ 'alternate', 'grid_timeline' ], true ) ) {
 					$html .= '<p class="fusion-single-line-meta">' . $metadata . '</p>';
 				} elseif ( 'recent_posts' === $layout ) {
 					$html .= $metadata;
@@ -3863,20 +1834,21 @@ if ( ! function_exists( 'fusion_builder_update_element' ) ) {
 	 */
 	function fusion_builder_update_element( $element, $param_name, $values ) {
 
-		global $all_fusion_builder_elements;
+		global $all_fusion_builder_elements, $pagenow;
 
-		$element_settings = $all_fusion_builder_elements[ $element ]['params'];
+		if ( is_admin() && isset( $pagenow ) && ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'fusion-builder-settings' === $_GET['page'] ) || ( 'post.php' === $pagenow ) || ( 'post-new.php' === $pagenow ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$element_settings = $all_fusion_builder_elements[ $element ]['params'];
 
-		$settings = $element_settings[ $param_name ]['value'];
+			$settings = $element_settings[ $param_name ]['value'];
 
-		if ( is_array( $values ) ) {
-			$settings = array_merge( $settings, $values );
-		} else {
-			$settings = $values;
+			if ( is_array( $values ) ) {
+				$settings = array_merge( $settings, $values );
+			} else {
+				$settings = $values;
+			}
+
+			$all_fusion_builder_elements[ $element ]['params'][ $param_name ]['value'] = $settings;
 		}
-
-		$all_fusion_builder_elements[ $element ]['params'][ $param_name ]['value'] = $settings;
-
 	}
 }
 
@@ -3888,14 +1860,14 @@ if ( ! function_exists( 'fusion_builder_update_element' ) ) {
  */
 function fusion_is_element_enabled( $element ) {
 
-	$fusion_builder_settings = get_option( 'fusion_builder_settings', array() );
+	$fusion_builder_settings = get_option( 'fusion_builder_settings', [] );
 	if ( empty( $fusion_builder_settings ) || ! isset( $fusion_builder_settings['fusion_elements'] ) ) {
 		return true;
 	}
 	// Set Fusion Builder enabled elements.
 	$enabled_elements = $fusion_builder_settings['fusion_elements'];
 
-	return (bool) ( empty( $enabled_elements ) || ( ! empty( $enabled_elements ) && in_array( $element, $enabled_elements ) ) );
+	return (bool) ( empty( $enabled_elements ) || ( ! empty( $enabled_elements ) && in_array( $element, $enabled_elements, true ) ) );
 
 }
 
@@ -3909,7 +1881,7 @@ if ( ! function_exists( 'fusion_get_fields_array' ) ) {
 	 */
 	function fusion_get_fields_array( $sections ) {
 
-		$fields = array();
+		$fields = [];
 		foreach ( $sections->sections as $section ) {
 			if ( ! isset( $section['fields'] ) ) {
 				continue;
@@ -3918,7 +1890,7 @@ if ( ! function_exists( 'fusion_get_fields_array' ) ) {
 				if ( ! isset( $field['type'] ) ) {
 					continue;
 				}
-				if ( ! in_array( $field['type'], array( 'sub-section', 'accordion' ) ) ) {
+				if ( ! in_array( $field['type'], [ 'sub-section', 'accordion' ], true ) ) {
 					if ( isset( $field['id'] ) ) {
 						$fields[] = $field['id'];
 					}
@@ -3938,6 +1910,43 @@ if ( ! function_exists( 'fusion_get_fields_array' ) ) {
 	}
 }
 
+if ( ! function_exists( 'fusion_builder_frontend_data' ) ) {
+	/**
+	 * Merges the front-end editor data into map.
+	 *
+	 * @since 2.0
+	 * @param  string $class_name class for shortcode.
+	 * @param  array  $map     Array map for shortcode.
+	 * @param  string $context Parent or child level.
+	 * @return string
+	 */
+	function fusion_builder_frontend_data( $class_name, $map, $context = '' ) {
+
+		// If element class does not exist (element disabled).
+		if ( ! class_exists( $class_name ) ) {
+			return $map;
+		}
+
+		// TO-DO: add a check for whether or not front-end editor is currently active.
+		$data = [];
+
+		if ( method_exists( $class_name, 'get_element_defaults' ) ) {
+			$data['defaults'] = $class_name::get_element_defaults( $context );
+		}
+		if ( method_exists( $class_name, 'get_element_extras' ) ) {
+			$data['extras'] = $class_name::get_element_extras( $context );
+		}
+		if ( method_exists( $class_name, 'settings_to_params' ) ) {
+			$data['settings_to_params'] = $class_name::settings_to_params( $context );
+		}
+		if ( method_exists( $class_name, 'settings_to_extras' ) ) {
+			$data['settings_to_extras'] = $class_name::settings_to_extras( $context );
+		}
+
+		return apply_filters( 'fusion_builder_frontend_data', array_merge( $data, $map ), $class_name );
+	}
+}
+
 /**
  * Get plugin info from plugins with plugin name.
  *
@@ -3947,14 +1956,28 @@ if ( ! function_exists( 'fusion_get_fields_array' ) ) {
  * @return array
  */
 function fusion_get_plugin_info( $plugin_name, $plugins ) {
+	$plugin_info_return = null;
 	foreach ( $plugins as $plugin_file => $plugin_info ) {
-		if ( $plugin_info['Name'] == $plugin_name ) {
+		if ( $plugin_info['Name'] === $plugin_name ) {
 			$plugin_info['plugin_file'] = $plugin_file;
-			$plugin_info['is_active'] = is_plugin_active( $plugin_file );
-			return $plugin_info;
+			$plugin_info['is_active']   = fusion_is_plugin_activated( $plugin_file );
+
+			$plugin_info_return = $plugin_info;
 		}
 	}
-	return null;
+	return apply_filters( 'fusion_get_plugin_info', $plugin_info_return, $plugin_name, $plugins );
+}
+
+/**
+ * Get default selection from array.
+ *
+ * @since 1.3
+ * @param array $choices Choices for select field.
+ * @return array
+ */
+function fusion_get_array_default( $choices = [] ) {
+	reset( $choices );
+	return key( $choices );
 }
 
 /**
@@ -3965,7 +1988,7 @@ function fusion_get_plugin_info( $plugin_name, $plugins ) {
  * @return string
  */
 function fusion_wrap_embed_with_div( $html ) {
-	$wrapper = '<div ' . FusionBuilder::attributes( 'video-shortcode' ) . '>';
+	$wrapper  = '<div class="video-shortcode">';
 	$wrapper .= $html;
 	$wrapper .= '</div>';
 
@@ -3989,7 +2012,7 @@ if ( apply_filters( 'is_jetpack_site', false ) ) {
 function fusion_builder_wp_link_query_args( $query ) {
 
 	// Get array key for the post type 'fusion_template'.
-	$post_type_key = array_search( 'fusion_template', $query['post_type'] );
+	$post_type_key = array_search( 'fusion_template', $query['post_type'], true );
 
 	// Remove the post type from query.
 	if ( $post_type_key ) {
@@ -4010,9 +2033,421 @@ add_filter( 'wp_link_query_args', 'fusion_builder_wp_link_query_args' );
  * @return bool
  */
 function fusion_color_needs_adjustment( $color ) {
-	if ( '#ffffff' === $color || 'transparent' === $color || '0' === Fusion_Color::new_color( $color )->alpha ) {
+	if ( '#ffffff' === $color || fusion_is_color_transparent( $color ) ) {
 		return true;
 	}
 
 	return false;
 }
+
+/**
+ * The template for options.
+ *
+ * @param array $params The parameters for the option.
+ */
+function fusion_element_options_loop( $params ) {
+	?>
+	<#
+	function fusion_display_option( param ) {
+		var hasDynamic,
+			supportsDynamic,
+			parentContent;
+
+		option_value = 'undefined' !== typeof atts.added ? param.value : atts.params[param.param_name];
+
+		if ( param.type == 'select' || param.type == 'multiple_select' || param.type == 'radio_button_set' || param.type == 'checkbox_button_set' || param.type == 'subgroup' ) {
+			option_value = ( 'undefined' !== typeof atts.added || '' === atts.params[param.param_name] || 'undefined' === typeof atts.params[ param.param_name ] ) ? param.default : atts.params[ param.param_name ];
+		};
+		if ( 'raw_textarea' == param.type || 'repeater' == param.type ) {
+			try {
+				if ( FusionPageBuilderApp.base64Encode( FusionPageBuilderApp.base64Decode( option_value ) ) === option_value ) {
+					option_value = FusionPageBuilderApp.base64Decode( option_value );
+				}
+			} catch(e) {
+				console.warn( 'Something went wrong! Error triggered - ' + e );
+			}
+		}
+		if ( 'code' === param.type && 1 === Number( FusionPageBuilderApp.disable_encoding ) && 'undefined' !== typeof option_value ) {
+			if ( FusionPageBuilderApp.base64Encode( FusionPageBuilderApp.base64Decode( option_value ) ) === option_value ) {
+				option_value = FusionPageBuilderApp.base64Decode( option_value );
+			}
+		}
+
+		option_value    = _.unescape( option_value );
+		parentContent   = 'string' === typeof atts.multi && 'multi_element_parent' === atts.multi && 'element_content' === param.param_name;
+		hidden          = 'undefined' !== typeof param.hidden ? ' hidden' : '';
+		supportsDynamic = 'undefined' !== param.dynamic_data && true === param.dynamic_data ? true : false;
+		hasDynamic      = 'object' === typeof atts.dynamic_params && 'undefined' !== typeof atts.dynamic_params[ param.param_name ] && supportsDynamic;
+		childDependency = 'undefined' !== typeof param.child_dependency ? ' has-child-dependency' : '';
+		#>
+		<li data-option-id="{{ param.param_name }}" data-option-type="{{ param.type }}" class="fusion-builder-option {{ param.type }}{{ hidden }}{{ childDependency }}" data-dynamic="{{ hasDynamic }}" data-dynamic-selection="false" data-parent-content="{{ parentContent }}">
+			<# if ( ! jQuery( 'body' ).hasClass( 'fusion-builder-live' ) ) { #>
+				<div class="option-details">
+					<# if ( 'undefined' !== typeof param.heading ) { #>
+						<h3>{{ param.heading }}
+							<# if ( supportsDynamic ) { #>
+								<a class="option-dynamic-content fusiona-dynamic-data" title="<?php esc_attr_e( 'Dynamic Content', 'fusion-builder' ); ?>"></a>
+							<# } #>
+						</h3>
+					<# }; #>
+
+					<# if ( 'undefined' !== typeof param.description ) { #>
+						<p class="description">{{{ param.description }}}</p>
+					<# }; #>
+				</div>
+			<# } else { #>
+				<div class="option-details">
+					<div class="option-details-inner">
+						<# if ( 'undefined' !== typeof param.heading ) { #>
+							<h3>
+								{{ param.heading }}
+							</h3>
+							<ul class="fusion-panel-options">
+								<li> <a href="JavaScript:void(0);" class="fusion-panel-description"><i class="fusiona-question-circle"></i></a> <span class="fusion-elements-option-tooltip fusion-tooltip-description">{{ fusionBuilderText.fusion_panel_desciption_toggle }}</span></li>
+								<# if ( 'undefined' !== param.default_option && '' !== param.default_option && param.default_option ) { #>
+									<li><a href="JavaScript:void(0);"><span class="fusion-panel-shortcut" data-fusion-option="{{ param.default_option }}"><i class="fusiona-cog"></i></a><span class="fusion-elements-option-tooltip fusion-tooltip-global-settings"><?php esc_html_e( 'Theme Options', 'fusion-builder' ); ?></span></li>
+								<# } #>
+								<# if ( 'undefined' !== param.to_link && '' !== param.to_link && param.to_link ) { #>
+									<li><a href="JavaScript:void(0);"><span class="fusion-panel-shortcut" data-fusion-option="{{ param.to_link }}"><i class="fusiona-cog"></i></a><span class="fusion-elements-option-tooltip fusion-tooltip-global-settings"><?php esc_html_e( 'Theme Options', 'fusion-builder' ); ?></span></li>
+								<# } #>
+								<# if ( 'undefined' !== typeof param.description && 'undefined' !== typeof param.default && -1 !== param.description.indexOf( 'fusion-builder-default-reset' )  ) { #>
+									<li class="fusion-builder-default-reset"> <a href="JavaScript:void(0);" class="fusion-range-default" data-default="{{ param.default }}"><i class="fusiona-undo"></i></a> <span class="fusion-elements-option-tooltip fusion-tooltip-reset-defaults"><?php esc_html_e( 'Reset To Default', 'fusion-builder' ); ?></span></li>
+								<# } #>
+								<# if ( 'undefined' !== typeof param.preview ) { #>
+									<#
+										dataType     = 'undefined' !== typeof param.preview.type     ? param.preview.type       : '';
+										dataSelector = 'undefined' !== typeof param.preview.selector ? param.preview.selector   : '';
+										dataToggle   = 'undefined' !== typeof param.preview.toggle   ? param.preview.toggle     : '';
+										dataAppend   = 'undefined' !== typeof param.preview.append   ? param.preview.append     : '';
+									#>
+									<li><a class="option-preview-toggle" href="JavaScript:void(0);" aria-label="<?php esc_attr_e( 'Preview', 'fusion-builder' ); ?>" data-type="{{ dataType }}" data-selector="{{ dataSelector }}" data-toggle="{{ dataToggle }}" data-append="{{ dataAppend }}"><i class="fas fusiona-eye"></i></a><span class="fusion-elements-option-tooltip fusion-tooltip-preview"><?php esc_html_e( 'Preview', 'fusion-builder' ); ?></span></li>
+								<# }; #>
+							</ul>
+						<# }; #>
+					</div>
+
+					<# if ( 'undefined' !== typeof param.description ) { #>
+						<p class="description">{{{ param.description }}}</p>
+					<# }; #>
+				</div>
+			<# } #>
+
+			<div class="option-field fusion-builder-option-container">
+				<?php
+				$field_types = [
+					'textarea',
+					'textfield',
+					'range',
+					'colorpickeralpha',
+					'colorpicker',
+					'select',
+					'upload',
+					'uploadfile',
+					'uploadattachment',
+					'tinymce',
+					'iconpicker',
+					'multiple_select',
+					'multiple_upload',
+					'checkbox_button_set',
+					'subgroup',
+					'radio_button_set',
+					'radio_image_set',
+					'link_selector',
+					'date_time_picker',
+					'upload_images',
+					'dimension',
+					'code',
+					'raw_textarea',
+					'repeater',
+					'sortable_text',
+					'info',
+					'font_family',
+				];
+
+				$fields = apply_filters( 'fusion_builder_fields', $field_types );
+				?>
+				<?php foreach ( $fields as $field_type ) : ?>
+					<?php if ( is_array( $field_type ) && ! empty( $field_type ) ) : ?>
+						<# if ( '<?php echo $field_type[0]; // phpcs:ignore WordPress.Security.EscapeOutput ?>' == param.type ) { #>
+						<?php include wp_normalize_path( $field_type[1] ); ?>
+						<# }; #>
+					<?php else : ?>
+					<# if ( '<?php echo $field_type; // phpcs:ignore WordPress.Security.EscapeOutput ?>' == param.type ) { #>
+						<?php include FUSION_LIBRARY_PATH . '/inc/fusion-app/templates/options/' . str_replace( '_', '-', $field_type ) . '.php'; ?>
+					<# }; #>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+
+			<# if ( supportsDynamic ) { #>
+			<div class="fusion-dynamic-content">
+				<?php include FUSION_BUILDER_PLUGIN_DIR . '/front-end/templates/dynamic-data.php'; ?>
+			</div>
+			<div class="fusion-dynamic-selection"></div>
+			<# } #>
+		</li>
+	<# } #>
+	<ul class="fusion-builder-module-settings {{ atts.element_type }}">
+		<#
+		var SubGroup,
+			activeSubGroup;
+		_.each( <?php echo $params; // phpcs:ignore WordPress.Security.EscapeOutput ?>, function( param, index ) {
+			if ( 'subgroup' !== param.type ) {
+				fusion_display_option( param );
+			} else {
+				SubGroup = param.default;
+				fusion_display_option( param );
+				_.each( param.subgroups, function( subgroup, tab ) {
+					activeSubGroup = tab === SubGroup ? 'active' : '';
+					#>
+					<ul class="fusion-subgroup-content fusion-subgroup-{{tab}} {{activeSubGroup}}">
+						<#
+						_.each( subgroup, function( item ) {
+
+							fusion_display_option( item );
+						} );
+						#>
+					</ul>
+					<#
+				} );
+			}
+		} ); #>
+	</ul>
+	<?php
+}
+
+/**
+ * Checks if on an editor page.
+ *
+ * @since 2.0
+ * @return boolean Whether or not it is a fusion editor page.
+ */
+function is_fusion_editor() {
+	global $pagenow;
+	return ( 'post.php' === $pagenow || 'post-new.php' === $pagenow ) || ( function_exists( 'fusion_is_builder_frame' ) && fusion_is_builder_frame() );
+}
+
+/**
+ * Get the $fusion_settings global.
+ *
+ * @since 2.0
+ * @return Fusion_Settings
+ */
+function fusion_get_fusion_settings() {
+	global $fusion_settings;
+	if ( ! $fusion_settings ) {
+		$fusion_settings = Fusion_Settings::get_instance();
+	}
+	return $fusion_settings;
+}
+
+/**
+ * The template for preference options.
+ *
+ * @param array $params The parameters for the option.
+ */
+function fusion_builder_preferences_loop( $params ) {
+	?>
+		<# _.each( <?php echo $params; // phpcs:ignore WordPress.Security.EscapeOutput ?>, function(param) { #>
+			<# option_value = _.unescape(param.default); #>
+
+			<li data-option-id="{{ param.param_name }}" class="fusion-builder-option {{ param.type }}">
+
+				<div class="option-details">
+					<div class="option-details-inner">
+						<# if ( 'undefined' !== typeof param.heading ) { #>
+							<h3>{{ param.heading }}</h3>
+							<ul class="fusion-panel-options">
+								<li> <a href="JavaScript:void(0);" class="fusion-panel-description"><i class="fusiona-question-circle"></i></a> <span class="fusion-elements-option-tooltip fusion-tooltip-description">{{ fusionBuilderText.fusion_panel_desciption_toggle }}</span></li>
+							</ul>
+						<# }; #>
+					</div>
+
+					<# if ( 'undefined' !== typeof param.description ) { #>
+						<p class="description">{{{ param.description }}}</p>
+					<# }; #>
+				</div>
+
+				<div class="option-field fusion-builder-option-container">
+					<?php
+					$field_types = [
+						'textarea',
+						'textfield',
+						'range',
+						'colorpickeralpha',
+						'colorpicker',
+						'select',
+						'upload',
+						'uploadfile',
+						'uploadattachment',
+						'tinymce',
+						'iconpicker',
+						'multiple_select',
+						'multiple_upload',
+						'checkbox_button_set',
+						'subgroup',
+						'radio_button_set',
+						'radio_image_set',
+						'link_selector',
+						'date_time_picker',
+						'upload_images',
+						'dimension',
+						'code',
+						'raw_textarea',
+						'repeater',
+						'sortable_text',
+						'info',
+					];
+
+					$fields = apply_filters( 'fusion_builder_fields', $field_types );
+					?>
+					<?php foreach ( $fields as $field_type ) : ?>
+						<?php if ( is_array( $field_type ) && ! empty( $field_type ) ) : ?>
+							<# if ( '<?php echo $field_type[0]; // phpcs:ignore WordPress.Security.EscapeOutput ?>' == param.type ) { #>
+							<?php include wp_normalize_path( $field_type[1] ); ?>
+							<# }; #>
+						<?php else : ?>
+						<# if ( '<?php echo $field_type; // phpcs:ignore WordPress.Security.EscapeOutput ?>' == param.type ) { #>
+							<?php include FUSION_LIBRARY_PATH . '/inc/fusion-app/templates/options/' . str_replace( '_', '-', $field_type ) . '.php'; ?>
+						<# }; #>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+			</li>
+
+		<# } ); #>
+	<?php
+}
+
+if ( ! function_exists( 'fusion_is_color_transparent' ) ) {
+	/**
+	 * Figure out if a color is transparent or not.
+	 *
+	 * @since 2.0
+	 * @param string $color The color we want to check.
+	 * @return bool
+	 */
+	function fusion_is_color_transparent( $color ) {
+		$color = trim( $color );
+		if ( 'transparent' === $color ) {
+			return true;
+		}
+		return ( 0 === Fusion_Color::new_color( $color )->alpha );
+	}
+}
+
+/**
+ * Get an array of widgets.
+ *
+ * @since 2.2.0
+ * @return array
+ */
+function fusion_get_available_widgets() {
+	$widgets            = [];
+	$widgets['default'] = __( 'Select a widget', 'fusion-builder' );
+	$widget_data        = fusion_get_widget_data();
+
+	foreach ( $widget_data as $widget ) {
+		$widgets[ $widget['title'] ] = $widget['name'];
+	}
+
+	return $widgets;
+}
+
+/**
+ * Fetch widget types and their forms.
+ *
+ * @access public
+ * @since 2.0.0
+ * @return array
+ */
+function fusion_get_widget_data() {
+	global $wp_widget_factory;
+
+	$widget_data = [];
+	foreach ( $wp_widget_factory->widgets as $class => $widget ) {
+		if ( class_exists( $class ) ) {
+			$name        = $widget->name;
+			$description = isset( $widget->widget_options['description'] ) ? $widget->widget_options['description'] : '';
+			$classname   = $widget->widget_options['classname'];
+			$id          = $widget->id_base;
+
+			$widget_class = new $class();
+			$settings     = $widget_class->get_settings( 'wp' );
+
+			ob_start();
+			$widget_class->form( $settings );
+			$content = ob_get_clean();
+
+			$widget_data[ $class ] = [
+				'name'        => $name,
+				'description' => $description,
+				'form'        => str_replace( ':</label>', '</label>', $content ),
+				'classname'   => $classname,
+				'id'          => $id,
+				'title'       => $class,
+			];
+		}
+	}
+
+	return $widget_data;
+}
+
+if ( ! function_exists( 'fusion_comment' ) ) {
+	/**
+	 * The comment template.
+	 *
+	 * @access public
+	 * @param string     $comment The comment.
+	 * @param array      $args    The comment arguments.
+	 * @param int|string $depth   The comment depth.
+	 */
+	function fusion_comment( $comment, $args, $depth ) {
+		$defaults = get_query_var( 'fusion_tb_comments_args' );
+		?>
+		<?php $add_below = ''; ?>
+		<li <?php comment_class(); ?> id="comment-<?php comment_ID(); ?>">
+			<div class="the-comment">
+				<?php if ( 'hide' !== $defaults['avatar'] ) : ?>
+				<div class="avatar"><?php echo get_avatar( $comment, 54 ); ?></div>
+				<?php endif; ?>
+				<div class="comment-box">
+					<div class="comment-author meta">
+						<strong><?php echo get_comment_author_link(); ?></strong>
+						<?php
+						printf(
+							/* translators: %1$s: Comment date. %2$s: Comment time. */
+							esc_attr__( '%1$s at %2$s', 'fusion-builder' ),
+							get_comment_date(), // phpcs:ignore WordPress.Security.EscapeOutput
+							get_comment_time() // phpcs:ignore WordPress.Security.EscapeOutput
+						);
+
+						edit_comment_link( __( ' - Edit', 'fusion-builder' ), '  ', '' );
+
+						comment_reply_link(
+							array_merge(
+								$args,
+								[
+									'reply_text' => __( ' - Reply', 'fusion-builder' ),
+									'add_below'  => 'comment',
+									'depth'      => $depth,
+									'max_depth'  => $args['max_depth'],
+								]
+							)
+						);
+						?>
+					</div>
+					<div class="comment-text">
+						<?php if ( '0' == $comment->comment_approved ) : // phpcs:ignore WordPress.PHP.StrictComparisons ?>
+							<em><?php esc_attr_e( 'Your comment is awaiting moderation.', 'fusion-builder' ); ?></em>
+							<br />
+						<?php endif; ?>
+						<?php comment_text(); ?>
+					</div>
+				</div>
+			</div>
+		<?php
+	}
+}
+
+/* Omit closing PHP tag to avoid "Headers already sent" issues. */

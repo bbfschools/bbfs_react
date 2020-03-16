@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      3.8
@@ -26,7 +26,7 @@ class Avada_Layout {
 	 * @access public
 	 * @var array
 	 */
-	public $sidebars = array();
+	public $sidebars = [];
 
 	/**
 	 * The content-width.
@@ -43,10 +43,10 @@ class Avada_Layout {
 	 */
 	public function __construct() {
 
-		add_action( 'wp', array( $this, 'add_sidebars' ), 20 );
-		add_action( 'wp', array( $this, 'add_no_sidebar_layout_styling' ), 20 );
-		add_filter( 'is_hundred_percent_template', array( $this, 'is_hundred_percent_template' ), 10, 2 );
-		add_filter( 'fusion_is_hundred_percent_template', array( $this, 'is_hundred_percent_template' ), 10, 2 );
+		add_action( 'wp', [ $this, 'add_sidebars' ], 20 );
+		add_action( 'wp', [ $this, 'add_no_sidebar_layout_styling' ], 20 );
+		add_filter( 'is_hundred_percent_template', [ $this, 'is_hundred_percent_template' ], 10, 2 );
+		add_filter( 'fusion_is_hundred_percent_template', [ $this, 'is_hundred_percent_template' ], 10, 2 );
 
 	}
 
@@ -61,13 +61,13 @@ class Avada_Layout {
 
 		// Append sidebar to after content div.
 		if ( Avada()->template->has_sidebar() && ! Avada()->template->double_sidebars() ) {
-			add_action( 'avada_after_content', array( $this, 'append_sidebar_single' ) );
+			add_action( 'avada_after_content', [ $this, 'append_sidebar_single' ] );
 			$load_sidebars = true;
 		} elseif ( Avada()->template->double_sidebars() ) {
-			add_action( 'avada_after_content', array( $this, 'append_sidebar_double' ) );
+			add_action( 'avada_after_content', [ $this, 'append_sidebar_double' ] );
 			$load_sidebars = true;
-		} elseif ( ! Avada()->template->has_sidebar() && ( is_page_template( 'side-navigation.php' ) || is_singular( 'tribe_events' ) ) ) {
-			add_action( 'avada_after_content', array( $this, 'append_sidebar_single' ) );
+		} elseif ( ! Avada()->template->has_sidebar() && ( is_page_template( 'side-navigation.php' ) || ( is_singular( 'tribe_events' ) && 'sidebar' === Avada()->settings->get( 'ec_meta_layout' ) ) ) ) {
+			add_action( 'avada_after_content', [ $this, 'append_sidebar_single' ] );
 			$load_sidebars = true;
 		}
 
@@ -78,8 +78,10 @@ class Avada_Layout {
 			// Set styling to content and sidebar divs.
 			$this->add_sidebar_layout_styling( $this->sidebars );
 
+			add_filter( 'fusion_responsive_sidebar_order', [ $this, 'correct_responsive_sidebar_order' ] );
 		}
 	}
+
 	/**
 	 * Get sidebar settings based on the page type.
 	 *
@@ -89,128 +91,131 @@ class Avada_Layout {
 		$post_id = Avada()->fusion_library->get_page_id();
 
 		if ( is_home() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => '1',
 				'sidebar_1' => Avada()->settings->get( 'blog_archive_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'blog_archive_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'blog_sidebar_position' ),
-			);
-		} elseif ( Avada_Helper::is_bbpress() ) {
-			$sidebars = array(
+			];
+		} elseif ( Fusion_Helper::is_bbpress() ) {
+			$sidebars = [
 				'global'    => Avada()->settings->get( 'bbpress_global_sidebar' ),
 				'sidebar_1' => Avada()->settings->get( 'ppbress_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'ppbress_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'bbpress_sidebar_position' ),
-			);
+			];
 
-			if ( Avada_Helper::bbp_is_forum_archive() || Avada_Helper::bbp_is_topic_archive() || Avada_Helper::bbp_is_user_home() || Avada_Helper::bbp_is_search() ) {
-				$sidebars = array(
+			if ( Fusion_Helper::bbp_is_forum_archive() || Fusion_Helper::bbp_is_topic_archive() || Avada_Helper::bbp_is_user_home() || Fusion_Helper::bbp_is_search() ) {
+				$sidebars = [
 					'global'    => '1',
 					'sidebar_1' => Avada()->settings->get( 'ppbress_sidebar' ),
 					'sidebar_2' => Avada()->settings->get( 'ppbress_sidebar_2' ),
 					'position'  => Avada()->settings->get( 'bbpress_sidebar_position' ),
-				);
+				];
 			}
 		} elseif ( Avada_Helper::is_buddypress() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => Avada()->settings->get( 'bbpress_global_sidebar' ),
 				'sidebar_1' => Avada()->settings->get( 'ppbress_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'ppbress_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'bbpress_sidebar_position' ),
-			);
+			];
 		} elseif ( class_exists( 'WooCommerce' ) && ( is_product() || is_shop() ) && ! is_search() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => Avada()->settings->get( 'woo_global_sidebar' ),
 				'sidebar_1' => Avada()->settings->get( 'woo_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'woo_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'woo_sidebar_position' ),
-			);
-		} elseif ( class_exists( 'WooCommerce' ) && ( ( Avada_Helper::is_woocommerce() && is_tax() ) || is_tax( 'product_brand' ) || is_tax( 'images_collections' ) || is_tax( 'shop_vendor' ) ) ) {
-			$sidebars = array(
+			];
+		} elseif ( class_exists( 'WooCommerce' ) && ( ( Fusion_Helper::is_woocommerce() && is_tax() ) || is_product_taxonomy() ) ) {
+			$sidebars = [
 				'global'    => '1',
 				'sidebar_1' => Avada()->settings->get( 'woocommerce_archive_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'woocommerce_archive_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'woo_sidebar_position' ),
-			);
+			];
 		} elseif ( is_page() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => Avada()->settings->get( 'pages_global_sidebar' ),
 				'sidebar_1' => Avada()->settings->get( 'pages_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'pages_sidebar_2' ),
-				'position'  => Avada()->settings->get( 'default_sidebar_pos' ),
-			);
+				'position'  => fusion_get_option( 'default_sidebar_pos' ),
+			];
 		} elseif ( is_single() ) {
-			$sidebars = array(
-				'global'    => Avada()->settings->get( 'posts_global_sidebar' ),
-				'sidebar_1' => Avada()->settings->get( 'posts_sidebar' ),
-				'sidebar_2' => Avada()->settings->get( 'posts_sidebar_2' ),
-				'position'  => Avada()->settings->get( 'blog_sidebar_position' ),
+			$sidebars = apply_filters(
+				'avada_single_post_sidebar_theme_options',
+				[
+					'global'    => Avada()->settings->get( 'posts_global_sidebar' ),
+					'sidebar_1' => Avada()->settings->get( 'posts_sidebar' ),
+					'sidebar_2' => Avada()->settings->get( 'posts_sidebar_2' ),
+					'position'  => Avada()->settings->get( 'blog_sidebar_position' ),
+				]
 			);
 
 			if ( is_singular( 'avada_portfolio' ) ) {
-				$sidebars = array(
+				$sidebars = [
 					'global'    => Avada()->settings->get( 'portfolio_global_sidebar' ),
 					'sidebar_1' => Avada()->settings->get( 'portfolio_sidebar' ),
 					'sidebar_2' => Avada()->settings->get( 'portfolio_sidebar_2' ),
 					'position'  => Avada()->settings->get( 'portfolio_sidebar_position' ),
-				);
+				];
 			} elseif ( is_singular( 'tribe_events' ) || is_singular( 'tribe_organizer' ) || is_singular( 'tribe_venue' ) ) {
-				$sidebars = array(
+				$sidebars = [
 					'global'    => Avada()->settings->get( 'ec_global_sidebar' ),
 					'sidebar_1' => Avada()->settings->get( 'ec_sidebar' ),
 					'sidebar_2' => Avada()->settings->get( 'ec_sidebar_2' ),
 					'position'  => Avada()->settings->get( 'ec_sidebar_pos' ),
-				);
-			}
+				];
 
-			if ( is_singular( 'tribe_organizer' ) || is_singular( 'tribe_venue' ) ) {
-				$sidebars['global'] = 1;
+				if ( is_singular( 'tribe_organizer' ) || is_singular( 'tribe_venue' ) ) {
+					$sidebars['global'] = 1;
+				}
 			}
 		} elseif ( is_archive() && ! is_search() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => '1',
 				'sidebar_1' => Avada()->settings->get( 'blog_archive_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'blog_archive_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'blog_sidebar_position' ),
-			);
+			];
 
 			if ( is_post_type_archive( 'avada_portfolio' ) || is_tax( 'portfolio_category' ) || is_tax( 'portfolio_skills' ) || is_tax( 'portfolio_tags' ) ) {
-				$sidebars = array(
+				$sidebars = [
 					'global'    => '1',
 					'sidebar_1' => Avada()->settings->get( 'portfolio_archive_sidebar' ),
 					'sidebar_2' => Avada()->settings->get( 'portfolio_archive_sidebar_2' ),
 					'position'  => Avada()->settings->get( 'portfolio_sidebar_position' ),
-				);
+				];
 			}
 		} elseif ( is_search() ) {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => '1',
 				'sidebar_1' => Avada()->settings->get( 'search_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'search_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'search_sidebar_position' ),
-			);
+			];
 		} else {
-			$sidebars = array(
+			$sidebars = [
 				'global'    => Avada()->settings->get( 'pages_global_sidebar' ),
 				'sidebar_1' => Avada()->settings->get( 'pages_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'pages_sidebar_2' ),
-				'position'  => Avada()->settings->get( 'default_sidebar_pos' ),
-			);
-		} // End if().
+				'position'  => fusion_get_option( 'default_sidebar_pos' ),
+			];
+		}
 
-		if ( Avada_Helper::is_events_archive( $post_id ) && ! is_tag() ) {
-			$sidebars = array(
+		if ( Fusion_Helper::is_events_archive( $post_id ) && ! is_tag() ) {
+			$sidebars = [
 				'global'    => '1',
 				'sidebar_1' => Avada()->settings->get( 'ec_sidebar' ),
 				'sidebar_2' => Avada()->settings->get( 'ec_sidebar_2' ),
 				'position'  => Avada()->settings->get( 'ec_sidebar_pos' ),
-			);
+			];
 		}
 
 		// Remove sidebars from the certain woocommerce pages.
 		if ( class_exists( 'WooCommerce' ) ) {
 			if ( is_cart() || is_checkout() || is_account_page() || ( get_option( 'woocommerce_thanks_page_id' ) && is_page( get_option( 'woocommerce_thanks_page_id' ) ) ) ) {
-				$sidebars = array();
+				$sidebars = [];
 			}
 		}
 
@@ -226,50 +231,48 @@ class Avada_Layout {
 	 * @param array $sidebar_options Our sidebar options.
 	 * @return array
 	 */
-	public function get_sidebar_settings( $sidebar_options = array() ) {
+	public function get_sidebar_settings( $sidebar_options = [] ) {
 
-		$post_id = Avada()->fusion_library->get_page_id();
+		$post_id               = Avada()->fusion_library->get_page_id();
+		$post_type             = get_post_type( $post_id );
+		$sidebars_option_names = avada_get_sidebar_post_meta_option_names( $post_type );
 
 		// Post options.
-		$sidebar_1                    = get_post_meta( $post_id, 'sbg_selected_sidebar_replacement', true );
-		$sidebar_2                    = get_post_meta( $post_id, 'sbg_selected_sidebar_2_replacement', true );
-		$sidebar_position_post_option = strtolower( get_post_meta( $post_id, 'pyre_sidebar_position', true ) );
-		$sidebar_sticky               = get_post_meta( $post_id, 'pyre_sidebar_sticky', true );
-		$sidebar_position_metadata    = metadata_exists( 'post', $post_id, 'pyre_sidebar_position' );
+		$sidebar_1        = (array) fusion_get_option( $sidebars_option_names[0] );
+		$sidebar_2        = (array) fusion_get_option( $sidebars_option_names[1] );
+		$sidebar_position = strtolower( fusion_get_option( $sidebars_option_names[2] ) );
+		$sidebar_sticky   = fusion_get_option( 'sidebar_sticky' );
+
+		$sidebar_1[0] = maybe_unserialize( $sidebar_1[0] );
+		$sidebar_1[0] = is_array( $sidebar_1[0] ) ? $sidebar_1[0][0] : $sidebar_1[0];
+		$sidebar_2[0] = maybe_unserialize( $sidebar_2[0] );
+		$sidebar_2[0] = is_array( $sidebar_2[0] ) ? $sidebar_2[0][0] : $sidebar_2[0];
 
 		if ( is_array( $sidebar_1 ) && '0' === $sidebar_1[0] ) {
-			$sidebar_1 = array( 'Blog Sidebar' );
+			$sidebar_1 = [ 'Blog Sidebar' ];
 		}
 
 		if ( is_array( $sidebar_2 ) && '0' === $sidebar_2[0] ) {
-			$sidebar_2 = array( 'Blog Sidebar' );
+			$sidebar_2 = [ 'Blog Sidebar' ];
 		}
-
-		// Theme option sidebar position.
-		$sidebar_position_theme_option = array_key_exists( 'position', $sidebar_options ) ? strtolower( $sidebar_options['position'] ) : '';
-
-		// Set default sidebar position.
-		$sidebar_position = $sidebar_position_post_option;
 
 		// Get sidebars and position from theme options if it's being forced globally.
 		if ( array_key_exists( 'global', $sidebar_options ) && $sidebar_options['global'] ) {
-			$sidebar_1 = array( ( 'None' !== $sidebar_options['sidebar_1'] ) ? $sidebar_options['sidebar_1'] : '' );
-			$sidebar_2 = array( ( 'None' !== $sidebar_options['sidebar_2'] ) ? $sidebar_options['sidebar_2'] : '' );
-
-			$sidebar_position = $sidebar_position_theme_option;
+			$sidebar_1 = [ ( 'None' !== $sidebar_options['sidebar_1'] ) ? $sidebar_options['sidebar_1'] : '' ];
+			$sidebar_2 = [ ( 'None' !== $sidebar_options['sidebar_2'] ) ? $sidebar_options['sidebar_2'] : '' ];
 		} else {
 			if ( isset( $sidebar_1[0] ) && 'default_sidebar' === $sidebar_1[0] ) {
-				$sidebar_1 = array( ( 'None' !== $sidebar_options['sidebar_1'] ) ? $sidebar_options['sidebar_1'] : '' );
+				$sidebar_1 = [ ( 'None' !== $sidebar_options['sidebar_1'] ) ? $sidebar_options['sidebar_1'] : '' ];
 			}
 
 			if ( isset( $sidebar_2[0] ) && 'default_sidebar' === $sidebar_2[0] ) {
-				$sidebar_2 = array( ( 'None' !== $sidebar_options['sidebar_2'] ) ? $sidebar_options['sidebar_2'] : '' );
+				$sidebar_2 = [ ( 'None' !== $sidebar_options['sidebar_2'] ) ? $sidebar_options['sidebar_2'] : '' ];
 			}
 		}
 
-		// If sidebar position is default OR no entry in database exists.
-		if ( 'default' === $sidebar_position || ! $sidebar_position_metadata ) {
-			$sidebar_position = $sidebar_position_theme_option;
+		// If sidebar position is default.
+		if ( class_exists( 'Avada' ) && ( 'default' === $sidebar_position || ! $sidebar_position ) ) {
+			$sidebar_position = Avada()->settings->get( $sidebars_option_names[2] );
 		}
 
 		// Reverse sidebar position if double sidebars are used and position is right.
@@ -287,10 +290,10 @@ class Avada_Layout {
 			$sidebar_sticky = $sidebar_options['sticky'];
 		}
 
-		$return = array(
+		$return = [
 			'position' => $sidebar_position,
 			'sticky'   => $sidebar_sticky,
-		);
+		];
 
 		if ( $sidebar_1 ) {
 			$return['sidebar_1'] = $sidebar_1[0];
@@ -314,18 +317,18 @@ class Avada_Layout {
 				$sidebar_2_2_width = ( 100 > intval( $sidebar_2_2_width ) ) ? intval( $sidebar_2_2_width ) . '%' : intval( $sidebar_2_2_width ) . 'px';
 			}
 
-			$sidebar_2_1_margin = Fusion_Sanitize::add_css_values( array( '-100%', $half_margin, $sidebar_2_2_width ) );
+			$sidebar_2_1_margin = Fusion_Sanitize::add_css_values( [ '-100%', $half_margin, $sidebar_2_2_width ] );
 			$sidebar_2_2_margin = $half_margin;
 
-			$return['sidebar_1_data'] = array(
+			$return['sidebar_1_data'] = [
 				'width'  => $sidebar_2_1_width,
 				'margin' => $sidebar_2_1_margin,
-			);
+			];
 
-			$return['sidebar_2_data'] = array(
+			$return['sidebar_2_data'] = [
 				'width'  => $sidebar_2_2_width,
 				'margin' => $sidebar_2_2_margin,
-			);
+			];
 		}
 
 		return $return;
@@ -342,10 +345,10 @@ class Avada_Layout {
 
 		// Check for sidebar location and apply styling to the content or sidebar div.
 		if ( ! Avada()->template->has_sidebar() && ! ( ( is_page_template( 'side-navigation.php' ) && 0 !== get_queried_object_id() ) || is_singular( 'tribe_events' ) ) ) {
-			add_filter( 'fusion_content_style', array( $this, 'full_width_content_style' ) );
+			add_filter( 'fusion_content_style', [ $this, 'full_width_content_style' ] );
 
 			if ( is_archive() || is_home() ) {
-				add_filter( 'fusion_content_class', array( $this, 'full_width_content_class' ) );
+				add_filter( 'fusion_content_class', [ $this, 'full_width_content_class' ] );
 			}
 		}
 	}
@@ -359,49 +362,71 @@ class Avada_Layout {
 	public function add_sidebar_layout_styling( $sidebars ) {
 
 		// Add sidebar class.
-		add_filter( 'fusion_sidebar_1_class', array( $this, 'sidebar_class' ) );
-		add_filter( 'fusion_sidebar_2_class', array( $this, 'sidebar_class' ) );
+		add_filter( 'fusion_sidebar_1_class', [ $this, 'sidebar_class' ] );
+		add_filter( 'fusion_sidebar_2_class', [ $this, 'sidebar_class' ] );
 
-		add_filter( 'fusion_sidebar_1_class', array( $this, 'sidebar_1_name_class' ) );
-		add_filter( 'fusion_sidebar_2_class', array( $this, 'sidebar_2_name_class' ) );
+		add_filter( 'fusion_sidebar_1_class', [ $this, 'sidebar_1_name_class' ] );
+		add_filter( 'fusion_sidebar_2_class', [ $this, 'sidebar_2_name_class' ] );
 
 		// Add sidebar sticky class.
-		add_filter( 'fusion_sidebar_1_class', array( $this, 'sidebar_sticky_class' ) );
-		add_filter( 'fusion_sidebar_2_class', array( $this, 'sidebar_sticky_class' ) );
+		add_filter( 'fusion_sidebar_1_class', [ $this, 'sidebar_sticky_class' ] );
+		add_filter( 'fusion_sidebar_2_class', [ $this, 'sidebar_sticky_class' ] );
 
 		// Check for sidebar location and apply styling to the content or sidebar div.
 		if ( ! Avada()->template->has_sidebar() && ! ( ( is_page_template( 'side-navigation.php' ) && 0 !== get_queried_object_id() ) || is_singular( 'tribe_events' ) ) ) {
-			add_filter( 'fusion_content_style', array( $this, 'full_width_content_style' ) );
+			add_filter( 'fusion_content_style', [ $this, 'full_width_content_style' ] );
 
 			if ( is_archive() || is_home() ) {
-				add_filter( 'fusion_content_class', array( $this, 'full_width_content_class' ) );
+				add_filter( 'fusion_content_class', [ $this, 'full_width_content_class' ] );
 			}
 		} elseif ( 'left' === $sidebars['position'] ) {
-			add_filter( 'fusion_content_style', array( $this, 'float_right_style' ) );
-			add_filter( 'fusion_sidebar_1_style', array( $this, 'float_left_style' ) );
-			add_filter( 'fusion_sidebar_1_class', array( $this, 'side_nav_left_class' ) );
+			add_filter( 'fusion_content_style', [ $this, 'float_right_style' ] );
+			add_filter( 'fusion_sidebar_1_style', [ $this, 'float_left_style' ] );
+			add_filter( 'fusion_sidebar_1_class', [ $this, 'side_nav_left_class' ] );
 		} elseif ( 'right' === $sidebars['position'] ) {
-			add_filter( 'fusion_content_style', array( $this, 'float_left_style' ) );
-			add_filter( 'fusion_sidebar_1_style', array( $this, 'float_right_style' ) );
-			add_filter( 'fusion_sidebar_1_class', array( $this, 'side_nav_right_class' ) );
+			add_filter( 'fusion_content_style', [ $this, 'float_left_style' ] );
+			add_filter( 'fusion_sidebar_1_style', [ $this, 'float_right_style' ] );
+			add_filter( 'fusion_sidebar_1_class', [ $this, 'side_nav_right_class' ] );
 		}
 
-		/*
-		Page has a single sidebar.
+		/**
+		 * Page has a single sidebar.
 		if ( Avada()->template->has_sidebar() && ! Avada()->template->double_sidebars() ) {}
 		*/
 
 		// Page has double sidebars.
 		if ( Avada()->template->double_sidebars() ) {
-			add_filter( 'fusion_content_style', array( $this, 'float_left_style' ) );
-			add_filter( 'fusion_sidebar_1_style', array( $this, 'float_left_style' ) );
-			add_filter( 'fusion_sidebar_2_style', array( $this, 'float_left_style' ) );
+			add_filter( 'fusion_content_style', [ $this, 'float_left_style' ] );
+			add_filter( 'fusion_sidebar_1_style', [ $this, 'float_left_style' ] );
+			add_filter( 'fusion_sidebar_2_style', [ $this, 'float_left_style' ] );
 
 			if ( 'right' === $sidebars['position'] ) {
-				add_filter( 'fusion_sidebar_2_class', array( $this, 'side_nav_right_class' ) );
+				add_filter( 'fusion_sidebar_2_class', [ $this, 'side_nav_right_class' ] );
 			}
 		}
 
+	}
+
+	/**
+	 * Changes the responsive sidebar order, if right positioning and dounble sidebars are used..
+	 *
+	 * @access public
+	 * @since 5.7.2
+	 * @param array $sidebar_order The ordered array of sidebars.
+	 * @return array The changed ordered sidebar array.
+	 */
+	public function correct_responsive_sidebar_order( $sidebar_order ) {
+		if ( isset( $this->sidebars['sidebar_2_data'] ) && 'right' === $this->sidebars['position'] ) {
+			foreach ( $sidebar_order as $key => $element ) {
+				if ( 'sidebar' === $element ) {
+					$sidebar_order[ $key ] = 'sidebar-2';
+				} elseif ( 'sidebar-2' === $element ) {
+					$sidebar_order[ $key ] = 'sidebar';
+				}
+			}
+		}
+
+		return $sidebar_order;
 	}
 
 	/**
@@ -523,7 +548,7 @@ class Avada_Layout {
 	 */
 	public function sidebar_1_name_class( $classes ) {
 		$sidebar_position = 'right';
-		$sidebar_name = ' fusion-default-sidebar';
+		$sidebar_name     = ' fusion-default-sidebar';
 
 		if ( 'right' !== $this->sidebars['position'] || ( isset( $this->sidebars['sidebar_2'] ) && '' !== $this->sidebars['sidebar_2'] ) ) {
 			$sidebar_position = 'left';
@@ -563,15 +588,15 @@ class Avada_Layout {
 		// If sticky param is either not defined yet or set to none, there is nothing to do.
 		if ( ! isset( $this->sidebars['sticky'] ) || ! $this->sidebars['sticky'] || 'none' === $this->sidebars['sticky'] ) {
 			return $classes;
-		} else if ( 'both' === $this->sidebars['sticky'] ) {
+		} elseif ( 'both' === $this->sidebars['sticky'] ) {
 			$classes[] = 'fusion-sticky-sidebar';
-		} else if ( false !== strpos( $classes_string, 'fusion-sidebar-left' ) && 'left' === $this->sidebars['position'] && 'sidebar_one' === $this->sidebars['sticky'] ) {
+		} elseif ( false !== strpos( $classes_string, 'fusion-sidebar-left' ) && 'left' === $this->sidebars['position'] && 'sidebar_one' === $this->sidebars['sticky'] ) {
 			$classes[] = 'fusion-sticky-sidebar';
-		} else if ( false !== strpos( $classes_string, 'fusion-sidebar-right' ) && 'right' === $this->sidebars['position'] && 'sidebar_one' === $this->sidebars['sticky'] ) {
+		} elseif ( false !== strpos( $classes_string, 'fusion-sidebar-right' ) && 'right' === $this->sidebars['position'] && 'sidebar_one' === $this->sidebars['sticky'] ) {
 			$classes[] = 'fusion-sticky-sidebar';
-		} else if ( false !== strpos( $classes_string, 'fusion-sidebar-left' ) && 'right' === $this->sidebars['position'] && 'sidebar_two' === $this->sidebars['sticky'] ) {
+		} elseif ( false !== strpos( $classes_string, 'fusion-sidebar-left' ) && 'right' === $this->sidebars['position'] && 'sidebar_two' === $this->sidebars['sticky'] ) {
 			$classes[] = 'fusion-sticky-sidebar';
-		} else if ( false !== strpos( $classes_string, 'fusion-sidebar-right' ) && 'left' === $this->sidebars['position'] && 'sidebar_two' === $this->sidebars['sticky'] ) {
+		} elseif ( false !== strpos( $classes_string, 'fusion-sidebar-right' ) && 'left' === $this->sidebars['position'] && 'sidebar_two' === $this->sidebars['sticky'] ) {
 			$classes[] = 'fusion-sticky-sidebar';
 		}
 
@@ -616,25 +641,20 @@ class Avada_Layout {
 		/**
 		 * The content width.
 		 */
-		$options = get_option( Avada::get_option_name() );
+		$options      = get_option( Avada::get_option_name() );
+		$c_page_id    = Avada()->fusion_library->get_page_id();
 		$page_padding = 0;
 
 		if ( ! $site_width ) {
-			$site_width = ( isset( $options['site_width'] ) ) ? $options['site_width'] : '1100px';
+			$site_width = ( isset( $options['site_width'] ) ) ? $options['site_width'] : '1200px';
 
 			if ( $this->is_current_wrapper_hundred_percent() ) {
 
 				$site_width = '100%';
 
 				// Get 100% Width Left/Right Padding.
-				$page_padding = ( isset( $options['hundredp_padding'] ) ) ? $options['hundredp_padding'] : '0';
-
-				// Page Option 100% Width Left/Right Padding.
-				$c_page_id = Avada()->fusion_library->get_page_id();
-				$page_option_page_padding = Fusion_Sanitize::size( fusion_get_option( 'hundredp_padding', 'hundredp_padding', $c_page_id ) );
-				if ( '' !== $page_option_page_padding ) {
-					$page_padding = $page_option_page_padding;
-				}
+				$page_padding = fusion_get_option( 'hundredp_padding' );
+				$page_padding = ! $page_padding ? '0' : $page_padding;
 
 				// Section shortcode padding.
 				if ( isset( $fusion_fwc_type ) && ! empty( $fusion_fwc_type ) ) {
@@ -655,7 +675,7 @@ class Avada_Layout {
 					$page_padding = Avada_Helper::ems_to_pixels( $page_padding );
 				}
 			}
-		} // End if().
+		}
 
 		if ( intval( $site_width ) ) {
 			// Site width is using %.
@@ -670,12 +690,12 @@ class Avada_Layout {
 			}
 
 			// Subtract side header width from remaining content width.
-			if ( 'Boxed' === Avada()->settings->get( 'layout' ) && 'Top' !== Avada()->settings->get( 'header_position' ) ) {
+			if ( 'boxed' === fusion_get_option( 'layout' ) && 'top' !== fusion_get_option( 'header_position' ) ) {
 				$site_width = intval( $site_width ) - intval( Avada()->settings->get( 'side_header_width' ) );
 			}
 		} else {
-			// Fallback to 1100px.
-			$site_width = 1100;
+			// Fallback to 1200px.
+			$site_width = 1200;
 		}
 
 		$site_width = intval( $site_width ) - 2 * intval( $page_padding );
@@ -686,13 +706,13 @@ class Avada_Layout {
 		$sidebar_1_width = 0;
 		$sidebar_2_width = 0;
 		if ( Avada()->template->has_sidebar() && ! Avada()->template->double_sidebars() ) {
-			if ( 'tribe_events' === get_post_type() ) {
+			if ( 'tribe_events' === get_post_type( $c_page_id ) ) {
 				$sidebar_1_width = Avada()->settings->get( 'ec_sidebar_width' );
 			} else {
 				$sidebar_1_width = Avada()->settings->get( 'sidebar_width' );
 			}
 		} elseif ( Avada()->template->double_sidebars() ) {
-			if ( 'tribe_events' === get_post_type() ) {
+			if ( 'tribe_events' === get_post_type( $c_page_id ) ) {
 				$sidebar_1_width = Avada()->settings->get( 'ec_sidebar_2_1_width' );
 				$sidebar_2_width = Avada()->settings->get( 'ec_sidebar_2_2_width' );
 			} else {
@@ -700,14 +720,14 @@ class Avada_Layout {
 				$sidebar_2_width = Avada()->settings->get( 'sidebar_2_2_width' );
 			}
 		} elseif ( ! Avada()->template->has_sidebar() && ( is_page_template( 'side-navigation.php' ) || is_singular( 'tribe_events' ) ) ) {
-			if ( 'tribe_events' === get_post_type() ) {
+			if ( 'tribe_events' === get_post_type( $c_page_id ) ) {
 				$sidebar_1_width = Avada()->settings->get( 'ec_sidebar_width' );
 			} else {
 				$sidebar_1_width = Avada()->settings->get( 'sidebar_width' );
 			}
 		}
 
-		$body_font_size = 16;
+		$body_font_size      = 16;
 		$real_body_font_size = Avada()->settings->get( 'body_typography', 'font-size' );
 		if ( 'px' === Fusion_Sanitize::get_unit( $real_body_font_size ) ) {
 			$body_font_size = (int) $real_body_font_size;
@@ -757,33 +777,6 @@ class Avada_Layout {
 	}
 
 	/**
-	 * Gets the width of each column.
-	 *
-	 * @access public
-	 * @param  int $columns The number of columns.
-	 * @param  int $gutter  The gutter size (in pixels).
-	 * @return int The column width in pixels.
-	 */
-	public function get_relative_width( $columns = 1, $gutter = 0 ) {
-		$columns = intval( $columns );
-		$gutter  = intval( $gutter );
-		// Get the total content width.
-		$total_width = $this->get_content_width();
-		if ( 1 >= $columns ) {
-			return $total_width;
-		}
-		// Get the total size of our gutters.
-		$total_gutter = ( $columns - 1 ) * $gutter;
-		// Get the useful width.
-		$useful_width = $total_width - $total_gutter;
-		if ( 0 == intval( $useful_width ) ) {
-			return $total_width;
-		}
-		// Return the width per column.
-		return absint( $useful_width / $columns );
-	}
-
-	/**
 	 * Checks is the current page is a 100% width page.
 	 *
 	 * @param bool          $value   The value from the filter.
@@ -792,30 +785,32 @@ class Avada_Layout {
 	 */
 	public function is_hundred_percent_template( $value = false, $page_id = false ) {
 		if ( ! $page_id ) {
-			$fusion_library = Fusion::get_instance();
-			$page_id = $fusion_library->get_page_id();
+			$page_id = fusion_library()->get_page_id();
 		}
 
 		$page_template = '';
 
-		if ( Avada_Helper::is_woocommerce() ) {
+		if ( Fusion_Helper::is_woocommerce() ) {
 			$custom_fields = get_post_custom_values( '_wp_page_template', $page_id );
 			$page_template = ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) ? $custom_fields[0] : '';
 		}
-
-		if ( 'tribe_events' === get_post_type( $page_id ) && '100-width.php' === tribe_get_option( 'tribeEventsTemplate', 'default' ) ) {
+		if ( 'tribe_events' === get_post_type( $page_id ) && function_exists( 'tribe_get_option' ) && '100-width.php' === tribe_get_option( 'tribeEventsTemplate', 'default' ) ) {
 			$page_template = '100-width.php';
 		}
 
 		if (
-			( '100%' === fusion_library()->get_option( 'site_width' ) ||
+			'100%' === fusion_library()->get_option( 'site_width' ) ||
 			( is_page_template( '100-width.php' ) && $page_id ) ||
 			is_page_template( 'blank.php' ) ||
 			( '100-width.php' === $page_template && $page_id ) ||
-			( ( '1' === fusion_get_option( 'portfolio_width_100', 'portfolio_width_100', $page_id ) || 'yes' === fusion_get_option( 'portfolio_width_100', 'portfolio_width_100', $page_id ) ) && is_singular( 'avada_portfolio' ) ) ||
-			( ( '1' === fusion_get_option( 'blog_width_100', 'portfolio_width_100', $page_id ) || 'yes' === fusion_get_option( 'blog_width_100', 'portfolio_width_100', $page_id ) ) && is_singular( 'post' ) ) ||
-			( ( '1' === fusion_get_option( 'product_width_100', 'portfolio_width_100', $page_id ) || 'yes' === fusion_get_option( 'product_width_100', 'portfolio_width_100', $page_id ) ) && is_singular( 'product' ) ) ||
-			( 'yes' === fusion_get_page_option( 'portfolio_width_100', $page_id ) && ! is_singular( array( 'post', 'avada_portfolio' ) ) ) )
+			( fusion_get_option( 'portfolio_width_100' ) && is_singular( 'avada_portfolio' ) ) ||
+			( fusion_get_option( 'blog_width_100' ) && is_singular( 'post' ) ) ||
+			( fusion_get_option( 'product_width_100' ) && is_singular( 'product' ) ) ||
+			(
+				is_numeric( $page_id ) &&
+				! in_array( get_post_type( $page_id ), [ 'product', 'post', 'avada_portfolio' ], true ) &&
+				'yes' === fusion_data()->post_meta( $page_id )->get( 'blog_width_100' )
+			)
 		) {
 			return true;
 		}
@@ -834,7 +829,7 @@ class Avada_Layout {
 	public function join( $filter_id = null, $sanitize = 'esc_attr', $join_separator = ' ' ) {
 
 		// Get the elements using a filter.
-		$elements = apply_filters( 'fusion_' . $filter_id, array() );
+		$elements = apply_filters( 'fusion_' . $filter_id, [] );
 
 		// Make sure each element is properly sanitized.
 		$elements = array_map( $sanitize, $elements );
@@ -857,9 +852,7 @@ class Avada_Layout {
 		if ( $this->is_hundred_percent_template() ) {
 			global $fusion_fwc_type;
 
-			if ( ! isset( $fusion_fwc_type ) ||
-				 ( isset( $fusion_fwc_type ) && is_array( $fusion_fwc_type ) && ( empty( $fusion_fwc_type ) || 'fullwidth' === $fusion_fwc_type['content'] ) )
-			) {
+			if ( ! isset( $fusion_fwc_type ) || ( isset( $fusion_fwc_type ) && is_array( $fusion_fwc_type ) && ( empty( $fusion_fwc_type ) || 'fullwidth' === $fusion_fwc_type['content'] ) ) ) {
 				return true;
 			}
 		}

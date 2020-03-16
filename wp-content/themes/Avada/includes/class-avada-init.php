@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Core
  * @since      3.8
@@ -26,104 +26,68 @@ class Avada_Init {
 	 * @access  public
 	 */
 	public function __construct() {
-		add_action( 'after_setup_theme', array( $this, 'load_textdomain' ) );
-		add_action( 'after_setup_theme', array( $this, 'set_builder_status' ), 10 );
-		add_action( 'after_setup_theme', array( $this, 'add_theme_supports' ), 10 );
-		add_action( 'after_setup_theme', array( $this, 'register_nav_menus' ) );
-		add_action( 'after_setup_theme', array( $this, 'add_image_size' ) );
-		add_filter( 'image_size_names_choose', array( $this, 'add_image_sizes_to_media_library_dialog' ) );
+		add_action( 'after_setup_theme', [ $this, 'set_builder_status' ], 10 );
+		add_action( 'after_setup_theme', [ $this, 'add_theme_supports' ], 10 );
+		add_action( 'after_setup_theme', [ $this, 'register_nav_menus' ] );
+		add_action( 'after_setup_theme', [ $this, 'add_image_size' ] );
+		add_action( 'after_setup_theme', [ $this, 'init_fb_demos_importer' ], 20 );
+		add_action( 'wp_ajax_fusion_builder_load_demo', [ $this, 'init_fb_demos_importer' ], 20 );
+		add_filter( 'image_size_names_choose', [ $this, 'add_image_sizes_to_media_library_dialog' ] );
+		add_action( 'init', [ $this, 'init' ] );
 
 		if ( class_exists( 'BuddyPress' ) && ! Avada_Helper::is_buddypress() ) {
-			add_action( 'init', array( $this, 'remove_buddypress_redirection' ), 5 );
+			add_action( 'init', [ $this, 'remove_buddypress_redirection' ], 5 );
 		}
 
 		if ( class_exists( 'Convert_Plug' ) ) {
-			add_action( 'init', array( $this, 'remove_convert_plus_notices' ) );
+			add_action( 'init', [ $this, 'remove_convert_plus_notices' ] );
 		}
 
 		if ( class_exists( 'GF_User_Registration_Bootstrap' ) ) {
-			add_action( 'init', array( $this, 'change_gravity_user_registration_priority' ) );
+			add_action( 'init', [ $this, 'change_gravity_user_registration_priority' ] );
 		}
 
 		// Init FPO for Event Espresso plugin.
 		if ( class_exists( 'EE_Calendar' ) ) {
-			add_filter( 'fusion_page_options_init', array( $this, 'init_fusion_page_option_for_event_espresso' ) );
+			add_filter( 'fusion_page_options_init', [ $this, 'init_fusion_page_option_for_event_espresso' ] );
 		}
-
-		add_action( 'widgets_init', array( $this, 'widget_init' ) );
-
-		add_action( 'wp', array( $this, 'set_theme_version' ) );
 
 		// Allow shortcodes in widget text.
 		add_filter( 'widget_text', 'do_shortcode' );
 
-		add_filter( 'wp_nav_menu_args', array( $this, 'main_menu_args' ), 5 );
-		add_action( 'after_switch_theme', array( $this, 'theme_activation' ) );
-		add_action( 'switch_theme', array( $this, 'theme_deactivation' ) );
+		add_filter( 'wp_nav_menu_args', [ $this, 'main_menu_args' ], 5 );
+		add_action( 'after_switch_theme', [ $this, 'theme_activation' ] );
+		add_action( 'switch_theme', [ $this, 'theme_deactivation' ] );
 
 		// Term meta migration for WordPress 4.4.
-		add_action( 'avada_before_main_content', array( $this, 'youtube_flash_fix' ) );
 		remove_action( 'wp_head', 'adjacent_posts_rel_link_wp_head' );
 
 		// Remove post_format from preview link.
-		add_filter( 'preview_post_link', array( $this, 'remove_post_format_from_link' ), 9999 );
+		add_filter( 'preview_post_link', [ $this, 'remove_post_format_from_link' ], 9999 );
 
-		add_filter( 'wp_tag_cloud', array( $this, 'remove_font_size_from_tagcloud' ) );
+		add_filter( 'wp_tag_cloud', [ $this, 'remove_font_size_from_tagcloud' ] );
 
 		// Add contact methods for author page.
-		add_filter( 'user_contactmethods', array( $this, 'modify_contact_methods' ) );
+		add_filter( 'user_contactmethods', [ $this, 'modify_contact_methods' ] );
 
-		add_filter( 'wpcf7_form_response_output', array( $this, 'modify_wpcf7_notices' ), 10, 4 );
+		add_filter( 'wpcf7_form_response_output', [ $this, 'modify_wpcf7_notices' ], 10, 4 );
 
 		if ( ! is_admin() ) {
-			add_filter( 'pre_get_posts', array( $this, 'modify_search_filter' ) );
+			add_filter( 'pre_get_posts', [ $this, 'modify_search_filter' ] );
+			add_filter( 'pre_get_posts', [ $this, 'empty_search_filter' ] );
+			add_filter( 'posts_search', [ $this, 'limit_search_to_title_only' ], 500, 2 );
 		}
 
 		// Check if we've got a task to remove backup data.
 		if ( false !== get_option( 'scheduled_avada_fusionbuilder_migration_cleanups', false ) ) {
-			add_action( 'init', array( 'Fusion_Builder_Migrate', 'cleanup_backups' ) );
+			add_action( 'init', [ 'Fusion_Builder_Migrate', 'cleanup_backups' ] );
 		}
 
-		add_action( 'wp_footer', array( $this, 'add_wp_footer_scripts' ), 9999 );
-	}
+		add_action( 'wp_footer', [ $this, 'add_wp_footer_scripts' ], 9999 );
 
-	/**
-	 * Load the theme textdomain.
-	 *
-	 * @access  public
-	 */
-	public function load_textdomain() {
-
-		// Path: wp-content/theme/languages/en_US.mo.
-		// Path: wp-content/languages/themes/Avada-en_US.mo.
-		$loaded = load_theme_textdomain( 'Avada', Avada::$template_dir_path . '/languages' );
-
-		// Path: wp-content/theme/languages/Avada-en_US.mo.
-		if ( ! $loaded ) {
-			add_filter( 'theme_locale', array( $this, 'change_locale' ), 10, 2 );
-			$loaded = load_theme_textdomain( 'Avada', Avada::$template_dir_path . '/languages' );
-
-			// Path: wp-content/theme/languages/avada-en_US.mo.
-			// Path: wp-content/languages/themes/avada-en_US.mo.
-			if ( ! $loaded ) {
-				remove_filter( 'theme_locale', array( $this, 'change_locale' ) );
-				add_filter( 'theme_locale', array( $this, 'change_locale_lowercase' ), 10, 2 );
-				$loaded = load_theme_textdomain( 'Avada', Avada::$template_dir_path . '/languages' );
-
-				// Path: wp-content/languages/Avada-en_US.mo.
-				if ( ! $loaded ) {
-					remove_filter( 'theme_locale', array( $this, 'change_locale_lowercase' ) );
-					add_filter( 'theme_locale', array( $this, 'change_locale' ), 10, 2 );
-					$loaded = load_theme_textdomain( 'Avada', dirname( dirname( Avada::$template_dir_path ) ) . '/languages' );
-
-					// Path: wp-content/languages/themes/avada/en_US.mo.
-					if ( ! $loaded ) {
-						remove_filter( 'theme_locale', array( $this, 'change_locale' ) );
-						load_theme_textdomain( 'Avada', dirname( dirname( Avada::$template_dir_path ) ) . '/languages/themes/avada' );
-					}
-				}
-			}
-		}
+		// Live Search.
+		add_action( 'wp_ajax_live_search_retrieve_posts', [ $this, 'live_search_retrieve_posts' ] );
+		add_action( 'wp_ajax_nopriv_live_search_retrieve_posts', [ $this, 'live_search_retrieve_posts' ] );
 	}
 
 	/**
@@ -170,7 +134,7 @@ class Avada_Init {
 	 */
 	public function set_theme_version() {
 		if ( function_exists( 'wp_get_theme' ) ) {
-			$theme_obj = wp_get_theme();
+			$theme_obj     = wp_get_theme();
 			$theme_version = $theme_obj->get( 'Version' );
 
 			if ( $theme_obj->parent_theme ) {
@@ -182,6 +146,47 @@ class Avada_Init {
 			update_option( 'avada_theme_version', $theme_version );
 		}
 
+	}
+
+	/**
+	 * Additional actions that need to run on init.
+	 *
+	 * @access public
+	 * @since 6.0
+	 */
+	public function init() {
+		Avada::get_options();
+	}
+
+	/**
+	 * Conditionally init Fusion_Builder_Demos_Importer class.
+	 *
+	 * @since 5.8.2
+	 * @access  public
+	 */
+	public function init_fb_demos_importer() {
+		$post_type = false;
+
+		if ( ( ! Avada_Helper::is_post_admin_screen() && ( function_exists( 'fusion_is_preview_frame' ) && ( function_exists( 'fusion_is_preview_frame' ) && ! fusion_is_preview_frame() ) ) && ! fusion_is_builder_frame() ) || ! current_theme_supports( 'fusion-builder-demos' ) || ! Avada()->registration->is_registered() || ! defined( 'FUSION_BUILDER_PLUGIN_DIR' ) || ( fusion_doing_ajax() && ! isset( $_POST['page_name'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
+
+		// Edit screen.
+		$post_id = isset( $_GET['post'] ) ? sanitize_text_field( wp_unslash( $_GET['post'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+
+		if ( '' !== $post_id ) {
+			$post_type = get_post_type( $post_id );
+		}
+
+		// New post screen.
+		if ( false === $post_type && isset( $_GET['post_type'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$post_type = sanitize_text_field( wp_unslash( $_GET['post_type'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
+
+		// Fusion Builder is enabled for this post type.
+		if ( in_array( $post_type, FusionBuilder::allowed_post_types(), true ) || ( fusion_doing_ajax() && isset( $_POST['page_name'] ) ) || ( function_exists( 'Fusion_App' ) && Fusion_App()->get_builder_status() ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$fusion_builder_demo_importer = new Fusion_Builder_Demos_Importer();
+		}
 	}
 
 	/**
@@ -208,14 +213,17 @@ class Avada_Init {
 			add_theme_support( 'wc-product-gallery-zoom' );
 		}
 
-		if ( '1' !== Avada()->settings->get( 'disable_woo_gallery' ) ) {
+		if ( ! fusion_get_option( 'disable_woo_gallery' ) ) {
 			add_theme_support( 'wc-product-gallery-lightbox' );
 		}
 
 		// Post Formats.
-		add_theme_support( 'post-formats', array( 'gallery', 'link', 'image', 'quote', 'video', 'audio', 'chat' ) );
+		add_theme_support( 'post-formats', [ 'gallery', 'link', 'image', 'quote', 'video', 'audio', 'chat' ] );
 		// Add post thumbnail functionality.
 		add_theme_support( 'post-thumbnails' );
+
+		// Add Fusion Builder Demos support.
+		add_theme_support( 'fusion-builder-demos' );
 
 	}
 
@@ -231,11 +239,11 @@ class Avada_Init {
 		add_image_size( 'recent-works-thumbnail', 66, 66, true );
 
 		// Image sizes used for grid layouts.
-		add_image_size( '200', 200, '', false );
-		add_image_size( '400', 400, '', false );
-		add_image_size( '600', 600, '', false );
-		add_image_size( '800', 800, '', false );
-		add_image_size( '1200', 1200, '', false );
+		add_image_size( 'fusion-200', 200, '', false );
+		add_image_size( 'fusion-400', 400, '', false );
+		add_image_size( 'fusion-600', 600, '', false );
+		add_image_size( 'fusion-800', 800, '', false );
+		add_image_size( 'fusion-1200', 1200, '', false );
 	}
 
 	/**
@@ -248,15 +256,15 @@ class Avada_Init {
 	 */
 	public function add_image_sizes_to_media_library_dialog( $sizes ) {
 		/* translators: image size. */
-		$sizes['200'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 200 );
+		$sizes['fusion-200'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 200 );
 		/* translators: image size. */
-		$sizes['400'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 400 );
+		$sizes['fusion-400'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 400 );
 		/* translators: image size. */
-		$sizes['600'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 600 );
+		$sizes['fusion-600'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 600 );
 		/* translators: image size. */
-		$sizes['800'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 800 );
+		$sizes['fusion-800'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 800 );
 		/* translators: image size. */
-		$sizes['1200'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 1200 );
+		$sizes['fusion-1200'] = sprintf( esc_attr__( 'Avada Grid %s', 'Avada' ), 1200 );
 
 		return $sizes;
 	}
@@ -284,25 +292,28 @@ class Avada_Init {
 	public function theme_activation() {
 
 		update_option(
-			'shop_catalog_image_size', array(
-				'width' => 500,
+			'shop_catalog_image_size',
+			[
+				'width'  => 500,
 				'height' => '',
 				0,
-			)
+			]
 		);
 		update_option(
-			'shop_single_image_size', array(
-				'width' => 700,
+			'shop_single_image_size',
+			[
+				'width'  => 700,
 				'height' => '',
 				0,
-			)
+			]
 		);
 		update_option(
-			'shop_thumbnail_image_size', array(
-				'width' => 120,
+			'shop_thumbnail_image_size',
+			[
+				'width'  => 120,
 				'height' => '',
 				0,
-			)
+			]
 		);
 
 		update_option( 'woocommerce_single_image_width', 700 );
@@ -312,7 +323,7 @@ class Avada_Init {
 		// Delete the patcher caches.
 		delete_site_transient( 'fusion_patcher_check_num' );
 		// Delete compiled JS.
-		avada_reset_all_caches();
+		fusion_reset_all_caches();
 
 	}
 
@@ -326,19 +337,18 @@ class Avada_Init {
 		// Delete the patcher caches.
 		delete_site_transient( 'fusion_patcher_check_num' );
 		// Delete compiled JS.
-		avada_reset_all_caches();
+		fusion_reset_all_caches();
 
 	}
 
-	/*
-	// WIP
+	/**
+	 * WIP
 	public function migrate_term_data() {
 		$version = get_bloginfo( 'version' );
 		$function_test = function_exists( 'add_term_meta' );
-
 		if ( version_compare( $version, '4.4', '>=' ) && ! $function_test ) {}
 	}
-	*/
+	 */
 
 	/**
 	 * Get the main menu arguments.
@@ -353,11 +363,11 @@ class Avada_Init {
 
 		$c_page_id = Avada()->fusion_library->get_page_id();
 
-		if ( get_post_meta( $c_page_id, 'pyre_displayed_menu', true ) &&
-			'default' !== get_post_meta( $c_page_id, 'pyre_displayed_menu', true ) &&
+		if ( fusion_get_page_option( 'displayed_menu', $c_page_id ) &&
+			'default' !== fusion_get_page_option( 'displayed_menu', $c_page_id ) &&
 			( 'main_navigation' === $args['theme_location'] || 'sticky_navigation' === $args['theme_location'] )
 		) {
-			$menu = get_post_meta( $c_page_id, 'pyre_displayed_menu', true );
+			$menu         = fusion_get_page_option( 'displayed_menu', $c_page_id );
 			$args['menu'] = $menu;
 		}
 
@@ -372,27 +382,6 @@ class Avada_Init {
 	 */
 	public function youtube_flash_fix() {
 		echo '<div class="fusion-youtube-flash-fix">&shy;<style type="text/css"> iframe { visibility: hidden; opacity: 0; } </style></div>';
-	}
-
-	/**
-	 * Register widgets.
-	 *
-	 * @access  public
-	 */
-	public function widget_init() {
-
-		register_widget( 'Fusion_Widget_Ad_125_125' );
-		register_widget( 'Fusion_Widget_Author' );
-		register_widget( 'Fusion_Widget_Contact_Info' );
-		register_widget( 'Fusion_Widget_Tabs' );
-		register_widget( 'Fusion_Widget_Recent_Works' );
-		register_widget( 'Fusion_Widget_Tweets' );
-		register_widget( 'Fusion_Widget_Flickr' );
-		register_widget( 'Fusion_Widget_Social_Links' );
-		register_widget( 'Fusion_Widget_Facebook_Page' );
-		register_widget( 'Fusion_Widget_Menu' );
-		register_widget( 'Fusion_Widget_Vertical_Menu' );
-
 	}
 
 	/**
@@ -425,12 +414,11 @@ class Avada_Init {
 	 */
 	public function modify_contact_methods( $profile_fields ) {
 		// Add new fields.
-		$profile_fields['author_email'] = 'Email (Author Page)';
+		$profile_fields['author_email']    = 'Email (Author Page)';
 		$profile_fields['author_facebook'] = 'Facebook (Author Page)';
 		$profile_fields['author_twitter']  = 'Twitter (Author Page)';
 		$profile_fields['author_linkedin'] = 'LinkedIn (Author Page)';
 		$profile_fields['author_dribble']  = 'Dribble (Author Page)';
-		$profile_fields['author_gplus']    = 'Google+ (Author Page)';
 		$profile_fields['author_whatsapp'] = 'WhatsApp (Author Page)';
 		$profile_fields['author_custom']   = 'Custom Message (Author Page)';
 
@@ -485,8 +473,8 @@ class Avada_Init {
 	 * @return void
 	 */
 	public function change_gravity_user_registration_priority() {
-		remove_action( 'wp', array( gf_user_registration(), 'maybe_activate_user' ) );
-		add_action( 'wp', array( gf_user_registration(), 'maybe_activate_user' ), 999 );
+		remove_action( 'wp', [ gf_user_registration(), 'maybe_activate_user' ] );
+		add_action( 'wp', [ gf_user_registration(), 'maybe_activate_user' ], 999 );
 	}
 
 	/**
@@ -500,11 +488,134 @@ class Avada_Init {
 	public function init_fusion_page_option_for_event_espresso( $additional_argument ) {
 		global $pagenow;
 
-		$additional_argument = 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'espresso_events' === $_GET['page'] && isset( $_GET['action'] ) && 'edit' === $_GET['action'] && isset( $_GET['post'] );
+		$additional_argument = 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'espresso_events' === $_GET['page'] && isset( $_GET['action'] ) && 'edit' === $_GET['action'] && isset( $_GET['post'] ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		return $additional_argument;
 	}
 
+	/**
+	 * Performs the live search for posts.
+	 *
+	 * @since 5.9
+	 * @access public
+	 * @return void.
+	 */
+	public function live_search_retrieve_posts() {
+		$args = apply_filters(
+			'fusion_live_search_query_args',
+			[
+				's'                   => trim( esc_attr( strip_tags( $_POST['search'] ) ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification, WordPress.WP.AlternativeFunctions
+				'post_type'           => isset( $_POST['post_type'] ) ? $_POST['post_type'] : $this->get_search_results_post_types(), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification
+				'posts_per_page'      => isset( $_POST['per_page'] ) ? (int) wp_unslash( $_POST['per_page'] ) : 100, // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+				'post_status'         => 'publish',
+				'ignore_sticky_posts' => 1,
+			]
+		);
+
+		$search_limit_to_post_titles = isset( $_POST['search_limit_to_post_titles'] ) ? $_POST['search_limit_to_post_titles'] : Avada()->settings->get( 'search_limit_to_post_titles' ); // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+
+		if ( $search_limit_to_post_titles ) {
+			add_filter( 'posts_where', [ $this, 'limit_wp_query_to_title_only' ], 10, 2 );
+			$search_results = fusion_cached_query( $args );
+			remove_filter( 'posts_where', [ $this, 'limit_wp_query_to_title_only' ] );
+		} else {
+			$search_results = fusion_cached_query( $args );
+		}
+
+		if ( $search_results->have_posts() ) {
+			$display_post_type      = isset( $_POST['display_post_type'] ) ? (bool) wp_unslash( $_POST['display_post_type'] ) : true; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+			$display_featured_image = isset( $_POST['show_feat_img'] ) ? (bool) wp_unslash( $_POST['show_feat_img'] ) : true; // phpcs:ignore WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput
+
+			while ( $search_results->have_posts() ) {
+				$search_results->the_post();
+				global $post;
+
+				$post_type = '';
+				if ( $display_post_type ) {
+					$post_type_obj = get_post_type_object( get_post_type( $post->ID ) );
+					$post_type     = ( $post_type_obj ) ? $post_type_obj->labels->singular_name : $post_type;
+				}
+
+				$result_suggestions[] = [
+					'id'        => esc_attr( $post->ID ),
+					'type'      => $post_type,
+					'title'     => get_the_title( $post->ID ),
+					'post_url'  => get_the_permalink( $post->ID ),
+					'image_url' => $display_featured_image ? get_the_post_thumbnail_url( $post->ID, 'recent-works-thumbnail' ) : '',
+				];
+			}
+		}
+
+		wp_reset_postdata();
+
+		wp_send_json( $result_suggestions );
+	}
+
+	/**
+	 * Modifies the WP_Query SQL query to limit to post titles.
+	 *
+	 * @since 5.9
+	 * @access public
+	 * @param string $where    Search SQL for WHERE clause.
+	 * @param object $wp_query The search query.
+	 * @return string $where   The modified clause.
+	 */
+	public function limit_wp_query_to_title_only( $where, $wp_query ) {
+		global $wpdb;
+
+		$query_vars = $wp_query->query_vars;
+		$title      = $wp_query->get( 's' );
+		if ( $title ) {
+			$where .= ' AND ' . $wpdb->posts . '.post_title LIKE \'' . esc_sql( $wpdb->esc_like( $title ) ) . '%\'';
+		}
+
+		return $where;
+	}
+
+	/**
+	 * Modifies the search SQL query to limit to post titles.
+	 *
+	 * @since 5.9
+	 * @access public
+	 * @param string $search   Search SQL for WHERE clause.
+	 * @param object $wp_query The search query.
+	 * @return string $where The modified clause.
+	 */
+	public function limit_search_to_title_only( $search, $wp_query ) {
+		global $wpdb;
+
+		$search_limit_to_post_titles = Avada()->settings->get( 'search_limit_to_post_titles' );
+
+		// If there's an URL override replace the settings value.
+		if ( isset( $_GET['search_limit_to_post_titles'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$search_limit_to_post_titles = $_GET['search_limit_to_post_titles']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification
+		}
+
+		// If there is no search term, skip process.
+		if ( empty( $search ) || ! $search_limit_to_post_titles ) {
+			return $search;
+		}
+		$query_vars = $wp_query->query_vars;
+		$n          = ! empty( $query_vars['exact'] ) ? '' : '%';
+		$search     = '';
+		$searchand  = '';
+
+		foreach ( (array) $query_vars['search_terms'] as $term ) {
+			$term      = esc_sql( $wpdb->esc_like( $term ) );
+			$search   .= "{$searchand}($wpdb->posts.post_title LIKE '{$n}{$term}{$n}')";
+			$searchand = ' AND ';
+		}
+
+		if ( ! empty( $search ) ) {
+			$search = " AND ({$search}) ";
+
+			if ( ! is_user_logged_in() ) {
+				$search .= " AND ($wpdb->posts.post_password = '') ";
+			}
+		}
+
+		return $search;
+	}
 
 	/**
 	 * Modifies the search filter.
@@ -515,27 +626,30 @@ class Avada_Init {
 	 */
 	public function modify_search_filter( $query ) {
 		if ( is_search() && $query->is_search ) {
-			if ( isset( $_GET ) && ( 2 < count( $_GET ) || ( 2 == count( $_GET ) && ! isset( $_GET['lang'] ) ) ) ) {
+			if ( isset( $_GET ) && ( 2 < count( $_GET ) || ( 2 === count( $_GET ) && ! isset( $_GET['lang'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 				return $query;
 			}
 
-			$search_content = Avada()->settings->get( 'search_content' );
-
-			if ( 'all_post_types_no_pages' === $search_content ) {
-				$query->set( 'post_type', array( 'post', 'avada_portfolio', 'product', 'tribe_events' ) );
-			} elseif ( 'Only Posts' === $search_content ) {
-				$query->set( 'post_type', 'post' );
-			} elseif ( 'portfolio_items' === $search_content ) {
-				$query->set( 'post_type', 'avada_portfolio' );
-			} elseif ( 'Only Pages' === $search_content ) {
-				$query->set( 'post_type', 'page' );
-			} elseif ( 'woocommerce_products' === $search_content ) {
-				$query->set( 'post_type', 'product' );
-			} elseif ( 'tribe_events' === $search_content ) {
-				$query->set( 'post_type', 'tribe_events' );
-			}
+			$query->set( 'post_type', $this->get_search_results_post_types() );
 		}
 		return $query;
+	}
+
+	/**
+	 * Make WordPress respect the search template on an empty search.
+	 *
+	 * @param  object $query The WP_Query object.
+	 * @return  object
+	 */
+	public function empty_search_filter( $query ) {
+
+		if ( isset( $_GET['s'] ) && empty( $_GET['s'] ) && $query->is_main_query() ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$query->is_search = true;
+			$query->is_home   = false;
+		}
+
+		return $query;
+
 	}
 
 	/**
@@ -551,10 +665,28 @@ class Avada_Init {
 		 * The 'space_body' setting is not sanitized.
 		 * In order to be able to take advantage of this,
 		 * a user would have to gain access to the database
-		 * in which case this is the least on your worries.
+		 * in which case this is the least of your worries.
 		 */
-		echo Avada()->settings->get( 'space_body' ); // WPCS: XSS ok.
+		echo Avada()->settings->get( 'space_body' ); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
+
+	/**
+	 * Gets the post types for search results filtering.
+	 *
+	 * @since 5.9.1
+	 * @access public
+	 * @return array|string The post types the search should be limited to.
+	 */
+	public function get_search_results_post_types() {
+		$search_post_types = Avada()->settings->get( 'search_content' );
+
+		if ( ! Avada()->settings->get( 'search_filter_results' ) ) {
+			$search_post_types = 'any';
+		}
+
+		return apply_filters( 'avada_search_results_post_types', $search_post_types );
+	}
+
 }
 
 /* Omit closing PHP tag to avoid "Headers already sent" issues. */

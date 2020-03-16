@@ -6,11 +6,6 @@
  * @since 1.0.0
  */
 
-// Do not allow directly accessing this file.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit( 'Direct script access denied.' );
-}
-
 /**
  * A helper class that depending on the active multilingual plugin
  * will get the available languages as well as the active language.
@@ -45,7 +40,7 @@ class Fusion_Multilingual {
 	 * @access  private
 	 * @var  array
 	 */
-	private static $available_languages = array();
+	private static $available_languages = [];
 
 	/**
 	 * The active language.
@@ -54,7 +49,7 @@ class Fusion_Multilingual {
 	 * @access  private
 	 * @var  string
 	 */
-	private static $active_language = 'en';
+	private static $active_language = '';
 
 	/**
 	 * The "main" language.
@@ -93,7 +88,7 @@ class Fusion_Multilingual {
 		// Set the $active_language property.
 		self::set_active_language();
 
-		add_filter( 'wpml_ls_html', array( $this, 'disable_wpml_footer_ls_html' ), 10, 3 );
+		add_filter( 'wpml_ls_html', [ $this, 'disable_wpml_footer_ls_html' ], 10, 3 );
 
 	}
 
@@ -133,7 +128,9 @@ class Fusion_Multilingual {
 	 * Gets the $active_language protected property.
 	 */
 	public static function get_active_language() {
-		self::set_active_language();
+		if ( ! self::$active_language ) {
+			self::set_active_language();
+		}
 		return self::$active_language;
 	}
 
@@ -143,47 +140,52 @@ class Fusion_Multilingual {
 	 * @param string|bool $lang The language code to set.
 	 */
 	public static function set_active_language( $lang = false ) {
-
 		if ( is_string( $lang ) && ! empty( $lang ) ) {
 			self::$active_language = $lang;
+			return;
 		}
-		// If we have not defined a language, then autodetect.
-		if ( false == $lang || empty( $lang ) ) {
-			// No need to proceed if both WPML & PLL are inactive.
-			if ( ! self::$is_pll && ! self::$is_wpml ) {
-				return 'en';
+
+		/**
+		 * If we have not defined a language, then autodetect.
+		 * No need to proceed if both WPML & PLL are inactive.
+		 */
+		if ( ! self::$is_pll && ! self::$is_wpml ) {
+			self::$active_language = 'en';
+			return;
+		}
+
+		// Preliminary work for PLL - adds the WPML compatibility layer.
+		if ( function_exists( 'pll_define_wpml_constants' ) ) {
+			pll_define_wpml_constants();
+		}
+
+		// WPML (Or the PLL with WPML compatibility layer) is active.
+		if ( defined( 'ICL_LANGUAGE_CODE' ) ) {
+			self::$active_language = ICL_LANGUAGE_CODE;
+			if ( 'all' === ICL_LANGUAGE_CODE ) {
+				do_action( 'fusion_library_set_language_is_all' );
+				if ( self::$is_wpml ) {
+					global $sitepress;
+					self::$active_language = $sitepress->get_default_language();
+				} elseif ( self::$is_pll ) {
+					self::$active_language = pll_default_language( 'slug' );
+				}
 			}
-			// Preliminary work for PLL.
-			// Adds the WPML compatibility layer.
-			if ( self::$is_pll && function_exists( 'pll_define_wpml_constants' ) ) {
-				pll_define_wpml_constants();
-			}
-			// PLL-WPML compatibility is active, we can now work easier.
-			if ( defined( 'ICL_LANGUAGE_CODE' ) ) {
-				self::$active_language = ICL_LANGUAGE_CODE;
-				if ( 'all' === ICL_LANGUAGE_CODE ) {
+			return;
+		}
+
+		// PLL without WPML compatibility layer.
+		if ( function_exists( 'PLL' ) ) {
+			$pll_obj = PLL();
+			if ( is_object( $pll_obj ) && property_exists( $pll_obj, 'curlang' ) ) {
+				if ( is_object( $pll_obj->curlang ) && property_exists( $pll_obj->curlang, 'slug' ) ) {
+					self::$active_language = $pll_obj->curlang->slug;
+				} elseif ( false === $pll_obj->curlang ) {
+					self::$active_language = 'all';
 					do_action( 'fusion_library_set_language_is_all' );
-					if ( self::$is_wpml ) {
-						global $sitepress;
-						self::$active_language = $sitepress->get_default_language();
-					} elseif ( self::$is_pll ) {
-						self::$active_language = pll_default_language( 'slug' );
-					}
-				}
-			} else {
-				if ( function_exists( 'PLL' ) ) {
-					$pll_obj = PLL();
-					if ( is_object( $pll_obj ) && property_exists( $pll_obj, 'curlang' ) ) {
-						if ( is_object( $pll_obj->curlang ) && property_exists( $pll_obj->curlang, 'slug' ) ) {
-							self::$active_language = $pll_obj->curlang->slug;
-						} elseif ( false === $pll_obj->curlang ) {
-							self::$active_language = 'all';
-							do_action( 'fusion_library_set_language_is_all' );
-						}
-					}
 				}
 			}
-		}// End if().
+		}
 	}
 
 	/**
@@ -197,6 +199,20 @@ class Fusion_Multilingual {
 	}
 
 	/**
+	 * Gets the data for front-end.
+	 *
+	 * @since 6.0
+	 * @return array
+	 */
+	public static function get_language_switcher_data() {
+		if ( self::$is_pll ) {
+			return self::get_language_switcher_pll();
+		} elseif ( self::$is_wpml ) {
+			return self::get_language_switcher_wpml();
+		}
+	}
+
+	/**
 	 * Get the available languages from WPML.
 	 *
 	 * @return array
@@ -204,10 +220,10 @@ class Fusion_Multilingual {
 	private static function get_available_languages_wpml() {
 		// Do not continue processing if we're not using WPML.
 		if ( ! self::$is_wpml ) {
-			return array();
+			return [];
 		}
 		$wpml_languages = icl_get_languages( 'skip_missing=0' );
-		$languages      = array();
+		$languages      = [];
 		foreach ( $wpml_languages as $language_key => $args ) {
 			$languages[] = $args['code'];
 		}
@@ -265,14 +281,14 @@ class Fusion_Multilingual {
 	private static function get_available_languages_pll() {
 		// Do not continue processing if we're not using PLL.
 		if ( ! self::$is_pll ) {
-			return array();
+			return [];
 		}
 
 		global $polylang;
 		// Get the PLL languages object.
 		$pll_languages_obj = $polylang->model->get_languages_list();
 		// Parse the object and get a usable array.
-		$pll_languages = array();
+		$pll_languages = [];
 		foreach ( $pll_languages_obj as $pll_language_obj ) {
 			$pll_languages[] = $pll_language_obj->slug;
 		}
@@ -281,19 +297,61 @@ class Fusion_Multilingual {
 	}
 
 	/**
+	 * Get the PolyLang data for front-end.
+	 *
+	 * @since 6.0
+	 * @return array
+	 */
+	private static function get_language_switcher_pll() {
+		// Do not continue processing if we're not using PLL.
+		if ( ! self::$is_pll || ! function_exists( 'pll_the_languages' ) ) {
+			return [];
+		}
+
+		return pll_the_languages( [ 'raw' => 1 ] );
+	}
+
+	/**
+	 * Get the WPML data for front-end.
+	 *
+	 * @since 6.0
+	 * @return array
+	 */
+	private static function get_language_switcher_wpml() {
+		// Do not continue processing if we're not using WPML.
+		if ( ! self::$is_wpml ) {
+			return [];
+		}
+
+		return apply_filters( 'wpml_active_languages', null, 'skip_missing=0&orderby=id&order=desc' );
+	}
+
+	/**
 	 * Determine if we're using PolyLang.
 	 *
 	 * @return bool
 	 */
-	private static function is_pll() {
-		return ( function_exists( 'pll_default_language' ) ) ? true : false;
+	public static function is_pll() {
+		if ( function_exists( 'pll_default_language' ) ) {
+			return true;
+		}
+
+		// Make sure the 'is_plugin_active' function exists.
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			include_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		if ( is_plugin_active( 'polylang\polylang.php' ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
 	 * Determine if we're using WPML.
 	 * Since PLL has a compatibility layer for WPML, we'll have to consider that too.
 	 */
-	private static function is_wpml() {
-		return ( defined( 'ICL_SITEPRESS_VERSION' ) && false === self::$is_pll ) ? true : false;
+	public static function is_wpml() {
+		return ( ( defined( 'WPML_PLUGIN_FILE' ) || defined( 'ICL_PLUGIN_FILE' ) ) && false === self::$is_pll ) ? true : false;
 	}
 }

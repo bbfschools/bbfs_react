@@ -1,3 +1,11 @@
+<?php
+/**
+ * Underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-block-module-testimonials-preview-template">
 	<h4 class="fusion_module_title"><span class="fusion-module-icon {{ fusionAllElements[element_type].icon }}"></span>{{ fusionAllElements[element_type].name }}</h4>
 	<ul>
@@ -15,9 +23,10 @@
 				var
 				shortcode_element = inner_item.match( shortcode_inner_reg_exp ),
 				shortcode_content = shortcode_element[5];
-				shortcode_attributes = shortcode_element[3] !== '' ? window.wp.shortcode.attrs( shortcode_element[3] ) : '';
+				shortcode_attributes = shortcode_element[3] !== '' ? window.wp.shortcode.attrs( shortcode_element[3] ) : '',
+				separator = ( shortcode_attributes.named['name'] && shortcode_attributes.named['company'] ) ? ', ' : '';
 				#>
-				<li>{{ shortcode_attributes.named['name'] }}, {{ shortcode_attributes.named['company'] }}</li>
+				<li>{{ shortcode_attributes.named['name'] }}{{ separator }}{{ shortcode_attributes.named['company'] }}</li>
 
 			<#
 			}

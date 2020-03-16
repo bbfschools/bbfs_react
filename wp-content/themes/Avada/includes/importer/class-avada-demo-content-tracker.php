@@ -4,7 +4,7 @@
  *
  * @author     ThemeFusion
  * @copyright  (c) Copyright by ThemeFusion
- * @link       http://theme-fusion.com
+ * @link       https://theme-fusion.com
  * @package    Avada
  * @subpackage Importer
  * @since      5.2
@@ -58,26 +58,29 @@ class Avada_Demo_Content_Tracker {
 
 		$this->demo_type = $demo_type;
 
-		$this->demo_history = get_option( 'fusion_demo_history', array() );
+		$this->demo_history = get_option( 'fusion_demo_history', [] );
 
-		$this->import_data_defaults = array(
-			'post'            => array(),
-			'page'            => array(),
-			'avada_portfolio' => array(),
-			'avada_faq'       => array(),
-			'attachment'      => array(),
-			'product'         => array(),
-			'event'           => array(),
-			'forum'           => array(),
-			'sliders'         => array(),
-			'widgets'         => array(),
-			'theme_options'   => array(),
-			'general_data'    => array(),
-			'all'             => array(),
-		);
+		$this->import_data_defaults = [
+			'post'            => [],
+			'page'            => [],
+			'avada_portfolio' => [],
+			'avada_faq'       => [],
+			'avada_layout'    => [],
+			'fusion_icons'    => [],
+			'attachment'      => [],
+			'product'         => [],
+			'event'           => [],
+			'forum'           => [],
+			'sliders'         => [],
+			'widgets'         => [],
+			'theme_options'   => [],
+			'convertplug'     => [],
+			'general_data'    => [],
+			'all'             => [],
+		];
 
-		add_action( 'wxr_importer.processed.term', array( $this, 'add_term_to_stack' ), 10, 2 );
-		add_action( 'fusion_slider_import_processed_term', array( $this, 'add_fusion_slider_term_to_stack' ), 10, 2 );
+		add_action( 'wxr_importer.processed.term', [ $this, 'add_term_to_stack' ], 10, 2 );
+		add_action( 'fusion_slider_import_processed_term', [ $this, 'add_fusion_slider_term_to_stack' ], 10, 2 );
 	}
 
 	/**
@@ -91,8 +94,7 @@ class Avada_Demo_Content_Tracker {
 	 */
 	public function save_import_stage_data( $import_stage, $import_type ) {
 
-		$import_data = get_option( 'fusion_import_data', $this->import_data_defaults );
-
+		$import_data                  = get_option( 'fusion_import_data', $this->import_data_defaults );
 		$import_data[ $import_stage ] = $import_type;
 
 		update_option( 'fusion_import_data', $import_data, false );
@@ -111,7 +113,7 @@ class Avada_Demo_Content_Tracker {
 		$import_data = get_option( 'fusion_import_data', $this->import_data_defaults );
 
 		if ( empty( $import_data[ $import_stage ] ) ) {
-			return array();
+			return [];
 		}
 
 		return $import_data[ $import_stage ];
@@ -126,8 +128,12 @@ class Avada_Demo_Content_Tracker {
 	 */
 	public function update_import_stage_data( $import_stage ) {
 
-		$data   = $this->get_import_stage_data( $import_stage );
-		$data[] = $this->demo_type;
+		$data = $this->get_import_stage_data( $import_stage );
+
+		// Add demo if it's not already added.
+		if ( ! in_array( $this->demo_type, $data ) ) {
+			$data[] = $this->demo_type;
+		}
 
 		$this->save_import_stage_data( $import_stage, $data );
 	}
@@ -174,6 +180,16 @@ class Avada_Demo_Content_Tracker {
 	}
 
 	/**
+	 * Adds global layout backup to demo history.
+	 *
+	 * @access public
+	 * @since 6.2
+	 */
+	public function set_avada_layout() {
+		$this->demo_history[ $this->demo_type ]['fusion_tb_layout_default'] = get_option( 'fusion_tb_layout_default' );
+	}
+
+	/**
 	 * Adds widgets backup to demo history.
 	 *
 	 * @access public
@@ -198,13 +214,13 @@ class Avada_Demo_Content_Tracker {
 		$results = $wpdb->get_results( "SELECT * FROM $wpdb->options WHERE option_name LIKE 'widget_%'" );
 
 		if ( is_wp_error( $results ) ) {
-			$results = array();
+			$results = [];
 		}
 		return $results;
 	}
 
 	/**
-	 * Adds Revolution slider IDs to demo history.
+	 * Adds Slider Revolution slider IDs to demo history.
 	 *
 	 * @access public
 	 * @since 5.2
@@ -213,7 +229,7 @@ class Avada_Demo_Content_Tracker {
 	public function add_rev_slider_to_stack( $slider_id ) {
 
 		if ( ! isset( $this->demo_history[ $this->demo_type ]['rev_sliders'] ) ) {
-			$this->demo_history[ $this->demo_type ]['rev_sliders'] = array();
+			$this->demo_history[ $this->demo_type ]['rev_sliders'] = [];
 		}
 		$this->demo_history[ $this->demo_type ]['rev_sliders'][] = (int) $slider_id;
 	}
@@ -228,7 +244,7 @@ class Avada_Demo_Content_Tracker {
 	public function add_layer_slider_to_stack( $slider_id ) {
 
 		if ( ! isset( $this->demo_history[ $this->demo_type ]['layer_sliders'] ) ) {
-			$this->demo_history[ $this->demo_type ]['layer_sliders'] = array();
+			$this->demo_history[ $this->demo_type ]['layer_sliders'] = [];
 		}
 		$this->demo_history[ $this->demo_type ]['layer_sliders'][] = (int) $slider_id;
 	}
@@ -244,12 +260,12 @@ class Avada_Demo_Content_Tracker {
 	public function add_term_to_stack( $term_id, $data ) {
 
 		if ( ! isset( $this->demo_history[ $this->demo_type ]['terms'] ) ) {
-			$this->demo_history[ $this->demo_type ]['terms'] = array();
+			$this->demo_history[ $this->demo_type ]['terms'] = [];
 		}
-		$this->demo_history[ $this->demo_type ]['terms'][] = array(
+		$this->demo_history[ $this->demo_type ]['terms'][] = [
 			'term_id'  => $term_id,
 			'taxonomy' => $data['taxonomy'],
-		);
+		];
 	}
 
 	/**
@@ -263,12 +279,28 @@ class Avada_Demo_Content_Tracker {
 	public function add_fusion_slider_term_to_stack( $term_id, $term ) {
 
 		if ( ! isset( $this->demo_history[ $this->demo_type ]['fusion_sliders'] ) ) {
-			$this->demo_history[ $this->demo_type ]['fusion_sliders'] = array();
+			$this->demo_history[ $this->demo_type ]['fusion_sliders'] = [];
 		}
-		$this->demo_history[ $this->demo_type ]['fusion_sliders'][] = array(
+		$this->demo_history[ $this->demo_type ]['fusion_sliders'][] = [
 			'term_id'  => $term_id,
 			'taxonomy' => $term['taxonomy'],
-		);
+		];
+	}
+
+	/**
+	 * Adds Convert Pluging module IDs to demo history.
+	 *
+	 * @access public
+	 * @since 6.2.0
+	 * @param array $module [module_id, module_name] pair.
+	 * @return void
+	 */
+	public function add_convertplug_to_stack( $module ) {
+
+		if ( ! isset( $this->demo_history[ $this->demo_type ]['convertplug_modules'] ) ) {
+			$this->demo_history[ $this->demo_type ]['convertplug_modules'] = [];
+		}
+		$this->demo_history[ $this->demo_type ]['convertplug_modules'][] = $module;
 	}
 
 	/**

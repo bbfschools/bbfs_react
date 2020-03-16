@@ -1,3 +1,11 @@
+<?php
+/**
+ * An underscore.js template.
+ *
+ * @package fusion-builder
+ */
+
+?>
 <script type="text/template" id="fusion-builder-block-module-settings-template">
 	<div class="fusion-builder-modal-top-container">
 		<# elementData = fusionAllElements[atts.element_type]; #>
@@ -5,26 +13,40 @@
 				<h2>{{ elementData.name }}</h2>
 		<# }; #>
 		<div class="fusion-builder-modal-close fusiona-plus2"></div>
-		<#  group_options = {}, group_options['general'] = {}; #>
+		<#  group_options = {}, group_options['general'] = {}; 
+			var	menuLabel = '';
+		#>
 
 		<!-- Move options to groups -->
-		<# _.each( elementData.params, function(param) { #>
-			<# if ( typeof( param.group ) !== 'undefined' ) {  #>
-				<# var group_tag = param.group.toLowerCase().replace(/ /g, '-'); #>
-				<# if ( typeof( group_options[group_tag] ) == 'undefined' ) {
-					group_options[group_tag] = {};
-				} #>
-				<# group_options[group_tag][param.param_name] = param; #>
-			<# } else { #>
-				<# group_options['general'][param.param_name] = param; #>
-			<# }; #>
-		<# } ); #>
+		<# _.each( fusionAllElements[atts.element_type].params, function( param ) {
+			if ( 'undefined' !== typeof param.group ) {
+				var group_tag = param.group.toLowerCase().replace(/ /g, '-');
+				if ( 'undefined' == typeof group_options[ group_tag ] ) {
+					group_options[ group_tag ] = {};
+				}
+				if ( 'undefined' !== typeof param.subgroup ) {
+					if ( 'undefined' == typeof group_options[ group_tag ][param.subgroup.name]['subgroups'] ) {
+						group_options[ group_tag ][param.subgroup.name]['subgroups'] = {};
+					}
+					if ( 'undefined' == typeof group_options[ group_tag ][param.subgroup.name]['subgroups'][param.subgroup.tab] ) {
+						group_options[ group_tag ][param.subgroup.name]['subgroups'][param.subgroup.tab] = {};
+					}
+					group_options[ group_tag ][param.subgroup.name]['subgroups'][param.subgroup.tab][ param.param_name ] = param;
+				} else {
+					group_options[ group_tag ][ param.param_name ] = param;
+				}
+			} else {
+				group_options['general'][ param.param_name ] = param;
+			}
+
+		} ); #>
 
 		<!-- If there is more than one group found show tabs -->
-		<# if ( Object.keys(group_options).length > 1 ) { #>
+		<# if ( Object.keys( group_options ).length > 1 ) { #>
 			<ul class="fusion-tabs-menu">
 				<# _.each( group_options, function( options, group) { #>
-					<li class=""><a href="#{{ group }}">{{ group.replace(/-/g, ' ') }}</a></li>
+					<# menuLabel = 'bg' === group ? 'BG' : group.replace(/-/g, ' '); #>
+					<li class=""><a href="#{{ group }}">{{ menuLabel }}</a></li>
 				<# }); #>
 			</ul>
 		<# }; #>
@@ -33,7 +55,7 @@
 	<div class="fusion-builder-modal-bottom-container">
 		<a href="#" class="fusion-builder-modal-save">
 			<span>
-				<# if ( FusionPageBuilderApp.shortcodeGenerator === true && FusionPageBuilderApp.shortcodeGeneratorMultiElementChild !== true ) { #>
+				<# if ( true === FusionPageBuilderApp.shortcodeGenerator && true !== FusionPageBuilderApp.shortcodeGeneratorMultiElementChild ) { #>
 					{{ fusionBuilderText.insert }}
 				<# } else { #>
 					{{ fusionBuilderText.save }}
@@ -48,7 +70,7 @@
 		</a>
 	</div>
 
-	<# if ( typeof ( atts.multi ) !== 'undefined' && atts.multi == 'multi_element_parent' ) {
+	<# if ( 'undefined' !== typeof atts.multi && 'multi_element_parent' === atts.multi ) {
 		advanced_module_class = ' fusion-builder-main-settings-advanced';
 	} else {
 		advanced_module_class = '';
